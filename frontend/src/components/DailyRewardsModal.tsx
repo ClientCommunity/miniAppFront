@@ -133,7 +133,7 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
           padding: '0 1rem',
           marginBottom: '1.5rem'
         }}>
-          {days.map((d, index) => {
+          {days.map((d) => {
             return (
               <div 
                 key={d.day}
