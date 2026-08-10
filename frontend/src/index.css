@@ -111,3 +111,60 @@ button {
   flex-direction: column;
   gap: 1.5rem;
 }
+/* --- Cards --- */
+.card {
+  background: var(--bg-surface);
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.card-emerald {
+  border-color: rgba(52, 211, 153, 0.3);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 1) 0%, rgba(6, 78, 59, 0.4) 100%);
+}
+
+.card-colorful {
+  border-color: rgba(139, 92, 246, 0.3);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 1) 0%, rgba(139, 92, 246, 0.2) 100%);
+}
+
+.card-gold {
+  border-color: rgba(251, 191, 36, 0.3);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 1) 0%, rgba(251, 191, 36, 0.15) 100%);
+}
+
+.card-title {
+  font-family: var(--font-family-display);
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+/* --- Badges --- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--border-radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badge-emerald {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--emerald-400);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-gold {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--accent-gold);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
