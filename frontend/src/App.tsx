@@ -46,7 +46,7 @@ function App() {
   };
 
   return (
-    <div className="layout-container" style={{ height: '100dvh', overflow: 'hidden', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0', justifyContent: 'center' }}>
+    <div className="layout-container" style={{ height: '100dvh', overflow: 'hidden', padding: '0.5rem 0.5rem 4rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0', justifyContent: 'center' }}>
       
       <div style={{ textAlign: 'center', marginBottom: '1rem', marginTop: '0.5rem' }}>
         <h1 style={{ marginBottom: '0.2rem', color: 'var(--emerald-400)', fontSize: '1.8rem' }}>Lucky Spin</h1>
@@ -57,24 +57,24 @@ function App() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', flex: 1, paddingBottom: '1rem' }}>
         
         {/* Left Column (4 Cards Vertical) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
           {LEFT_CARDS.map(card => (
             <FeatureCard key={card.title} {...card} />
           ))}
         </div>
 
         {/* Center Wheel */}
-        <div style={{ display: 'flex', justifyContent: 'center', flex: 1 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', flex: '1 1 auto', minWidth: 0, padding: '0 0.25rem' }}>
           <SpinWheel 
             segments={WHEEL_SEGMENTS}
             onSpinEnd={handleSpinEnd}
             theme="emerald"
-            size={250}
+            size={300}
           />
         </div>
 
         {/* Right Column (3 Cards Vertical) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center', flexShrink: 0 }}>
           {RIGHT_CARDS.map(card => (
             <FeatureCard key={card.title} {...card} />
           ))}

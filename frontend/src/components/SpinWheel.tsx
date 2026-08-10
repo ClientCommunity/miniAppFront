@@ -232,9 +232,9 @@ export const SpinWheel: FC<SpinWheelProps> = ({
       
       {/* The Wheel Container */}
       <div style={{
-        position: 'relative',
-        width: `${size}px`,
-        height: `${size}px`,
+        width: '100%',
+        maxWidth: `${size}px`,
+        aspectRatio: '1 / 1',
         margin: '0 auto',
         filter: 'drop-shadow(0 20px 25px rgba(0,0,0,0.5))'
       }}>
@@ -252,20 +252,22 @@ export const SpinWheel: FC<SpinWheelProps> = ({
             ref={canvasRef} 
             width={size} 
             height={size}
+            style={{ width: '100%', height: '100%' }}
           />
         </div>
 
         {/* Pointer (The Casino Flapper) */}
         <div style={{
           position: 'absolute',
-          top: '-20px',
+          top: '-7%',
           left: '50%',
           transform: 'translateX(-50%)',
+          width: '16%',
           zIndex: 10,
           filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.6))' // Casts shadow onto wheel
         }}>
           {/* A fancy golden flapper */}
-          <svg width="48" height="56" viewBox="0 0 24 32" fill="url(#goldGradient)" stroke="#713f12" strokeWidth="1.5">
+          <svg width="100%" height="100%" viewBox="0 0 24 32" fill="url(#goldGradient)" stroke="#713f12" strokeWidth="1.5">
             <defs>
               <linearGradient id="goldGradient" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0%" stopColor="#fef08a" />
@@ -282,6 +284,8 @@ export const SpinWheel: FC<SpinWheelProps> = ({
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
+            width: '32%',
+            height: '32%',
             zIndex: 20
         }}>
           <button 
@@ -293,8 +297,8 @@ export const SpinWheel: FC<SpinWheelProps> = ({
             onTouchStart={() => !isSpinning && setIsButtonPressed(true)}
             onTouchEnd={() => setIsButtonPressed(false)}
             style={{
-              width: '85px',
-              height: '85px',
+              width: '100%',
+              height: '100%',
               borderRadius: '50%',
               background: isSpinning ? '#475569' : 'linear-gradient(to bottom, #10b981, #047857)',
               color: '#fff',
