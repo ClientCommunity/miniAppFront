@@ -16,14 +16,14 @@ const WHEEL_SEGMENTS: SpinSegment[] = [
 ];
 
 const LEFT_CARDS = [
-  { title: 'Raffle', icon: '🎫', variant: 'emerald' as const, badgeText: 'Live' },
+  { title: 'Raffle', icon: '🎫', variant: 'emerald' as const },
   { title: 'Contest', icon: '🏆', variant: 'colorful' as const },
   { title: 'Gift', icon: '🎁', variant: 'gold' as const },
   { title: 'Team', icon: '🤝', variant: 'emerald' as const }
 ];
 
 const RIGHT_CARDS = [
-  { title: '+ Spins', icon: '🔄', variant: 'colorful' as const, badgeText: 'Hot' },
+  { title: '+ Spins', icon: '🔄', variant: 'colorful' as const },
   { title: 'Sign In', icon: '✅', variant: 'emerald' as const },
   { title: 'Wallet', icon: '💰', variant: 'gold' as const }
 ];
@@ -46,41 +46,35 @@ function App() {
   };
 
   return (
-    <div className="layout-container">
+    <div className="layout-container" style={{ height: '100dvh', overflow: 'hidden', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0', justifyContent: 'center' }}>
       
-      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ marginBottom: '0.5rem', color: 'var(--emerald-400)' }}>Lucky Spin</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>Test your luck and win coins!</p>
+      <div style={{ textAlign: 'center', marginBottom: '1rem', marginTop: '0.5rem' }}>
+        <h1 style={{ marginBottom: '0.2rem', color: 'var(--emerald-400)', fontSize: '1.8rem' }}>Lucky Spin</h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>Test your luck and win coins!</p>
       </div>
 
-      {/* Center Wheel (Always at top) */}
-      <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '3rem' }}>
-        <SpinWheel 
-          segments={WHEEL_SEGMENTS}
-          onSpinEnd={handleSpinEnd}
-          theme="emerald"
-        />
-      </div>
-
-      {/* 2-Column Mobile Friendly Card Layout */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '1fr 1fr', 
-        gap: '1rem', 
-        width: '100%',
-        maxWidth: '500px',
-        margin: '0 auto'
-      }}>
+      {/* Main Single-Screen Row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', flex: 1, paddingBottom: '1rem' }}>
         
         {/* Left Column (4 Cards Vertical) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {LEFT_CARDS.map(card => (
             <FeatureCard key={card.title} {...card} />
           ))}
         </div>
 
+        {/* Center Wheel */}
+        <div style={{ display: 'flex', justifyContent: 'center', flex: 1 }}>
+          <SpinWheel 
+            segments={WHEEL_SEGMENTS}
+            onSpinEnd={handleSpinEnd}
+            theme="emerald"
+            size={250}
+          />
+        </div>
+
         {/* Right Column (3 Cards Vertical) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center' }}>
           {RIGHT_CARDS.map(card => (
             <FeatureCard key={card.title} {...card} />
           ))}

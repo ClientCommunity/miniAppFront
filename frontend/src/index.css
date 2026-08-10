@@ -113,10 +113,11 @@ button {
 }
 /* --- Cards --- */
 .card {
-  background: var(--bg-surface);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-radius: var(--border-radius-lg);
-  padding: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
@@ -126,18 +127,15 @@ button {
 }
 
 .card-emerald {
-  border-color: rgba(52, 211, 153, 0.3);
-  background: linear-gradient(180deg, rgba(30, 41, 59, 1) 0%, rgba(6, 78, 59, 0.4) 100%);
+  border-color: rgba(52, 211, 153, 0.4);
 }
 
 .card-colorful {
-  border-color: rgba(139, 92, 246, 0.3);
-  background: linear-gradient(180deg, rgba(30, 41, 59, 1) 0%, rgba(139, 92, 246, 0.2) 100%);
+  border-color: rgba(139, 92, 246, 0.4);
 }
 
 .card-gold {
-  border-color: rgba(251, 191, 36, 0.3);
-  background: linear-gradient(180deg, rgba(30, 41, 59, 1) 0%, rgba(251, 191, 36, 0.15) 100%);
+  border-color: rgba(251, 191, 36, 0.4);
 }
 
 .card-title {

@@ -104,7 +104,7 @@ export const SpinWheel: FC<SpinWheelProps> = ({
 
     const innerRadius = radius - 14;
 
-    ctx.font = 'bold 18px Outfit, sans-serif';
+    ctx.font = 'bold 14px Outfit, sans-serif';
 
     // 3. Draw segments
     for (let i = 0; i < numSegments; i++) {
@@ -139,8 +139,8 @@ export const SpinWheel: FC<SpinWheelProps> = ({
       const segment = segments[i];
       if (segment.image && loadedImagesRef.current[segment.image]) {
         const img = loadedImagesRef.current[segment.image];
-        const imgSize = 48;
-        ctx.drawImage(img, innerRadius - imgSize - 20, -imgSize / 2, imgSize, imgSize);
+        const imgSize = 28;
+        ctx.drawImage(img, innerRadius - imgSize - 12, -imgSize / 2, imgSize, imgSize);
       } else {
         ctx.textAlign = 'right';
         ctx.fillStyle = '#fff';
