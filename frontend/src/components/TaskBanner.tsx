@@ -15,13 +15,25 @@ export const TaskBanner: FC<TaskBannerProps> = ({
   subtitle,
   icon,
   rewardAmount,
-  rewardIcon = '💎',
+  rewardIcon = './assets/purple-diamond.png',
   onClick
 }) => {
   const [isPressed, setIsPressed] = useState(false);
   const [isBtnPressed, setIsBtnPressed] = useState(false);
 
-  const btnContent = rewardAmount ? `${rewardIcon} ${rewardAmount}` : 'Go';
+  const renderReward = () => {
+    if (!rewardAmount) return 'Go';
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+        {rewardIcon.endsWith('.png') ? (
+          <img src={rewardIcon} alt="Reward" style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
+        ) : (
+          rewardIcon
+        )}
+        <span>{rewardAmount}</span>
+      </span>
+    );
+  };
 
   return (
     <div
@@ -90,7 +102,7 @@ export const TaskBanner: FC<TaskBannerProps> = ({
           cursor: 'pointer'
         }}
       >
-        {btnContent}
+        {renderReward()}
       </button>
     </div>
   );

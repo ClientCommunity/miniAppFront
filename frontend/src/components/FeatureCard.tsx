@@ -45,10 +45,23 @@ export const FeatureCard: FC<FeatureCardProps> = ({
         boxSizing: 'border-box'
       }}
     >
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-        <div style={{ fontSize: '1.8rem', lineHeight: 1, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}>
-          {icon}
-        </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+        {icon.endsWith('.png') ? (
+          <img 
+            src={icon} 
+            alt={title} 
+            style={{ 
+              maxWidth: '80%', 
+              maxHeight: '80%', 
+              objectFit: 'contain',
+              filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.3))' 
+            }} 
+          />
+        ) : (
+          <div style={{ fontSize: '1.8rem', lineHeight: 1, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}>
+            {icon}
+          </div>
+        )}
       </div>
       
       <div 

@@ -21,13 +21,13 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
   };
 
   const days = [
-    { day: 1, reward: 'Up to 80', icon: '💎', active: true },
-    { day: 2, reward: '+80', icon: '💎' },
-    { day: 3, reward: '+200', icon: '🎁' },
-    { day: 4, reward: '+90', icon: '💎' },
-    { day: 5, reward: '+90', icon: '💎' },
-    { day: 6, reward: '+90', icon: '💎' },
-    { day: 7, reward: '+6000', icon: '🎁' },
+    { day: 1, reward: 'Up to 80', icon: './assets/purple-diamond.png', active: true },
+    { day: 2, reward: '+80', icon: './assets/purple-diamond.png' },
+    { day: 3, reward: '+200', icon: './assets/giftIconInDailySignIn.png' },
+    { day: 4, reward: '+90', icon: './assets/purple-diamond.png' },
+    { day: 5, reward: '+90', icon: './assets/purple-diamond.png' },
+    { day: 6, reward: '+90', icon: './assets/purple-diamond.png' },
+    { day: 7, reward: '+6000', icon: './assets/giftIconInDailySignIn.png' },
   ];
 
   return (
@@ -165,9 +165,16 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
                 <div style={{ 
                   fontSize: '1.5rem', 
                   marginBottom: '0.2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   filter: d.active ? 'drop-shadow(0 0 10px rgba(255,255,255,0.8))' : 'none'
                 }}>
-                  {d.icon}
+                  {d.icon.endsWith('.png') ? (
+                    <img src={d.icon} alt="Reward" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+                  ) : (
+                    d.icon
+                  )}
                 </div>
 
                 <div style={{ 

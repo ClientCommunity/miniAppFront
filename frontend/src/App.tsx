@@ -24,16 +24,16 @@ const MOCK_TASKS = [
 ];
 
 const LEFT_CARDS = [
-  { title: 'Raffle', icon: '🎫', variant: 'emerald' as const },
-  { title: 'Contest', icon: '🏆', variant: 'colorful' as const },
-  { title: 'Gift', icon: '🎁', variant: 'gold' as const },
-  { title: 'Team', icon: '🤝', variant: 'emerald' as const }
+  { title: 'Raffle', icon: './assets/raffleFeatureCardIcon.png', variant: 'emerald' as const },
+  { title: 'Contest', icon: './assets/contestFeatureCardIcon.png', variant: 'colorful' as const },
+  { title: 'Gift', icon: './assets/giftcodeFeatureCardIcon.png', variant: 'gold' as const },
+  { title: 'Team', icon: './assets/inviteFeatureCardIcon.png', variant: 'emerald' as const }
 ];
 
 const RIGHT_CARDS = [
-  { title: '+ Spins', icon: '🔄', variant: 'colorful' as const },
-  { title: 'Sign In', icon: '✅', variant: 'emerald' as const },
-  { title: 'Wallet', icon: '💰', variant: 'gold' as const }
+  { title: '+ Spins', icon: './assets/wheel-of-fortune.png', variant: 'colorful' as const },
+  { title: 'Sign In', icon: './assets/signin-iconFetareCardIcon.png', variant: 'emerald' as const },
+  { title: 'Wallet', icon: './assets/icon-gold.png', variant: 'gold' as const }
 ];
 
 function App() {
@@ -68,7 +68,7 @@ function App() {
   const handleSpinEnd = (winner: SpinSegment) => {
     setRewardText(winner.label);
     setShowRewardModal(true);
-    
+
     if (winner.value !== '0' && winner.label !== 'Empty') {
       throwConfetti();
     }
@@ -80,21 +80,21 @@ function App() {
 
   return (
     <div className="layout-container" style={{ height: '100dvh', overflow: 'hidden', padding: '0.25rem 0.5rem 0.5rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0', justifyContent: 'center' }}>
-      
+
       {/* Top Header / Asset Balances */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '0.5rem', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '0.5rem',
         marginTop: '0.25rem',
         padding: '0 0.25rem'
       }}>
         {/* User Profile (Left) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <img 
-            src={userToDisplay.photo_url} 
-            alt="Profile" 
+          <img
+            src={userToDisplay.photo_url}
+            alt="Profile"
             style={{ width: '36px', height: '36px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)' }}
           />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -107,19 +107,19 @@ function App() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {/* Energy Balance */}
           <div style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-            <span style={{ fontSize: '0.8rem' }}>⚡</span>
+            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
             <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>50</span>
           </div>
-          
+
           {/* Spin Balance */}
           <div style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-            <span style={{ fontSize: '0.8rem' }}>🔄</span>
+            <img src="./assets/wheel-of-fortune.png" alt="Spins" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
             <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>12</span>
           </div>
 
           {/* Diamond Balance */}
           <div style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-            <span style={{ fontSize: '0.8rem' }}>💎</span>
+            <img src="./assets/purple-diamond.png" alt="Diamond" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
             <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>124</span>
           </div>
         </div>
@@ -127,7 +127,7 @@ function App() {
 
       {/* Main Single-Screen Row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', flex: 1, paddingBottom: '0.25rem' }}>
-        
+
         {/* Left Column (4 Cards Vertical) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
           {LEFT_CARDS.map(card => (
@@ -137,7 +137,7 @@ function App() {
 
         {/* Center Wheel */}
         <div style={{ display: 'flex', justifyContent: 'center', flex: '1 1 auto', minWidth: 0, padding: '0 0.25rem' }}>
-          <SpinWheel 
+          <SpinWheel
             segments={WHEEL_SEGMENTS}
             onSpinEnd={handleSpinEnd}
             theme="emerald"
@@ -148,9 +148,9 @@ function App() {
         {/* Right Column (3 Cards Vertical) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center', flexShrink: 0 }}>
           {RIGHT_CARDS.map(card => (
-            <FeatureCard 
-              key={card.title} 
-              {...card} 
+            <FeatureCard
+              key={card.title}
+              {...card}
               onClick={card.title === 'Sign In' ? () => setShowDailyRewards(true) : undefined}
             />
           ))}
@@ -159,18 +159,18 @@ function App() {
       </div>
 
       {/* Task Banner Peek-a-boo Carousel */}
-      <div 
+      <div
         className="hide-scrollbar"
         style={{
-        display: 'flex',
-        overflowX: 'auto',
-        scrollSnapType: 'x mandatory',
-        gap: '0.75rem',
-        padding: '0.25rem 0',
-        width: '100%',
-        flexShrink: 0,
-        WebkitOverflowScrolling: 'touch',
-      }}>
+          display: 'flex',
+          overflowX: 'auto',
+          scrollSnapType: 'x mandatory',
+          gap: '0.75rem',
+          padding: '0.25rem 0',
+          width: '100%',
+          flexShrink: 0,
+          WebkitOverflowScrolling: 'touch',
+        }}>
         {MOCK_TASKS.map((task, i) => (
           <TaskBanner key={i} {...task} />
         ))}
@@ -180,16 +180,17 @@ function App() {
       <div style={{
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: '0.75rem',
         width: '100%',
         paddingTop: '0.5rem',
         paddingBottom: '0.5rem',
         flexShrink: 0
       }}>
-        <div 
+        <div
           className="card"
           style={{
-            flex: 1,
+            width: '65%',
             background: 'linear-gradient(145deg, var(--task-card-bg-start) 0%, var(--task-card-bg-end) 100%)',
             border: '1px solid var(--task-card-border)',
             borderRadius: 'var(--border-radius-md)',
@@ -209,7 +210,7 @@ function App() {
           </div>
         </div>
 
-        <button 
+        <button
           style={{
             width: '48px',
             height: '48px',
@@ -248,9 +249,9 @@ function App() {
           zIndex: 1000,
           padding: '1rem'
         }}>
-          <RewardCard 
-            rewardText={rewardText} 
-            onCollect={handleCollect} 
+          <RewardCard
+            rewardText={rewardText}
+            onCollect={handleCollect}
           />
         </div>
       )}
