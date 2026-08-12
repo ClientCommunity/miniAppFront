@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import type { FC } from 'react';
+import { HowToPlayModal } from './HowToPlayModal';
+import { ClaimBottomSheet } from './ClaimBottomSheet';
 
 export interface RaffleDetailsProps {
   raffle: any;
@@ -14,6 +17,9 @@ const PRIZE_TIERS = [
 ];
 
 export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [showClaimSheet, setShowClaimSheet] = useState(false);
+
   return (
     <div style={{
       width: '100%',
@@ -159,7 +165,9 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
           <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>
             {raffle.id}
           </div>
-          <button style={{
+          <button 
+            onClick={() => setShowHowToPlay(true)}
+            style={{
             background: 'transparent',
             border: '1px solid rgba(255,255,255,0.4)',
             borderRadius: '1rem',
@@ -179,9 +187,9 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
           justifyContent: 'center', 
           alignItems: 'baseline', 
           gap: '0.5rem', 
-          marginBottom: '2rem',
+          marginBottom: '1rem',
           position: 'relative',
-          padding: '1rem 0'
+          padding: '0.5rem 0'
         }}>
           {/* Faint 777 Watermarks behind timer */}
           <div style={{
@@ -209,17 +217,17 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
             letterSpacing: '-2px'
           }}>777</div>
 
-          <div style={{ color: '#fbbf24', fontSize: '2.5rem', fontWeight: 900, fontFamily: 'Outfit, sans-serif' }}>
-            4<span style={{ fontSize: '1.5rem', marginLeft: '4px' }}>D</span>
+          <div style={{ color: '#fbbf24', fontSize: '2.8rem', fontWeight: 900, fontFamily: 'Georgia, serif' }}>
+            4<span style={{ fontSize: '1.2rem', marginLeft: '6px' }}>D</span>
           </div>
-          <div style={{ color: '#fbbf24', fontSize: '2.5rem', fontWeight: 900, fontFamily: 'Outfit, sans-serif' }}>
-            3<span style={{ fontSize: '1.5rem', marginLeft: '4px' }}>H</span>
+          <div style={{ color: '#fbbf24', fontSize: '2.8rem', fontWeight: 900, fontFamily: 'Georgia, serif' }}>
+            3<span style={{ fontSize: '1.2rem', marginLeft: '6px' }}>H</span>
           </div>
-          <div style={{ color: '#fbbf24', fontSize: '2.5rem', fontWeight: 900, fontFamily: 'Outfit, sans-serif' }}>
-            30<span style={{ fontSize: '1.5rem', marginLeft: '4px' }}>m</span>
+          <div style={{ color: '#fbbf24', fontSize: '2.8rem', fontWeight: 900, fontFamily: 'Georgia, serif' }}>
+            30<span style={{ fontSize: '1.2rem', marginLeft: '6px' }}>m</span>
           </div>
-          <div style={{ color: '#fbbf24', fontSize: '2.5rem', fontWeight: 900, fontFamily: 'Outfit, sans-serif' }}>
-            33<span style={{ fontSize: '1.5rem', marginLeft: '4px' }}>s</span>
+          <div style={{ color: '#fbbf24', fontSize: '2.8rem', fontWeight: 900, fontFamily: 'Georgia, serif' }}>
+            33<span style={{ fontSize: '1.2rem', marginLeft: '6px' }}>s</span>
           </div>
         </div>
 
@@ -245,7 +253,7 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
               <span>{raffle.tickets.toLocaleString()}</span>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', fontWeight: 800 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.95rem', fontWeight: 800, fontFamily: 'Georgia, serif' }}>
             <span style={{ color: 'rgba(255,255,255,0.7)' }}>Rewards</span>
             <span style={{ color: '#fbbf24' }}>${raffle.cashReward}</span>
             <span style={{ color: '#fff' }}>+ {raffle.coinRewardStr}</span>
@@ -254,7 +262,7 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
         </div>
 
         {/* Divider */}
-        <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', marginBottom: '1.5rem' }} />
+        <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', marginBottom: '0.5rem' }} />
 
         {/* Prize List */}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -263,18 +271,19 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
               display: 'flex', 
               justifyContent: 'space-between', 
               alignItems: 'center',
-              padding: '1.25rem 0',
-              borderBottom: idx < PRIZE_TIERS.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none'
+              padding: '0.9rem 0',
+              borderBottom: idx < PRIZE_TIERS.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+              fontFamily: 'Georgia, serif'
             }}>
-              <div style={{ color: '#fff', fontSize: '1.05rem', fontWeight: 800 }}>
+              <div style={{ color: '#fff', fontSize: '0.95rem', fontWeight: 800 }}>
                 {prize.rank}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 900 }}>{prize.amount}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ color: '#fff', fontSize: '1.05rem', fontWeight: 900 }}>{prize.amount}</span>
                 {prize.icon && (
                   <img src={prize.icon} alt="Diamond" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
                 )}
-                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', fontWeight: 700, marginLeft: '0.2rem' }}>
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', fontWeight: 700, marginLeft: '0.1rem', fontFamily: 'Outfit, sans-serif' }}>
                   {prize.multiplier}
                 </span>
               </div>
@@ -291,7 +300,7 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
         left: 0,
         right: 0,
         background: 'linear-gradient(to top, #022c22 80%, transparent 100%)',
-        padding: '2rem 1.25rem 1.5rem 1.25rem',
+        padding: '1rem 1.25rem 1.5rem 1.25rem',
         zIndex: 20
       }}>
         {/* Ticket Status */}
@@ -306,7 +315,9 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
         </div>
 
         {/* Claim Button */}
-        <button style={{
+        <button 
+          onClick={() => setShowClaimSheet(true)}
+          style={{
           width: '100%',
           background: 'linear-gradient(180deg, #fde047 0%, #f59e0b 100%)',
           border: 'none',
@@ -322,6 +333,14 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
           Claim
         </button>
       </div>
+
+      {/* Modals */}
+      {showHowToPlay && (
+        <HowToPlayModal onClose={() => setShowHowToPlay(false)} />
+      )}
+      {showClaimSheet && (
+        <ClaimBottomSheet onClose={() => setShowClaimSheet(false)} />
+      )}
 
     </div>
   );
