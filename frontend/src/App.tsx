@@ -6,7 +6,7 @@ import { RewardCard } from './components/RewardCard';
 import { FeatureCard } from './components/FeatureCard';
 import { TaskBanner } from './components/TaskBanner';
 import { DailyRewardsModal } from './components/DailyRewardsModal';
-import { RafflePage } from './components/RafflePage';
+import { RafflePage } from './components/raffle/RafflePage';
 import { throwConfetti } from './utils/confetti';
 
 const WHEEL_SEGMENTS: SpinSegment[] = [
