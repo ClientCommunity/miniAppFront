@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import type { FC } from 'react';
 import { RaffleCard } from './RaffleCard';
+import { RaffleDetails } from './RaffleDetails';
 
 export interface RafflePageProps {
   onBack: () => void;
@@ -16,11 +18,22 @@ const ENDED_RAFFLES = [
 ];
 
 export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
+  const [selectedRaffle, setSelectedRaffle] = useState<any>(null);
+
+  if (selectedRaffle) {
+    return (
+      <RaffleDetails 
+        raffle={selectedRaffle}
+        onBack={() => setSelectedRaffle(null)}
+      />
+    );
+  }
+
   return (
     <div style={{
       width: '100%',
       minHeight: '100vh',
-      background: 'linear-gradient(to bottom, #022c22 0%, #064e3b 100%)',
+      background: 'radial-gradient(ellipse at 50% 0%, #0c6340 0%, #032b1d 60%, #01170f 100%)',
       position: 'absolute',
       top: 0,
       left: 0,
@@ -29,32 +42,82 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
       overflowX: 'hidden',
       zIndex: 50 // Ensures it covers the main page completely
     }}>
-      {/* Background Watermark & Patterns */}
+      {/* Vibrant Ambient Glow Orbs */}
       <div style={{
         position: 'absolute',
-        top: '6%',
+        top: '-60px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '320px',
+        height: '320px',
+        background: 'radial-gradient(circle, rgba(52, 211, 153, 0.25) 0%, rgba(251, 191, 36, 0.1) 45%, transparent 70%)',
+        filter: 'blur(50px)',
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
+
+      <div style={{
+        position: 'absolute',
+        bottom: '15%',
+        right: '-80px',
+        width: '280px',
+        height: '280px',
+        background: 'radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(251, 191, 36, 0.12) 50%, transparent 75%)',
+        filter: 'blur(60px)',
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
+
+      <div style={{
+        position: 'absolute',
+        top: '45%',
+        left: '-80px',
+        width: '240px',
+        height: '240px',
+        background: 'radial-gradient(circle, rgba(5, 150, 105, 0.25) 0%, transparent 70%)',
+        filter: 'blur(60px)',
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
+
+      {/* Modern Outlined Watermark */}
+      <div style={{
+        position: 'absolute',
+        top: '4%',
         left: '50%',
         transform: 'translateX(-50%)',
         fontSize: '7rem',
         fontWeight: 900,
-        fontFamily: 'Georgia, serif',
-        color: 'rgba(255,255,255,0.04)',
+        fontFamily: "'Outfit', 'Inter', sans-serif",
+        color: 'transparent',
+        WebkitTextStroke: '1.5px rgba(255, 255, 255, 0.08)',
         pointerEvents: 'none',
         zIndex: 0,
-        whiteSpace: 'nowrap'
+        whiteSpace: 'nowrap',
+        letterSpacing: '6px',
+        textTransform: 'lowercase'
       }}>
         raffle
       </div>
       
-      {/* CSS Pattern for faint dots */}
+      {/* Crisp Dotted Grid */}
       <div style={{
         position: 'absolute',
         top: 0, left: 0, right: 0, bottom: 0,
-        backgroundImage: 'radial-gradient(rgba(255,255,255,0.06) 2px, transparent 2px)',
-        backgroundSize: '40px 40px',
+        backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.1) 1.5px, transparent 1.5px)',
+        backgroundSize: '28px 28px',
         pointerEvents: 'none',
         zIndex: 0
       }} />
+
+      {/* Floating Translucent Triangles Pattern */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="rgba(52, 211, 153, 0.2)" style={{ position: 'absolute', top: '12%', left: '8%', transform: 'rotate(15deg)' }}><polygon points="12,2 22,22 2,22"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(251, 191, 36, 0.25)" style={{ position: 'absolute', top: '22%', right: '12%', transform: 'rotate(-30deg)' }}><polygon points="12,2 22,22 2,22"/></svg>
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="rgba(255, 255, 255, 0.08)" style={{ position: 'absolute', top: '48%', left: '5%', transform: 'rotate(45deg)' }}><polygon points="12,2 22,22 2,22"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="rgba(52, 211, 153, 0.18)" style={{ position: 'absolute', top: '65%', right: '8%', transform: 'rotate(-15deg)' }}><polygon points="12,2 22,22 2,22"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="rgba(251, 191, 36, 0.2)" style={{ position: 'absolute', top: '82%', left: '15%', transform: 'rotate(60deg)' }}><polygon points="12,2 22,22 2,22"/></svg>
+      </div>
 
       {/* Top Header */}
       <div style={{ 
@@ -117,6 +180,7 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
             key={raffle.id}
             status="ongoing"
             {...raffle}
+            onClickDetails={() => setSelectedRaffle(raffle)}
           />
         ))}
 
@@ -131,6 +195,7 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
             key={raffle.id}
             status="ended"
             {...raffle}
+            onClickDetails={() => setSelectedRaffle(raffle)}
           />
         ))}
         
