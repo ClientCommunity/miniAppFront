@@ -6,15 +6,16 @@ import { RewardCard } from './components/RewardCard';
 import { FeatureCard } from './components/FeatureCard';
 import { TaskBanner } from './components/TaskBanner';
 import { DailyRewardsModal } from './components/DailyRewardsModal';
+import { RafflePage } from './components/RafflePage';
 import { throwConfetti } from './utils/confetti';
 
 const WHEEL_SEGMENTS: SpinSegment[] = [
-  { label: 'Gem', value: 'gem', image: './assets/gem_stone_3d.png' },
+  { label: 'Diamond', value: 'gem', image: './assets/purple-diamond.png' },
   { label: 'Coins', value: 'coins', image: './assets/coin_3d.png' },
-  { label: 'Empty', value: '0' },
+  { label: 'Diamond', value: 'gem', image: './assets/purple-diamond.png' },
   { label: 'Jackpot', value: 'jackpot', image: './assets/money_bag_3d.png' },
   { label: 'Tickets', value: 'tickets', image: './assets/admission_tickets_3d.png' },
-  { label: 'Empty', value: '0' }
+  { label: 'Diamond', value: 'gem', image: './assets/purple-diamond.png' }
 ];
 
 const MOCK_TASKS = [
@@ -37,6 +38,7 @@ const RIGHT_CARDS = [
 ];
 
 function App() {
+  const [currentPage, setCurrentPage] = useState<'main' | 'raffle'>('main');
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [showDailyRewards, setShowDailyRewards] = useState(false);
   const [rewardText, setRewardText] = useState('');
@@ -131,12 +133,78 @@ function App() {
         {/* Left Column (4 Cards Vertical) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
           {LEFT_CARDS.map(card => (
-            <FeatureCard key={card.title} {...card} />
+            <FeatureCard 
+              key={card.title} 
+              {...card} 
+              onClick={card.title === 'Raffle' ? () => setCurrentPage('raffle') : undefined}
+            />
           ))}
         </div>
 
-        {/* Center Wheel */}
-        <div style={{ display: 'flex', justifyContent: 'center', flex: '1 1 auto', minWidth: 0, padding: '0 0.25rem' }}>
+        {/* Center Wheel & Progress Section */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: '1 1 auto', minWidth: 0, padding: '0 0.25rem', marginTop: '-20px' }}>
+          
+          {/* Balance Display */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+            <img src="./assets/icon-gold.png" alt="Coin" style={{ width: '30px', height: '30px', objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }} />
+            <span style={{ 
+              color: '#FFE81A', 
+              fontWeight: 900, 
+              fontSize: '1.75rem', 
+              fontStyle: 'italic',
+              textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+            }}>$0.56</span>
+          </div>
+
+          {/* Progress Bar */}
+          <div style={{ 
+            width: '100%', 
+            maxWidth: '240px', 
+            height: '13px', 
+            background: 'rgba(255,255,255,0.2)', 
+            borderRadius: '10px',
+            position: 'relative',
+            marginBottom: '0.5rem',
+            boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)'
+          }}>
+            {/* Fill */}
+            <div style={{
+              width: '56%',
+              height: '100%',
+              background: 'linear-gradient(90deg, #F5A623 0%, #F8E71C 100%)',
+              borderRadius: '10px',
+              position: 'relative',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
+            }}>
+              {/* Glowing Particle Tip */}
+              <div style={{
+                position: 'absolute',
+                right: '-7px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '13px',
+                height: '13px',
+                background: 'rgba(255, 230, 0, 0.8)',
+                borderRadius: '50%',
+                boxShadow: '0 0 15px 5px rgba(248, 231, 28, 0.8)',
+                filter: 'blur(1.5px)'
+              }} />
+            </div>
+          </div>
+
+          {/* Helper Text */}
+          <div style={{ 
+            color: 'white', 
+            fontSize: '0.85rem', 
+            fontFamily: 'Georgia, serif', 
+            fontStyle: 'italic', 
+            opacity: 0.95,
+            marginBottom: '1.75rem',
+            textShadow: '0 1px 3px rgba(0,0,0,0.6)'
+          }}>
+            Only $0.44 to cash out $1 !
+          </div>
+
           <SpinWheel
             segments={WHEEL_SEGMENTS}
             onSpinEnd={handleSpinEnd}
@@ -202,8 +270,17 @@ function App() {
             cursor: 'pointer'
           }}
         >
-          <div style={{ fontSize: '1.5rem', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))' }}>
-            ✉️
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img 
+              src="./assets/spin-ticket.png" 
+              alt="Spin Ticket" 
+              style={{ 
+                width: '28px', 
+                height: '28px', 
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))' 
+              }} 
+            />
           </div>
           <div style={{ fontWeight: 700, fontFamily: 'var(--font-family-display)', fontSize: '0.95rem', color: 'white' }}>
             Invite to earn spins
@@ -259,6 +336,11 @@ function App() {
       {/* Daily Rewards Modal (10s Pop-up) */}
       {showDailyRewards && (
         <DailyRewardsModal onClose={() => setShowDailyRewards(false)} />
+      )}
+
+      {/* Raffle Page Overlay */}
+      {currentPage === 'raffle' && (
+        <RafflePage onBack={() => setCurrentPage('main')} />
       )}
     </div>
   );

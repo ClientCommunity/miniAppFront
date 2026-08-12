@@ -39,26 +39,64 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
       bottom: 0,
       background: 'rgba(0, 0, 0, 0.75)',
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: 'column',
+      justifyContent: 'flex-end',
       zIndex: 1000,
-      padding: '1.5rem',
       opacity: isVisible ? 1 : 0,
       transition: 'opacity 0.3s ease',
       backdropFilter: 'blur(3px)'
     }}>
       
+      {/* Outer Bottom Sheet Container */}
       <div style={{
         width: '100%',
-        maxWidth: '380px',
-        background: '#e3f7ea', // Pale mint green from image
-        borderRadius: '1.5rem',
+        background: '#0d5c27', // Dark green background mimicking a bottom sheet
+        borderTopLeftRadius: '2rem',
+        borderTopRightRadius: '2rem',
+        transform: isVisible ? 'translateY(0)' : 'translateY(100%)',
+        transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)', // bouncy slide up
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: '2.5rem 1.5rem 3rem 1.5rem',
         position: 'relative',
-        transform: isVisible ? 'scale(1) translateY(0)' : 'scale(0.9) translateY(20px)',
-        transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        paddingBottom: '1.5rem',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
+        boxShadow: '0 -10px 25px rgba(0,0,0,0.5)'
       }}>
+
+        {/* Close Button moved to Outer Sheet */}
+        <button 
+          onClick={handleClose}
+          style={{
+            position: 'absolute',
+            top: '15px',
+            right: '15px',
+            background: 'rgba(255,255,255,0.15)',
+            border: 'none',
+            color: 'white',
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.2rem',
+            cursor: 'pointer',
+            zIndex: 20
+          }}
+        >
+          ✕
+        </button>
+
+        {/* Inner Binder Card */}
+        <div style={{
+          width: '100%',
+          maxWidth: '380px',
+          background: '#e3f7ea', // Pale mint green from image
+          borderRadius: '1.5rem',
+          position: 'relative',
+          paddingBottom: '1.5rem',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
+        }}>
         
         {/* Binder Straps / Pegs */}
         <div style={{
@@ -94,24 +132,6 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
           marginBottom: '1rem',
           boxShadow: '0 4px 10px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.4)'
         }}>
-          {/* Close Button */}
-          <button 
-            onClick={handleClose}
-            style={{
-              position: 'absolute',
-              top: '10px',
-              right: '10px',
-              background: 'transparent',
-              border: 'none',
-              color: 'white',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              padding: '0.2rem'
-            }}
-          >
-            ×
-          </button>
-          
           <h2 style={{ 
             color: 'white', 
             margin: 0, 
@@ -222,6 +242,8 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
           >
             Only Claim 15
           </button>
+        </div>
+        
         </div>
         
       </div>
