@@ -1,0 +1,412 @@
+import { useState } from 'react';
+import type { FC } from 'react';
+
+export interface WalletRecordsPageProps {
+  onBack: () => void;
+}
+
+type FilterTab = 'all' | 'withdrawals' | 'spins' | 'tasks';
+
+interface TransactionRecord {
+  id: string;
+  title: string;
+  category: FilterTab;
+  date: string;
+  txId: string;
+  icon: string;
+  isImageIcon?: boolean;
+  amount: string;
+  isDiamond?: boolean;
+  status: 'completed' | 'processing' | 'failed';
+}
+
+const MOCK_RECORDS: TransactionRecord[] = [
+  {
+    id: 'tx-1',
+    title: 'Spin Wheel Reward',
+    category: 'spins',
+    date: 'Today, 14:32',
+    txId: 'TX-84921',
+    icon: './assets/wheel-of-fortune.png',
+    isImageIcon: true,
+    amount: '+$0.20',
+    status: 'completed'
+  },
+  {
+    id: 'tx-2',
+    title: 'Daily Check-in Bonus',
+    category: 'spins',
+    date: 'Today, 10:15',
+    txId: 'TX-84918',
+    icon: './assets/giftIconInDailySignIn.png',
+    isImageIcon: true,
+    amount: '+80',
+    isDiamond: true,
+    status: 'completed'
+  },
+  {
+    id: 'tx-3',
+    title: 'Friend Invite Bonus',
+    category: 'tasks',
+    date: 'Yesterday, 19:40',
+    txId: 'TX-83904',
+    icon: './assets/inviteFeatureCardIcon.png',
+    isImageIcon: true,
+    amount: '+300',
+    isDiamond: true,
+    status: 'completed'
+  },
+  {
+    id: 'tx-4',
+    title: 'USDT (TON) Withdrawal',
+    category: 'withdrawals',
+    date: 'Aug 12, 2026',
+    txId: 'TX-78210',
+    icon: '🏧',
+    isImageIcon: false,
+    amount: '-$1.00',
+    status: 'processing'
+  }
+];
+
+export const WalletRecordsPage: FC<WalletRecordsPageProps> = ({ onBack }) => {
+  const [activeTab, setActiveTab] = useState<FilterTab>('all');
+
+  const filteredRecords = MOCK_RECORDS.filter(
+    (rec) => activeTab === 'all' || rec.category === activeTab
+  );
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        minHeight: '100vh',
+        background: 'radial-gradient(ellipse at 50% 0%, #0c6340 0%, #032b1d 60%, #01170f 100%)',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        overflowX: 'hidden',
+        overflowY: 'auto',
+        zIndex: 60,
+        fontFamily: 'Outfit, sans-serif'
+      }}
+    >
+      {/* Background Ambient Glows */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '6%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '320px',
+          height: '240px',
+          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(0,0,0,0) 70%)',
+          borderRadius: '50%',
+          pointerEvents: 'none',
+          zIndex: 1
+        }}
+      />
+
+      {/* Top Header */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '1.25rem 1rem 0.75rem 1rem',
+          position: 'relative',
+          zIndex: 10
+        }}
+      >
+        <button
+          onClick={onBack}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            background: 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.25)',
+            borderRadius: '20px',
+            padding: '0.35rem 0.85rem',
+            color: '#ffffff',
+            fontWeight: 800,
+            fontSize: '0.85rem',
+            cursor: 'pointer',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+          }}
+        >
+          &lt; Back
+        </button>
+
+        <h2
+          style={{
+            margin: 0,
+            color: '#ffffff',
+            fontSize: '1.25rem',
+            fontWeight: 800,
+            fontFamily: 'Georgia, serif'
+          }}
+        >
+          Transaction Records
+        </h2>
+
+        {/* Balance pill */}
+        <div
+          style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '20px',
+            padding: '0.2rem 0.6rem',
+            color: '#fbbf24',
+            fontWeight: 800,
+            fontSize: '0.85rem'
+          }}
+        >
+          $0.56
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div
+        style={{
+          flex: 1,
+          padding: '0.5rem 1.25rem 2.5rem 1.25rem',
+          position: 'relative',
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.25rem'
+        }}
+      >
+        {/* 1. Summary Stats Card */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '0.9rem 1.2rem',
+            background: 'linear-gradient(135deg, rgba(3, 102, 57, 0.7) 0%, rgba(2, 44, 34, 0.85) 100%)',
+            borderRadius: '1rem',
+            border: '1px solid rgba(52, 211, 153, 0.35)',
+            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.2)'
+          }}
+        >
+          {/* Total Earned */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Total Earned</span>
+            <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#facc15', fontFamily: 'Georgia, serif' }}>
+              $0.56
+            </span>
+          </div>
+
+          <div style={{ width: '1px', height: '28px', background: 'rgba(255,255,255,0.15)' }} />
+
+          {/* Withdrawn */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Withdrawn</span>
+            <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#ffffff', fontFamily: 'Georgia, serif' }}>
+              $0.00
+            </span>
+          </div>
+
+          <div style={{ width: '1px', height: '28px', background: 'rgba(255,255,255,0.15)' }} />
+
+          {/* Gems Earned */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Total Gems</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <img src="./assets/purple-diamond.png" alt="Diamond" style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
+              <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#ffffff', fontFamily: 'Georgia, serif' }}>
+                760
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Filter Tabs */}
+        <div
+          style={{
+            display: 'flex',
+            gap: '0.5rem',
+            overflowX: 'auto',
+            paddingBottom: '0.25rem',
+            scrollbarWidth: 'none'
+          }}
+        >
+          {(
+            [
+              { key: 'all', label: 'All' },
+              { key: 'withdrawals', label: 'Withdrawals' },
+              { key: 'spins', label: 'Spins & Daily' },
+              { key: 'tasks', label: 'Tasks & Team' }
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              style={{
+                background:
+                  activeTab === tab.key
+                    ? 'linear-gradient(180deg, #10b981 0%, #059669 100%)'
+                    : 'rgba(0, 0, 0, 0.25)',
+                color: activeTab === tab.key ? '#ffffff' : 'rgba(255, 255, 255, 0.75)',
+                border:
+                  activeTab === tab.key
+                    ? '1px solid rgba(167, 243, 208, 0.6)'
+                    : '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '1.25rem',
+                padding: '0.4rem 0.9rem',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* 3. Transaction Records List */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+          {filteredRecords.length > 0 ? (
+            filteredRecords.map((record) => (
+              <div
+                key={record.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.85rem 1rem',
+                  background: 'rgba(0, 0, 0, 0.22)',
+                  borderRadius: '1rem',
+                  border: '1px solid rgba(52, 211, 153, 0.25)',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
+                }}
+              >
+                {/* Left: Icon & Info */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  {record.isImageIcon ? (
+                    <img
+                      src={record.icon}
+                      alt={record.title}
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        objectFit: 'contain',
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '50%',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.2rem'
+                      }}
+                    >
+                      {record.icon}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span
+                      style={{
+                        fontWeight: 800,
+                        fontSize: '0.95rem',
+                        color: '#ffffff',
+                        fontFamily: 'Georgia, serif'
+                      }}
+                    >
+                      {record.title}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.65)', marginTop: '0.15rem' }}>
+                      {record.date} • {record.txId}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Right: Amount & Status Badge */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    {record.isDiamond && (
+                      <img
+                        src="./assets/purple-diamond.png"
+                        alt="Diamond"
+                        style={{ width: '14px', height: '14px', objectFit: 'contain' }}
+                      />
+                    )}
+                    <span
+                      style={{
+                        fontWeight: 900,
+                        fontSize: '1.05rem',
+                        fontFamily: 'Georgia, serif',
+                        color: record.amount.startsWith('+') ? '#4ade80' : '#facc15'
+                      }}
+                    >
+                      {record.amount}
+                    </span>
+                  </div>
+
+                  {/* Status Badge */}
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: '10px',
+                      background:
+                        record.status === 'completed'
+                          ? 'rgba(34, 197, 94, 0.2)'
+                          : record.status === 'processing'
+                          ? 'rgba(250, 204, 21, 0.2)'
+                          : 'rgba(239, 68, 68, 0.2)',
+                      color:
+                        record.status === 'completed'
+                          ? '#4ade80'
+                          : record.status === 'processing'
+                          ? '#facc15'
+                          : '#f87171',
+                      border:
+                        record.status === 'completed'
+                          ? '1px solid rgba(34, 197, 94, 0.4)'
+                          : record.status === 'processing'
+                          ? '1px solid rgba(250, 204, 21, 0.4)'
+                          : '1px solid rgba(239, 68, 68, 0.4)'
+                    }}
+                  >
+                    {record.status}
+                  </span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div
+              style={{
+                padding: '2.5rem 1rem',
+                textAlign: 'center',
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: '0.9rem',
+                fontFamily: 'Georgia, serif',
+                background: 'rgba(0,0,0,0.15)',
+                borderRadius: '1rem'
+              }}
+            >
+              No transaction records found in this category
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};

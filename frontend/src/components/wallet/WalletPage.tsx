@@ -2,6 +2,8 @@ import { useState } from 'react';
 import type { FC } from 'react';
 import { ConnectWalletModal } from './ConnectWalletModal';
 import { UserAgreementModal } from './UserAgreementModal';
+import { WalletRecordsPage } from './WalletRecordsPage';
+import { FeedbackModal } from './FeedbackModal';
 
 export interface WalletPageProps {
   onBack: () => void;
@@ -13,6 +15,8 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
   const [walletPhone, setWalletPhone] = useState<string | null>(null);
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [showAgreementModal, setShowAgreementModal] = useState(false);
+  const [showRecordsPage, setShowRecordsPage] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   const handleConnectWallet = () => {
     setShowConnectModal(true);
@@ -327,7 +331,7 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
             {/* Buttons Row */}
             <div style={{ display: 'flex', gap: '0.65rem' }}>
               <button
-                onClick={() => alert('No transaction records yet.')}
+                onClick={() => setShowRecordsPage(true)}
                 style={{
                   background: 'rgba(6, 78, 59, 0.7)',
                   border: '1px solid rgba(52, 211, 153, 0.4)',
@@ -344,7 +348,7 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
               </button>
 
               <button
-                onClick={() => alert('Support: feedback@earncraft.app')}
+                onClick={() => setShowFeedbackModal(true)}
                 style={{
                   background: 'rgba(6, 78, 59, 0.7)',
                   border: '1px solid rgba(52, 211, 153, 0.4)',
@@ -436,6 +440,16 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
       {/* User Agreement Modal */}
       {showAgreementModal && (
         <UserAgreementModal onClose={() => setShowAgreementModal(false)} />
+      )}
+
+      {/* Wallet Records / History Page */}
+      {showRecordsPage && (
+        <WalletRecordsPage onBack={() => setShowRecordsPage(false)} />
+      )}
+
+      {/* Feedback Modal */}
+      {showFeedbackModal && (
+        <FeedbackModal onClose={() => setShowFeedbackModal(false)} />
       )}
     </div>
   );
