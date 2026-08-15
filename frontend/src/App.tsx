@@ -123,9 +123,50 @@ function App() {
           </div>
 
           {/* Diamond Balance */}
-          <div style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+          <div 
+            onClick={() => setCurrentPage('tasks')}
+            style={{ 
+              position: 'relative',
+              background: 'rgba(255,255,255,0.1)', 
+              backdropFilter: 'blur(8px)', 
+              border: '1px solid rgba(255,255,255,0.15)', 
+              color: 'white', 
+              padding: '0.2rem 0.65rem 0.2rem 0.5rem', 
+              borderRadius: '20px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.25rem',
+              cursor: 'pointer',
+              transition: 'transform 0.1s ease'
+            }}
+            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
+            onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+          >
             <img src="./assets/purple-diamond.png" alt="Diamond" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
             <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>124</span>
+
+            {/* Green plus badge */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '-3px',
+                right: '-3px',
+                width: '13px',
+                height: '13px',
+                borderRadius: '50%',
+                background: '#22c55e',
+                color: 'white',
+                fontSize: '10px',
+                fontWeight: 900,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 0 4px rgba(34, 197, 94, 0.8)'
+              }}
+            >
+              +
+            </div>
           </div>
         </div>
       </div>
