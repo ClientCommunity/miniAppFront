@@ -7,6 +7,7 @@ import { FeatureCard } from './components/FeatureCard';
 import { TaskBanner } from './components/TaskBanner';
 import { DailyRewardsModal } from './components/DailyRewardsModal';
 import { RafflePage } from './components/raffle/RafflePage';
+import { TasksPage } from './components/tasks/TasksPage';
 import { throwConfetti } from './utils/confetti';
 
 const WHEEL_SEGMENTS: SpinSegment[] = [
@@ -38,7 +39,7 @@ const RIGHT_CARDS = [
 ];
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'main' | 'raffle'>('main');
+  const [currentPage, setCurrentPage] = useState<'main' | 'raffle' | 'tasks'>('main');
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [showDailyRewards, setShowDailyRewards] = useState(false);
   const [rewardText, setRewardText] = useState('');
@@ -219,7 +220,13 @@ function App() {
             <FeatureCard
               key={card.title}
               {...card}
-              onClick={card.title === 'Sign In' ? () => setShowDailyRewards(true) : undefined}
+              onClick={
+                card.title === '+ Spins'
+                  ? () => setCurrentPage('tasks')
+                  : card.title === 'Sign In'
+                  ? () => setShowDailyRewards(true)
+                  : undefined
+              }
             />
           ))}
         </div>
@@ -240,7 +247,7 @@ function App() {
           WebkitOverflowScrolling: 'touch',
         }}>
         {MOCK_TASKS.map((task, i) => (
-          <TaskBanner key={i} {...task} />
+          <TaskBanner key={i} {...task} onClick={() => setCurrentPage('tasks')} />
         ))}
       </div>
 
@@ -341,6 +348,11 @@ function App() {
       {/* Raffle Page Overlay */}
       {currentPage === 'raffle' && (
         <RafflePage onBack={() => setCurrentPage('main')} />
+      )}
+
+      {/* Tasks Page Overlay */}
+      {currentPage === 'tasks' && (
+        <TasksPage onBack={() => setCurrentPage('main')} />
       )}
     </div>
   );
