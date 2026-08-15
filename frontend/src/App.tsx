@@ -6,6 +6,7 @@ import { RewardCard } from './components/RewardCard';
 import { FeatureCard } from './components/FeatureCard';
 import { TaskBanner } from './components/TaskBanner';
 import { DailyRewardsModal } from './components/DailyRewardsModal';
+import { GiftCodeModal } from './components/GiftCodeModal';
 import { RafflePage } from './components/raffle/RafflePage';
 import { TasksPage } from './components/tasks/TasksPage';
 import { throwConfetti } from './utils/confetti';
@@ -42,6 +43,7 @@ function App() {
   const [currentPage, setCurrentPage] = useState<'main' | 'raffle' | 'tasks'>('main');
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [showDailyRewards, setShowDailyRewards] = useState(false);
+  const [showGiftModal, setShowGiftModal] = useState(false);
   const [rewardText, setRewardText] = useState('');
   const [tgUser, setTgUser] = useState<any>(null);
 
@@ -137,7 +139,13 @@ function App() {
             <FeatureCard 
               key={card.title} 
               {...card} 
-              onClick={card.title === 'Raffle' ? () => setCurrentPage('raffle') : undefined}
+              onClick={
+                card.title === 'Raffle'
+                  ? () => setCurrentPage('raffle')
+                  : card.title === 'Gift'
+                  ? () => setShowGiftModal(true)
+                  : undefined
+              }
             />
           ))}
         </div>
@@ -343,6 +351,11 @@ function App() {
       {/* Daily Rewards Modal (10s Pop-up) */}
       {showDailyRewards && (
         <DailyRewardsModal onClose={() => setShowDailyRewards(false)} />
+      )}
+
+      {/* Gift Code Modal */}
+      {showGiftModal && (
+        <GiftCodeModal onClose={() => setShowGiftModal(false)} />
       )}
 
       {/* Raffle Page Overlay */}
