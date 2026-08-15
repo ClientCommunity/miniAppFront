@@ -10,6 +10,7 @@ import { GiftCodeModal } from './components/GiftCodeModal';
 import { TeamModal } from './components/TeamModal';
 import { RafflePage } from './components/raffle/RafflePage';
 import { TasksPage } from './components/tasks/TasksPage';
+import { WalletPage } from './components/wallet/WalletPage';
 import { throwConfetti } from './utils/confetti';
 
 const WHEEL_SEGMENTS: SpinSegment[] = [
@@ -41,7 +42,7 @@ const RIGHT_CARDS = [
 ];
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'main' | 'raffle' | 'tasks'>('main');
+  const [currentPage, setCurrentPage] = useState<'main' | 'raffle' | 'tasks' | 'wallet'>('main');
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [showDailyRewards, setShowDailyRewards] = useState(false);
   const [showGiftModal, setShowGiftModal] = useState(false);
@@ -278,6 +279,8 @@ function App() {
                   ? () => setCurrentPage('tasks')
                   : card.title === 'Sign In'
                   ? () => setShowDailyRewards(true)
+                  : card.title === 'Wallet'
+                  ? () => setCurrentPage('wallet')
                   : undefined
               }
             />
@@ -416,6 +419,11 @@ function App() {
       {/* Tasks Page Overlay */}
       {currentPage === 'tasks' && (
         <TasksPage onBack={() => setCurrentPage('main')} />
+      )}
+
+      {/* Wallet Page Overlay */}
+      {currentPage === 'wallet' && (
+        <WalletPage onBack={() => setCurrentPage('main')} />
       )}
     </div>
   );
