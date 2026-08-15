@@ -7,6 +7,7 @@ import { FeatureCard } from './components/FeatureCard';
 import { TaskBanner } from './components/TaskBanner';
 import { DailyRewardsModal } from './components/DailyRewardsModal';
 import { GiftCodeModal } from './components/GiftCodeModal';
+import { TeamModal } from './components/TeamModal';
 import { RafflePage } from './components/raffle/RafflePage';
 import { TasksPage } from './components/tasks/TasksPage';
 import { throwConfetti } from './utils/confetti';
@@ -44,6 +45,7 @@ function App() {
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [showDailyRewards, setShowDailyRewards] = useState(false);
   const [showGiftModal, setShowGiftModal] = useState(false);
+  const [showTeamModal, setShowTeamModal] = useState(false);
   const [rewardText, setRewardText] = useState('');
   const [tgUser, setTgUser] = useState<any>(null);
 
@@ -185,6 +187,8 @@ function App() {
                   ? () => setCurrentPage('raffle')
                   : card.title === 'Gift'
                   ? () => setShowGiftModal(true)
+                  : card.title === 'Team'
+                  ? () => setShowTeamModal(true)
                   : undefined
               }
             />
@@ -397,6 +401,11 @@ function App() {
       {/* Gift Code Modal */}
       {showGiftModal && (
         <GiftCodeModal onClose={() => setShowGiftModal(false)} />
+      )}
+
+      {/* Team Modal */}
+      {showTeamModal && (
+        <TeamModal onClose={() => setShowTeamModal(false)} />
       )}
 
       {/* Raffle Page Overlay */}
