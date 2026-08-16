@@ -3,10 +3,14 @@ import type { FC } from 'react';
 import type { TaskItem, ReadyToClaimItem } from './types';
 import { ReadyToClaimCard } from './ReadyToClaimCard';
 import { TaskCard } from './TaskCard';
+import { haptics } from '../../utils/haptics';
+import { throwConfetti } from '../../utils/confetti';
 
 export interface TasksPageProps {
   onBack: () => void;
 }
+
+type TaskCategory = 'all' | 'special' | 'daily' | 'socials';
 
 const DEFAULT_READY_CLAIM: ReadyToClaimItem = {
   id: 'ready-1',
@@ -15,58 +19,93 @@ const DEFAULT_READY_CLAIM: ReadyToClaimItem = {
   rewardGems: 300
 };
 
-const DEFAULT_SPECIAL_TASKS: TaskItem[] = [
+const ALL_TASKS: TaskItem[] = [
   {
     id: 'special-1',
+    category: 'special',
     title: 'Reach lvl 3 FOR THE FIRST TIME!',
-    icon: './assets/coin_3d.png', // Or custom mascot
+    icon: './assets/coin_3d.png',
     rewardGems: 1600,
+    progress: { current: 1, total: 3 },
     status: 'pending'
   },
   {
     id: 'special-2',
-    title: 'Complete a purchase of any amount.',
-    icon: './assets/coin_3d.png',
+    category: 'special',
+    title: 'Invite 3 active spinners',
+    icon: './assets/inviteFeatureCardIcon.png',
     rewardGems: 3000,
+    progress: { current: 2, total: 3 },
     status: 'pending'
   },
   {
     id: 'special-3',
+    category: 'special',
     title: 'Join EarnCraft VIP Get More Rewards',
     icon: './assets/wheel-of-fortune.png',
     rewardGems: 3200,
     secondaryRewardGems: 1,
     status: 'pending'
-  }
-];
-
-const DEFAULT_DAILY_TASKS: TaskItem[] = [
+  },
   {
     id: 'daily-1',
-    isPlaceholder: true,
+    category: 'daily',
+    title: 'Spin the Lucky Wheel 5 times',
+    icon: './assets/wheel-of-fortune.png',
     rewardGems: 160,
+    progress: { current: 3, total: 5 },
     status: 'pending'
   },
   {
     id: 'daily-2',
+    category: 'daily',
     title: 'Complete 10 tasks today',
     icon: './assets/giftIconInDailySignIn.png',
     rewardGems: 800,
-    hideButton: true,
+    progress: { current: 4, total: 10 },
+    status: 'pending'
+  },
+  {
+    id: 'social-1',
+    category: 'socials',
+    title: 'Subscribe to EarnCraft Telegram Channel',
+    icon: '📣',
+    rewardGems: 500,
+    status: 'pending'
+  },
+  {
+    id: 'social-2',
+    category: 'socials',
+    title: 'Follow EarnCraft on X (Twitter)',
+    icon: '🐦',
+    rewardGems: 400,
     status: 'pending'
   }
 ];
 
 export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
+  const [activeCategory, setActiveCategory] = useState<TaskCategory>('all');
   const [readyItem, setReadyItem] = useState<ReadyToClaimItem | null>(DEFAULT_READY_CLAIM);
-  const [specialTasks] = useState<TaskItem[]>(DEFAULT_SPECIAL_TASKS);
-  const [dailyTasks] = useState<TaskItem[]>(DEFAULT_DAILY_TASKS);
+  const [tasks, setTasks] = useState<TaskItem[]>(ALL_TASKS);
 
   const handleClaimReady = () => {
-    // Visual feedback for claiming
-    alert('Claimed 300 💎 Diamonds!');
+    haptics.notification('success');
+    haptics.playWinSound();
+    throwConfetti();
     setReadyItem(null);
   };
+
+  const handleTaskClaim = (taskId: string) => {
+    haptics.notification('success');
+    haptics.playWinSound();
+    throwConfetti();
+    setTasks(prev => prev.filter(t => t.id !== taskId));
+  };
+
+  const filteredTasks = tasks.filter(t => {
+    if (activeCategory === 'all') return true;
+    return t.category === activeCategory;
+  });
 
   return (
     <div
@@ -101,19 +140,6 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
           zIndex: 1
         }}
       />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '10%',
-          right: '-10%',
-          width: '280px',
-          height: '280px',
-          background: 'radial-gradient(circle, rgba(251, 191, 36, 0.1) 0%, rgba(0,0,0,0) 70%)',
-          borderRadius: '50%',
-          pointerEvents: 'none',
-          zIndex: 1
-        }}
-      />
 
       {/* Top Header & Stats Bar */}
       <div
@@ -128,7 +154,10 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
       >
         {/* Back Button */}
         <button
-          onClick={onBack}
+          onClick={() => {
+            haptics.impact('light');
+            onBack();
+          }}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -144,107 +173,27 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
             boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
           }}
         >
-          &lt; Back
+          ‹ Back
         </button>
 
         {/* Resource Badges */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          {/* Energy Badge */}
-          <div
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              color: 'white',
-              padding: '0.2rem 0.55rem',
-              borderRadius: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.3rem'
-            }}
-          >
-            <div
-              style={{
-                width: '18px',
-                height: '18px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 0 6px rgba(251, 191, 36, 0.6)'
-              }}
-            >
-              <span style={{ fontSize: '11px', fontWeight: 900, color: '#1e293b' }}>⚡</span>
-            </div>
-            <span style={{ fontWeight: 800, fontSize: '0.8rem' }}>0</span>
+          {/* Energy */}
+          <div style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '0.2rem 0.55rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>50</span>
           </div>
 
-          {/* Spin Ticket Badge */}
-          <div
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              color: 'white',
-              padding: '0.2rem 0.55rem',
-              borderRadius: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.3rem'
-            }}
-          >
-            <img
-              src="./assets/spin-ticket.png"
-              alt="Ticket"
-              style={{ width: '18px', height: '18px', objectFit: 'contain' }}
-            />
-            <span style={{ fontWeight: 800, fontSize: '0.8rem' }}>0</span>
+          {/* Spins */}
+          <div style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '0.2rem 0.55rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <img src="./assets/wheel-of-fortune.png" alt="Spins" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>12</span>
           </div>
 
-          {/* Purple Diamond Badge with green + */}
-          <div
-            style={{
-              position: 'relative',
-              background: 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              color: 'white',
-              padding: '0.2rem 0.65rem 0.2rem 0.5rem',
-              borderRadius: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.3rem'
-            }}
-          >
-            <img
-              src="./assets/purple-diamond.png"
-              alt="Diamond"
-              style={{ width: '18px', height: '18px', objectFit: 'contain' }}
-            />
-            <span style={{ fontWeight: 800, fontSize: '0.8rem' }}>695</span>
-
-            {/* Green plus button */}
-            <div
-              style={{
-                position: 'absolute',
-                top: '-3px',
-                right: '-3px',
-                width: '13px',
-                height: '13px',
-                borderRadius: '50%',
-                background: '#22c55e',
-                color: 'white',
-                fontSize: '10px',
-                fontWeight: 900,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 0 4px rgba(34, 197, 94, 0.8)'
-              }}
-            >
-              +
-            </div>
+          {/* Diamonds */}
+          <div style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '0.2rem 0.65rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <img src="./assets/purple-diamond.png" alt="Diamond" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>760</span>
           </div>
         </div>
       </div>
@@ -258,7 +207,7 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
           zIndex: 10,
           display: 'flex',
           flexDirection: 'column',
-          gap: '1.5rem'
+          gap: '1.25rem'
         }}
       >
         {/* Section 1: Ready To Claim */}
@@ -284,13 +233,12 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
             </h2>
             <span
               style={{
-                fontSize: '0.95rem',
-                fontWeight: 700,
-                color: '#ffffff',
-                fontFamily: 'Georgia, serif'
+                fontSize: '0.85rem',
+                fontWeight: 800,
+                color: '#34d399'
               }}
             >
-              {readyItem ? '1 / 1' : '0 / 1'}
+              {readyItem ? '1 AVAILABLE 💎' : '0 AVAILABLE'}
             </span>
           </div>
 
@@ -308,141 +256,86 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
                 textAlign: 'center',
                 color: 'rgba(255,255,255,0.6)',
                 fontSize: '0.9rem',
-                fontFamily: 'Georgia, serif',
-                background: 'rgba(0,0,0,0.2)',
-                borderRadius: '12px'
+                background: 'rgba(0,0,0,0.25)',
+                borderRadius: '12px',
+                border: '1px solid rgba(255,255,255,0.1)'
               }}
             >
-              No rewards ready to claim
+              All available rewards claimed! Complete tasks below for more.
             </div>
           )}
         </div>
 
-        {/* Section 2: 🔥 Special Tasks */}
+        {/* Section 2: Category Filter Tabs */}
         <div>
           <div
             style={{
               display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '0.6rem'
+              gap: '0.45rem',
+              overflowX: 'auto',
+              paddingBottom: '0.5rem'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span style={{ fontSize: '1.25rem' }}>🔥</span>
-              <h2
+            {[
+              { id: 'all', label: 'All Tasks' },
+              { id: 'special', label: '🔥 Special' },
+              { id: 'daily', label: '🎁 Daily' },
+              { id: 'socials', label: '📣 Socials' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  haptics.selection();
+                  setActiveCategory(tab.id as TaskCategory);
+                }}
                 style={{
-                  fontSize: '1.25rem',
-                  fontWeight: 800,
+                  background:
+                    activeCategory === tab.id
+                      ? 'linear-gradient(180deg, #10b981 0%, #047857 100%)'
+                      : 'rgba(255, 255, 255, 0.08)',
                   color: '#ffffff',
-                  margin: 0,
-                  fontFamily: 'Georgia, serif'
+                  border:
+                    activeCategory === tab.id
+                      ? '1px solid #6ee7b7'
+                      : '1px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: '20px',
+                  padding: '0.4rem 0.9rem',
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  boxShadow:
+                    activeCategory === tab.id
+                      ? '0 2px 8px rgba(16, 185, 129, 0.4)'
+                      : 'none',
+                  transition: 'all 0.15s ease'
                 }}
               >
-                Special Tasks
-              </h2>
-            </div>
-
-            {/* Refresh Button */}
-            <button
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.25)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontSize: '1rem',
-                cursor: 'pointer',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-              }}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-              </svg>
-            </button>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            {specialTasks.map((task) => (
-              <TaskCard key={task.id} task={task} />
+                {tab.label}
+              </button>
             ))}
           </div>
-        </div>
 
-        {/* Section 3: 🎁 Daily Rewards */}
-        <div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '0.6rem'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span style={{ fontSize: '1.25rem' }}>🎁</span>
-              <h2
+          {/* Task List */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+            {filteredTasks.length > 0 ? (
+              filteredTasks.map((task) => (
+                <TaskCard key={task.id} task={task} onClaim={() => handleTaskClaim(task.id)} />
+              ))
+            ) : (
+              <div
                 style={{
-                  fontSize: '1.25rem',
-                  fontWeight: 800,
-                  color: '#ffffff',
-                  margin: 0,
-                  fontFamily: 'Georgia, serif'
+                  padding: '1.5rem',
+                  textAlign: 'center',
+                  color: 'rgba(255,255,255,0.6)',
+                  fontSize: '0.9rem',
+                  background: 'rgba(0,0,0,0.2)',
+                  borderRadius: '12px'
                 }}
               >
-                Daily Rewards
-              </h2>
-            </div>
-
-            {/* Refresh Button */}
-            <button
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.25)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontSize: '1rem',
-                cursor: 'pointer',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-              }}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-              </svg>
-            </button>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            {dailyTasks.map((task) => (
-              <TaskCard key={task.id} task={task} />
-            ))}
+                No tasks in this category.
+              </div>
+            )}
           </div>
         </div>
       </div>

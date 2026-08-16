@@ -8,6 +8,7 @@ import { TaskBanner } from './components/TaskBanner';
 import { DailyRewardsModal } from './components/DailyRewardsModal';
 import { GiftCodeModal } from './components/GiftCodeModal';
 import { TeamModal } from './components/TeamModal';
+import { ContestLeaderboardModal } from './components/ContestLeaderboardModal';
 import { RafflePage } from './components/raffle/RafflePage';
 import { TasksPage } from './components/tasks/TasksPage';
 import { WalletPage } from './components/wallet/WalletPage';
@@ -49,8 +50,35 @@ function App() {
   const [showDailyRewards, setShowDailyRewards] = useState(false);
   const [showGiftModal, setShowGiftModal] = useState(false);
   const [showTeamModal, setShowTeamModal] = useState(false);
+  const [showContestModal, setShowContestModal] = useState(false);
   const [rewardText, setRewardText] = useState('');
   const [tgUser, setTgUser] = useState<any>(null);
+
+  // Responsive Wheel Sizing for Mobile Viewports
+  const [wheelSize, setWheelSize] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const w = window.innerWidth;
+      if (w < 360) return 220;
+      if (w < 390) return 235;
+      if (w < 430) return 245;
+      if (w < 600) return 260;
+      return 280;
+    }
+    return 240;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      const w = window.innerWidth;
+      if (w < 360) setWheelSize(220);
+      else if (w < 390) setWheelSize(235);
+      else if (w < 430) setWheelSize(245);
+      else if (w < 600) setWheelSize(260);
+      else setWheelSize(280);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     // Show Daily Rewards after 10 seconds
@@ -244,6 +272,8 @@ function App() {
               onClick={
                 card.title === 'Raffle'
                   ? () => setCurrentPage('raffle')
+                  : card.title === 'Contest'
+                  ? () => setShowContestModal(true)
                   : card.title === 'Gift'
                   ? () => setShowGiftModal(true)
                   : card.title === 'Team'
@@ -364,7 +394,7 @@ function App() {
             }}
             onSpinEnd={handleSpinEnd}
             theme="emerald"
-            size={300}
+            size={wheelSize}
           />
         </div>
 
@@ -509,6 +539,11 @@ function App() {
       {/* Team Modal */}
       {showTeamModal && (
         <TeamModal onClose={() => setShowTeamModal(false)} />
+      )}
+
+      {/* Contest Leaderboard Modal */}
+      {showContestModal && (
+        <ContestLeaderboardModal onClose={() => setShowContestModal(false)} />
       )}
 
       {/* Raffle Page Overlay */}

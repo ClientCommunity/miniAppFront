@@ -1,25 +1,47 @@
+import { useState } from 'react';
 import type { FC } from 'react';
 import type { TaskItem } from './types';
+import { haptics } from '../../utils/haptics';
 
 export interface TaskCardProps {
   task: TaskItem;
+  onClaim?: () => void;
 }
 
-export const TaskCard: FC<TaskCardProps> = ({ task }) => {
+export const TaskCard: FC<TaskCardProps> = ({ task, onClaim }) => {
+  const [isBtnPressed, setIsBtnPressed] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
+
+  const handleAction = () => {
+    haptics.impact('medium');
+    haptics.playClickSound();
+
+    if (task.onAction) {
+      task.onAction();
+    } else {
+      setIsChecking(true);
+      setTimeout(() => {
+        setIsChecking(false);
+        if (onClaim) onClaim();
+      }, 1000);
+    }
+  };
+
   return (
     <div
       style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0.75rem 0.9rem',
-        background: 'linear-gradient(135deg, rgba(3, 102, 57, 0.8) 0%, rgba(2, 68, 38, 0.9) 100%)',
-        borderRadius: '12px',
-        border: '1px solid rgba(52, 211, 153, 0.4)',
-        boxShadow: '0 4px 10px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.15)',
+        padding: '0.85rem 1rem',
+        background: 'linear-gradient(135deg, rgba(3, 102, 57, 0.75) 0%, rgba(2, 44, 34, 0.9) 100%)',
+        borderRadius: '1rem',
+        border: '1px solid rgba(52, 211, 153, 0.45)',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
         color: 'white',
         gap: '0.85rem',
-        transition: 'transform 0.15s ease'
+        marginBottom: '0.65rem',
+        fontFamily: 'Outfit, sans-serif'
       }}
     >
       {/* Left Icon & Title */}
@@ -28,33 +50,34 @@ export const TaskCard: FC<TaskCardProps> = ({ task }) => {
         {task.isPlaceholder ? (
           <div
             style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '10px',
-              background: 'rgba(255, 255, 255, 0.2)',
+              width: '46px',
+              height: '46px',
+              borderRadius: '12px',
+              background: 'rgba(255, 255, 255, 0.15)',
               flexShrink: 0
             }}
           />
-        ) : typeof task.icon === 'string' && (task.icon.endsWith('.png') || task.icon.endsWith('.jpg') || task.icon.endsWith('.svg') || task.isIconImage) ? (
+        ) : typeof task.icon === 'string' &&
+          (task.icon.endsWith('.png') || task.icon.endsWith('.jpg') || task.icon.endsWith('.svg') || task.isIconImage) ? (
           <img
             src={task.icon}
             alt="Task Icon"
             style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '10px',
+              width: '46px',
+              height: '46px',
+              borderRadius: '12px',
               objectFit: 'contain',
               flexShrink: 0,
-              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+              filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.35))'
             }}
           />
         ) : (
           <div
             style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '10px',
-              background: 'rgba(0, 0, 0, 0.25)',
+              width: '46px',
+              height: '46px',
+              borderRadius: '12px',
+              background: 'rgba(0, 0, 0, 0.3)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -66,7 +89,7 @@ export const TaskCard: FC<TaskCardProps> = ({ task }) => {
           </div>
         )}
 
-        {/* Title / Description */}
+        {/* Title / Progress */}
         <div style={{ flex: 1, minWidth: 0 }}>
           {task.isPlaceholder ? (
             <div
@@ -78,18 +101,40 @@ export const TaskCard: FC<TaskCardProps> = ({ task }) => {
               }}
             />
           ) : (
-            <div
-              style={{
-                fontWeight: 600,
-                fontSize: '0.95rem',
-                color: '#ffffff',
-                fontFamily: 'Georgia, serif',
-                lineHeight: 1.25,
-                wordBreak: 'break-word'
-              }}
-            >
-              {task.title}
-            </div>
+            <>
+              <div
+                style={{
+                  fontWeight: 700,
+                  fontSize: '0.95rem',
+                  color: '#ffffff',
+                  fontFamily: 'Georgia, serif',
+                  lineHeight: 1.25,
+                  wordBreak: 'break-word'
+                }}
+              >
+                {task.title}
+              </div>
+
+              {/* Multi-step progress bar if available */}
+              {task.progress && (
+                <div style={{ marginTop: '0.35rem', width: '90%' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#a7f3d0', marginBottom: '0.15rem' }}>
+                    <span>Progress</span>
+                    <span>{task.progress.current} / {task.progress.total}</span>
+                  </div>
+                  <div style={{ width: '100%', height: '5px', background: 'rgba(0,0,0,0.4)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        width: `${Math.min(100, (task.progress.current / task.progress.total) * 100)}%`,
+                        height: '100%',
+                        background: 'linear-gradient(90deg, #10b981 0%, #34d399 100%)',
+                        borderRadius: '4px'
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -98,82 +143,67 @@ export const TaskCard: FC<TaskCardProps> = ({ task }) => {
       <div
         style={{
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
-          gap: '0.35rem',
-          flexShrink: 0,
-          minWidth: '78px'
+          gap: '0.75rem',
+          flexShrink: 0
         }}
       >
-        {/* Action Button (GO / Check / Done) */}
+        {/* Reward Pill */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.25rem',
+            background: 'rgba(0, 0, 0, 0.35)',
+            padding: '0.35rem 0.65rem',
+            borderRadius: '20px',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            fontWeight: 800,
+            fontSize: '0.85rem',
+            color: '#fef08a'
+          }}
+        >
+          <img
+            src="./assets/purple-diamond.png"
+            alt="Diamond"
+            style={{ width: '15px', height: '15px', objectFit: 'contain' }}
+          />
+          <span>+{task.rewardGems || 100}</span>
+        </div>
+
+        {/* Action Button */}
         {!task.hideButton && (
           <button
-            onClick={task.onAction}
+            onClick={handleAction}
+            onMouseDown={() => setIsBtnPressed(true)}
+            onMouseUp={() => setIsBtnPressed(false)}
+            onMouseLeave={() => setIsBtnPressed(false)}
+            onTouchStart={() => setIsBtnPressed(true)}
+            onTouchEnd={() => setIsBtnPressed(false)}
+            disabled={isChecking}
             style={{
-              width: '100%',
-              background: 'linear-gradient(180deg, #facc15 0%, #eab308 50%, #ca8a04 100%)',
+              background: isChecking
+                ? 'rgba(255,255,255,0.2)'
+                : 'linear-gradient(180deg, #facc15 0%, #eab308 50%, #ca8a04 100%)',
+              color: '#1e293b',
               border: '1px solid rgba(254, 240, 138, 0.7)',
-              borderRadius: '8px',
-              padding: '0.3rem 1.1rem',
-              color: '#ffffff',
-              fontStyle: 'italic',
+              borderRadius: '0.75rem',
+              padding: '0.45rem 1rem',
+              fontSize: '0.85rem',
               fontWeight: 900,
-              fontSize: '0.95rem',
               fontFamily: 'Georgia, serif',
-              cursor: 'pointer',
-              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.4)',
-              transition: 'transform 0.1s ease',
+              cursor: isChecking ? 'default' : 'pointer',
+              boxShadow: isBtnPressed
+                ? '0 1px 0 #854d0e, inset 0 2px 3px rgba(0,0,0,0.3)'
+                : '0 3px 0 #854d0e, 0 4px 8px rgba(0,0,0,0.3)',
+              transform: isBtnPressed ? 'translateY(2px)' : 'translateY(0)',
+              transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+              minWidth: '55px',
               textAlign: 'center'
             }}
-            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
-            onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
-            GO
+            {isChecking ? '...' : 'GO'}
           </button>
-        )}
-
-        {/* Diamond Reward Capsule */}
-        {task.rewardGems !== undefined && (
-          <div
-            style={{
-              width: task.hideButton ? 'auto' : '100%',
-              minWidth: task.hideButton ? '84px' : 'auto',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.3rem',
-              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(40, 55, 45, 0.6) 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '14px',
-              padding: task.hideButton ? '0.45rem 1.1rem' : '0.2rem 0.5rem',
-              boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.2)',
-              color: 'white',
-              fontSize: '0.85rem',
-              fontWeight: 800,
-              fontStyle: 'italic',
-              fontFamily: 'Georgia, serif'
-            }}
-          >
-            <img
-              src="./assets/purple-diamond.png"
-              alt="Diamond"
-              style={{ width: '13px', height: '13px', objectFit: 'contain' }}
-            />
-            <span>{task.rewardGems}</span>
-
-            {/* Secondary Reward if present (e.g. VIP dual reward) */}
-            {task.secondaryRewardGems !== undefined && (
-              <>
-                <img
-                  src="./assets/purple-diamond.png"
-                  alt="Diamond"
-                  style={{ width: '13px', height: '13px', objectFit: 'contain', marginLeft: '0.2rem' }}
-                />
-                <span>{task.secondaryRewardGems}</span>
-              </>
-            )}
-          </div>
         )}
       </div>
     </div>

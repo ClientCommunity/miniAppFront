@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
+import { haptics } from '../utils/haptics';
 
 export interface TeamModalProps {
   onClose: () => void;
@@ -8,12 +9,14 @@ export interface TeamModalProps {
 interface TeamMember {
   id: string;
   name: string;
+  joinedDate: string;
   joinedChannel: boolean;
 }
 
 const MOCK_TEAM_MEMBERS: TeamMember[] = [
-  { id: '1', name: 'Mahoraga', joinedChannel: true },
-  { id: '2', name: 'Tiku', joinedChannel: true }
+  { id: '1', name: 'Mahoraga', joinedDate: 'Today, 14:10', joinedChannel: true },
+  { id: '2', name: 'Tiku', joinedDate: 'Yesterday, 18:22', joinedChannel: true },
+  { id: '3', name: 'Gojo_Satoru', joinedDate: 'Aug 14, 09:15', joinedChannel: false }
 ];
 
 export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
@@ -27,29 +30,43 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
   }, []);
 
   const handleClose = () => {
+    haptics.impact('light');
     setIsVisible(false);
     setTimeout(onClose, 300);
   };
 
   const handleInvite = () => {
+    haptics.impact('medium');
+    haptics.playClickSound();
+
     const inviteUrl = `https://t.me/EarnCraftBot?start=ref_user`;
     const shareText = `Join me on EarnCraft and spin the wheel for massive cash rewards! 🎰💰\n${inviteUrl}`;
-    
-    // @ts-ignore
-    if (window.Telegram?.WebApp?.openTelegramLink) {
+
+    try {
       // @ts-ignore
-      window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent(shareText)}`);
-    } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(inviteUrl);
+      if (window.Telegram?.WebApp?.openTelegramLink) {
+        // @ts-ignore
+        window.Telegram.WebApp.openTelegramLink(
+          `https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent(shareText)}`
+        );
+      } else if (navigator?.clipboard) {
+        navigator.clipboard.writeText(inviteUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      } else {
+        window.open(
+          `https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent(shareText)}`,
+          '_blank'
+        );
+      }
+    } catch {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } else {
-      window.open(`https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent(shareText)}`, '_blank');
+      setTimeout(() => setCopied(false), 2500);
     }
   };
 
   const totalCount = MOCK_TEAM_MEMBERS.length;
-  const activeCount = MOCK_TEAM_MEMBERS.filter(m => m.joinedChannel).length;
+  const activeCount = MOCK_TEAM_MEMBERS.filter((m) => m.joinedChannel).length;
 
   return (
     <div
@@ -60,17 +77,18 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
         right: 0,
         bottom: 0,
         background: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'flex-end',
         zIndex: 1000,
         opacity: isVisible ? 1 : 0,
-        transition: 'opacity 0.3s ease'
+        transition: 'opacity 0.3s ease',
+        fontFamily: 'Outfit, sans-serif'
       }}
     >
-      {/* Dark overlay click to close */}
+      {/* Dark overlay click */}
       <div
         onClick={handleClose}
         style={{
@@ -83,30 +101,64 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
         }}
       />
 
-      {/* Bottom Sheet Modal Container (~82% - 85% Height) */}
+      {/* Floating Copy Toast Notification */}
+      {copied && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'linear-gradient(180deg, #10b981 0%, #059669 100%)',
+            color: '#ffffff',
+            padding: '0.6rem 1.25rem',
+            borderRadius: '25px',
+            border: '1px solid #6ee7b7',
+            boxShadow: '0 8px 20px rgba(0,0,0,0.4)',
+            fontSize: '0.9rem',
+            fontWeight: 800,
+            zIndex: 1100,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            animation: 'slideUp 0.3s ease'
+          }}
+        >
+          <span>📋</span> Invite Link Copied to Clipboard!
+        </div>
+      )}
+
+      {/* Bottom Sheet Container */}
       <div
         style={{
           width: '100%',
-          height: '83vh',
-          maxHeight: '85vh',
-          background: 'linear-gradient(180deg, #058245 0%, #024a27 100%)',
+          height: '86vh',
+          maxHeight: '88vh',
+          background: 'linear-gradient(180deg, #058245 0%, #02381e 100%)',
           borderTopLeftRadius: '1.75rem',
           borderTopRightRadius: '1.75rem',
           borderTop: '1px solid rgba(52, 211, 153, 0.5)',
-          boxShadow: '0 -10px 40px rgba(0,0,0,0.6)',
+          boxShadow: '0 -10px 40px rgba(0,0,0,0.7)',
           transform: isVisible ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
           display: 'flex',
           flexDirection: 'column',
-          padding: '1.25rem 1.25rem 1.5rem 1.25rem',
+          padding: '1.1rem 1.25rem 1.5rem 1.25rem',
           position: 'relative',
           zIndex: 1,
-          boxSizing: 'border-box',
-          fontFamily: 'Outfit, sans-serif'
+          boxSizing: 'border-box'
         }}
       >
-        {/* Header Title & Close Button */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', marginBottom: '0.75rem' }}>
+        {/* Header */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'relative',
+            marginBottom: '0.75rem'
+          }}
+        >
           <h2
             style={{
               margin: 0,
@@ -117,23 +169,24 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
               letterSpacing: '0.3px'
             }}
           >
-            Team
+            My Referral Team
           </h2>
           <button
             onClick={handleClose}
             style={{
               position: 'absolute',
               right: 0,
-              background: 'transparent',
+              background: 'rgba(255,255,255,0.12)',
               border: 'none',
               color: 'white',
-              fontSize: '1.35rem',
+              fontSize: '1.1rem',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
               cursor: 'pointer',
-              padding: '0.25rem',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              opacity: 0.85
+              justifyContent: 'center'
             }}
           >
             ✕
@@ -146,16 +199,22 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
             display: 'flex',
             justifyContent: 'space-around',
             alignItems: 'center',
-            padding: '0.25rem 1rem'
+            padding: '0.4rem 1rem',
+            background: 'rgba(0,0,0,0.2)',
+            borderRadius: '1rem',
+            marginBottom: '0.75rem',
+            border: '1px solid rgba(255,255,255,0.1)'
           }}
         >
           {/* Total Count */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.95rem', fontWeight: 700 }}>total</span>
+            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase' }}>
+              Total Friends
+            </span>
             <span
               style={{
                 color: '#facc15',
-                fontSize: '1.8rem',
+                fontSize: '1.75rem',
                 fontWeight: 900,
                 fontFamily: 'Georgia, serif',
                 lineHeight: 1.1
@@ -165,13 +224,17 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
             </span>
           </div>
 
+          <div style={{ width: '1px', height: '30px', background: 'rgba(255,255,255,0.15)' }} />
+
           {/* Active Count */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.95rem', fontWeight: 700 }}>active</span>
+            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase' }}>
+              Active in Channel
+            </span>
             <span
               style={{
-                color: '#facc15',
-                fontSize: '1.8rem',
+                color: '#34d399',
+                fontSize: '1.75rem',
                 fontWeight: 900,
                 fontFamily: 'Georgia, serif',
                 lineHeight: 1.1
@@ -182,32 +245,39 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
           </div>
         </div>
 
-        {/* Disclaimer Note */}
+        {/* Partner Tier Roadmap */}
         <div
           style={{
-            textAlign: 'center',
-            color: 'rgba(255,255,255,0.85)',
-            fontSize: '0.8rem',
-            lineHeight: 1.3,
-            margin: '0.35rem 0 0.9rem 0'
+            background: 'rgba(0, 0, 0, 0.25)',
+            borderRadius: '0.85rem',
+            padding: '0.65rem 0.9rem',
+            marginBottom: '0.85rem',
+            border: '1px solid rgba(52, 211, 153, 0.3)'
           }}
         >
-          * If the person you invite doesn't join our channel, you can't get spins!
+          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#fde68a', marginBottom: '0.35rem' }}>
+            🌟 REFERRAL TIER REWARDS
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'rgba(255,255,255,0.85)' }}>
+            <span>🥉 Bronze: 1 Spin/friend</span>
+            <span>🥈 Silver: 2 Spins + 5%</span>
+            <span>🥇 Gold: 3 Spins + 10%</span>
+          </div>
         </div>
 
         {/* Highlight Invite Offer Card */}
         <div
           style={{
-            background: 'rgba(0, 0, 0, 0.16)',
+            background: 'linear-gradient(135deg, rgba(6, 78, 59, 0.6) 0%, rgba(2, 44, 34, 0.8) 100%)',
             borderRadius: '1rem',
-            border: '1px solid rgba(255, 255, 255, 0.25)',
-            padding: '0.9rem 1rem',
+            border: '1px solid rgba(251, 191, 36, 0.5)',
+            padding: '0.85rem 1rem',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             gap: '0.65rem',
-            marginBottom: '1rem',
-            boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.2)'
+            marginBottom: '0.85rem',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
           }}
         >
           <div
@@ -217,7 +287,7 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
               justifyContent: 'center',
               gap: '0.5rem',
               color: '#ffffff',
-              fontSize: '1.1rem',
+              fontSize: '1.05rem',
               fontWeight: 800,
               fontFamily: 'Georgia, serif'
             }}
@@ -233,132 +303,134 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
               alt="Spin Ticket"
               style={{ width: '22px', height: '22px', objectFit: 'contain' }}
             />
-            <span>1 Spin</span>
+            <span style={{ color: '#facc15' }}>1 Free Spin</span>
           </div>
 
           <button
             onClick={handleInvite}
             style={{
               width: '100%',
-              maxWidth: '240px',
               background: 'linear-gradient(180deg, #10b981 0%, #059669 100%)',
-              border: '1px solid rgba(167, 243, 208, 0.6)',
+              border: '1px solid rgba(167, 243, 208, 0.7)',
               borderRadius: '0.75rem',
-              padding: '0.6rem 1.25rem',
+              padding: '0.7rem 1.25rem',
               color: '#ffffff',
-              fontStyle: 'italic',
-              fontWeight: 800,
-              fontSize: '1.05rem',
+              fontWeight: 900,
+              fontSize: '1rem',
               fontFamily: 'Georgia, serif',
               cursor: 'pointer',
-              boxShadow: '0 3px 8px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.4)',
-              transition: 'transform 0.1s ease',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.4)',
               textAlign: 'center'
             }}
-            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.97)')}
-            onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
-            {copied ? 'Link Copied! ✓' : 'Invite for Spins!'}
+            {copied ? 'Link Copied! ✓' : 'Share Referral Link 🚀'}
           </button>
         </div>
 
-        {/* Invited Members Table Container */}
+        {/* Invited Members Table */}
         <div
           style={{
             flex: 1,
-            background: 'rgba(0, 0, 0, 0.16)',
+            background: 'rgba(0, 0, 0, 0.2)',
             borderRadius: '1rem',
             border: '1px solid rgba(255, 255, 255, 0.15)',
-            padding: '0.9rem 1rem',
+            padding: '0.75rem 0.9rem',
             display: 'flex',
             flexDirection: 'column',
             minHeight: 0
           }}
         >
-          {/* Table Header Row */}
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '0.75rem',
+              marginBottom: '0.5rem',
               padding: '0 0.25rem'
             }}
           >
-            <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#ffffff' }}>Name</span>
-            <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#ffffff' }}>Join Channel</span>
+            <span style={{ fontWeight: 800, fontSize: '0.82rem', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase' }}>
+              Invited Friend
+            </span>
+            <span style={{ fontWeight: 800, fontSize: '0.82rem', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase' }}>
+              Channel Status
+            </span>
           </div>
 
-          {/* Members List */}
           <div
             style={{
               flex: 1,
               overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.5rem',
-              paddingRight: '0.2rem'
+              gap: '0.45rem'
             }}
           >
             {MOCK_TEAM_MEMBERS.map((member) => (
               <div
                 key={member.id}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.08)',
+                  background: 'rgba(255, 255, 255, 0.06)',
                   borderRadius: '0.75rem',
-                  padding: '0.65rem 0.9rem',
+                  padding: '0.55rem 0.75rem',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}
               >
-                {/* User Info */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                   <div
                     style={{
-                      width: '28px',
-                      height: '28px',
+                      width: '32px',
+                      height: '32px',
                       borderRadius: '50%',
-                      background: 'rgba(255, 255, 255, 0.2)',
+                      background: 'rgba(255, 255, 255, 0.15)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '0.85rem'
+                      fontSize: '0.9rem'
                     }}
                   >
                     👤
                   </div>
-                  <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#ffffff' }}>
-                    {member.name}
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#ffffff' }}>
+                      {member.name}
+                    </span>
+                    <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)' }}>
+                      {member.joinedDate}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Status */}
-                <span
+                <div
                   style={{
-                    color: member.joinedChannel ? '#4ade80' : 'rgba(255,255,255,0.5)',
-                    fontWeight: 800,
-                    fontSize: '0.95rem'
+                    background: member.joinedChannel ? 'rgba(74, 222, 128, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                    border: member.joinedChannel ? '1px solid #4ade80' : '1px solid #ef4444',
+                    color: member.joinedChannel ? '#4ade80' : '#f87171',
+                    borderRadius: '12px',
+                    padding: '0.15rem 0.5rem',
+                    fontSize: '0.72rem',
+                    fontWeight: 800
                   }}
                 >
-                  {member.joinedChannel ? 'Yes' : 'No'}
-                </span>
+                  {member.joinedChannel ? 'Active ✓' : 'Pending'}
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Footer Text */}
+        {/* Disclaimer */}
         <div
           style={{
             textAlign: 'center',
-            fontSize: '0.8rem',
-            color: 'rgba(255, 255, 255, 0.75)',
-            marginTop: '0.75rem'
+            fontSize: '0.72rem',
+            color: 'rgba(255, 255, 255, 0.65)',
+            marginTop: '0.5rem'
           }}
         >
-          Only the latest 50 invitations are shown
+          * Free spins are unlocked when your invited friends join the channel.
         </div>
       </div>
     </div>

@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import type { FC } from 'react';
+import { haptics } from '../../utils/haptics';
 
 export interface RaffleCardProps {
   status: 'ongoing' | 'ended';
@@ -7,6 +9,7 @@ export interface RaffleCardProps {
   coinRewardStr: string;
   participants: number;
   tickets: number;
+  totalTickets?: number;
   onClickDetails?: () => void;
 }
 
@@ -17,130 +20,269 @@ export const RaffleCard: FC<RaffleCardProps> = ({
   coinRewardStr,
   participants,
   tickets,
+  totalTickets = 10000,
   onClickDetails
 }) => {
   const isOngoing = status === 'ongoing';
+  const [isPressed, setIsPressed] = useState(false);
+  const [countdown, setCountdown] = useState('04h 28m 15s');
+
+  useEffect(() => {
+    if (!isOngoing) return;
+    const interval = setInterval(() => {
+      const now = new Date();
+      const sec = 59 - now.getSeconds();
+      const min = 59 - now.getMinutes();
+      setCountdown(`04h ${min < 10 ? '0' : ''}${min}m ${sec < 10 ? '0' : ''}${sec}s`);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isOngoing]);
+
+  const percentage = Math.min(100, Math.round((tickets / totalTickets) * 100));
+
+  const handleClick = () => {
+    haptics.impact('light');
+    haptics.playClickSound();
+    if (onClickDetails) onClickDetails();
+  };
 
   return (
-    <div style={{
-      background: isOngoing ? 'rgba(6, 78, 59, 0.4)' : 'rgba(30, 41, 59, 0.3)',
-      border: isOngoing ? '1px solid rgba(251, 191, 36, 0.5)' : '1px solid rgba(255,255,255,0.2)',
-      boxShadow: isOngoing ? '0 0 15px rgba(251, 191, 36, 0.15), inset 0 0 20px rgba(251, 191, 36, 0.05)' : 'none',
-      borderRadius: '1rem',
-      padding: '1.25rem',
-      position: 'relative',
-      overflow: 'hidden',
-      marginBottom: '1rem'
-    }}>
-      {/* 777 Ticket Watermarks using CSS */}
+    <div
+      onClick={handleClick}
+      onMouseDown={() => setIsPressed(true)}
+      onMouseUp={() => setIsPressed(false)}
+      onMouseLeave={() => setIsPressed(false)}
+      onTouchStart={() => setIsPressed(true)}
+      onTouchEnd={() => setIsPressed(false)}
+      style={{
+        background: isOngoing
+          ? 'linear-gradient(135deg, rgba(6, 78, 59, 0.6) 0%, rgba(2, 44, 34, 0.85) 100%)'
+          : 'rgba(30, 41, 59, 0.4)',
+        border: isOngoing ? '1px solid rgba(251, 191, 36, 0.6)' : '1px solid rgba(255,255,255,0.15)',
+        boxShadow: isOngoing
+          ? '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 12px rgba(251, 191, 36, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.2)'
+          : '0 4px 10px rgba(0, 0, 0, 0.2)',
+        borderRadius: '1.25rem',
+        padding: '1.2rem',
+        position: 'relative',
+        overflow: 'hidden',
+        marginBottom: '1rem',
+        cursor: 'pointer',
+        transform: isPressed ? 'scale(0.98)' : 'scale(1)',
+        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+        fontFamily: 'Outfit, sans-serif'
+      }}
+    >
+      {/* 777 Ticket Watermarks */}
       {isOngoing && (
         <>
-          <div style={{
-            position: 'absolute',
-            top: '20px',
-            left: '-10px',
-            fontSize: '4rem',
-            fontWeight: 900,
-            color: 'rgba(251, 191, 36, 0.04)',
-            transform: 'rotate(-25deg)',
-            fontFamily: 'Outfit, sans-serif',
-            pointerEvents: 'none',
-            letterSpacing: '-2px'
-          }}>777</div>
-          <div style={{
-            position: 'absolute',
-            bottom: '20px',
-            right: '-10px',
-            fontSize: '4rem',
-            fontWeight: 900,
-            color: 'rgba(251, 191, 36, 0.04)',
-            transform: 'rotate(25deg)',
-            fontFamily: 'Outfit, sans-serif',
-            pointerEvents: 'none',
-            letterSpacing: '-2px'
-          }}>777</div>
+          <div
+            style={{
+              position: 'absolute',
+              top: '20px',
+              left: '-10px',
+              fontSize: '4.5rem',
+              fontWeight: 900,
+              color: 'rgba(251, 191, 36, 0.05)',
+              transform: 'rotate(-25deg)',
+              pointerEvents: 'none',
+              letterSpacing: '-2px'
+            }}
+          >
+            777
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '10px',
+              right: '-10px',
+              fontSize: '4.5rem',
+              fontWeight: 900,
+              color: 'rgba(251, 191, 36, 0.05)',
+              transform: 'rotate(25deg)',
+              pointerEvents: 'none',
+              letterSpacing: '-2px'
+            }}
+          >
+            777
+          </div>
         </>
       )}
 
-      {/* Top Row: Badge & ID */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', position: 'relative', zIndex: 2 }}>
-        <div style={{
-          border: isOngoing ? '1px solid #fbbf24' : '1px solid rgba(255,255,255,0.4)',
-          borderRadius: '1rem',
-          padding: '0.2rem 0.75rem',
-          fontSize: '0.65rem',
-          fontWeight: 700,
-          color: isOngoing ? '#fbbf24' : 'rgba(255,255,255,0.6)',
-          textTransform: 'uppercase'
-        }}>
-          {status}
+      {/* Top Row: Status Badge, Timer & ID */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1rem',
+          position: 'relative',
+          zIndex: 2
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div
+            style={{
+              background: isOngoing
+                ? 'linear-gradient(180deg, #f59e0b 0%, #b45309 100%)'
+                : 'rgba(255,255,255,0.15)',
+              border: isOngoing ? '1px solid #fde68a' : '1px solid rgba(255,255,255,0.3)',
+              borderRadius: '1rem',
+              padding: '0.2rem 0.65rem',
+              fontSize: '0.68rem',
+              fontWeight: 900,
+              color: '#ffffff',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em'
+            }}
+          >
+            {status}
+          </div>
+
+          {isOngoing && (
+            <div
+              style={{
+                fontSize: '0.72rem',
+                color: '#fef08a',
+                fontWeight: 800,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.2rem'
+              }}
+            >
+              <span>⏳</span> {countdown}
+            </div>
+          )}
         </div>
-        <div style={{
-          fontSize: '0.8rem',
-          fontWeight: 700,
-          color: isOngoing ? '#fff' : 'rgba(255,255,255,0.6)'
-        }}>
+
+        <div
+          style={{
+            fontSize: '0.82rem',
+            fontWeight: 800,
+            color: isOngoing ? '#fef08a' : 'rgba(255,255,255,0.6)',
+            letterSpacing: '0.5px'
+          }}
+        >
           {id}
         </div>
       </div>
 
-      {/* Middle: Total Reward */}
-      <div style={{ marginBottom: '1.25rem', position: 'relative', zIndex: 2 }}>
-        <div style={{ 
-          fontSize: '0.65rem', 
-          fontWeight: 700, 
-          color: isOngoing ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.5)',
-          marginBottom: '0.2rem'
-        }}>
-          TOTAL REWARD
+      {/* Middle: Total Jackpot Reward */}
+      <div style={{ marginBottom: '1rem', position: 'relative', zIndex: 2 }}>
+        <div
+          style={{
+            fontSize: '0.68rem',
+            fontWeight: 800,
+            color: isOngoing ? '#a7f3d0' : 'rgba(255,255,255,0.5)',
+            letterSpacing: '0.05em',
+            marginBottom: '0.25rem'
+          }}
+        >
+          TOTAL REWARD POOL
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '1.6rem', fontWeight: 900, fontFamily: 'Outfit, sans-serif' }}>
-          <span style={{ color: isOngoing ? '#fbbf24' : '#fff' }}>${cashReward}</span>
-          <span style={{ color: isOngoing ? '#fff' : 'rgba(255,255,255,0.7)' }}> + {coinRewardStr}</span>
-          <img src="./assets/purple-diamond.png" alt="Diamond" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            fontSize: '1.75rem',
+            fontWeight: 900,
+            fontFamily: 'Georgia, serif'
+          }}
+        >
+          <span style={{ color: isOngoing ? '#fbbf24' : '#ffffff', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+            ${cashReward}
+          </span>
+          <span style={{ color: isOngoing ? '#ffffff' : 'rgba(255,255,255,0.7)', fontSize: '1.25rem' }}>
+            + {coinRewardStr}
+          </span>
+          <img
+            src="./assets/purple-diamond.png"
+            alt="Diamond"
+            style={{ width: '20px', height: '20px', objectFit: 'contain' }}
+          />
         </div>
       </div>
 
-      {/* Bottom Row: Stats & Action Button */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative', zIndex: 2 }}>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          {/* Users */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: isOngoing ? '#fff' : 'rgba(255,255,255,0.5)', fontSize: '0.85rem', fontWeight: 700 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-            </svg>
-            <span>{participants.toLocaleString()}</span>
+      {/* Ticket Progress Meter */}
+      {isOngoing && (
+        <div style={{ marginBottom: '1.1rem', position: 'relative', zIndex: 2 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: '0.72rem',
+              color: 'rgba(255,255,255,0.85)',
+              fontWeight: 700,
+              marginBottom: '0.35rem'
+            }}
+          >
+            <span>Tickets Sold: {tickets.toLocaleString()} / {totalTickets.toLocaleString()}</span>
+            <span style={{ color: '#fbbf24' }}>{percentage}%</span>
           </div>
-          {/* Tickets */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: isOngoing ? '#fff' : 'rgba(255,255,255,0.5)', fontSize: '0.85rem', fontWeight: 700 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path>
-              <path d="M13 5v2"></path>
-              <path d="M13 17v2"></path>
-              <path d="M13 11v2"></path>
-            </svg>
-            <span>{tickets.toLocaleString()}</span>
+          <div
+            style={{
+              width: '100%',
+              height: '8px',
+              background: 'rgba(0,0,0,0.4)',
+              borderRadius: '6px',
+              overflow: 'hidden',
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}
+          >
+            <div
+              style={{
+                width: `${percentage}%`,
+                height: '100%',
+                background: 'linear-gradient(90deg, #10b981 0%, #fbbf24 100%)',
+                borderRadius: '6px'
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Row: Stats & Action Button */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          position: 'relative',
+          zIndex: 2
+        }}
+      >
+        <div style={{ display: 'flex', gap: '1.25rem' }}>
+          <div>
+            <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>PARTICIPANTS</div>
+            <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>{participants.toLocaleString()}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>TICKETS</div>
+            <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>{tickets.toLocaleString()}</div>
           </div>
         </div>
 
-        <button 
-          onClick={onClickDetails}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClick();
+          }}
           style={{
-            background: isOngoing ? 'linear-gradient(180deg, #fde047 0%, #f59e0b 100%)' : 'transparent',
-            border: isOngoing ? 'none' : '1px solid rgba(255,255,255,0.3)',
-            borderRadius: '0.4rem',
-            padding: '0.5rem 1rem',
-            color: isOngoing ? '#1c1917' : 'rgba(255,255,255,0.6)',
-            fontSize: '0.75rem',
+            background: isOngoing
+              ? 'linear-gradient(180deg, #10b981 0%, #047857 100%)'
+              : 'rgba(255,255,255,0.1)',
+            color: '#ffffff',
+            border: isOngoing ? '1px solid #6ee7b7' : '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '0.75rem',
+            padding: '0.5rem 1.1rem',
+            fontSize: '0.85rem',
             fontWeight: 800,
             cursor: 'pointer',
-            boxShadow: isOngoing ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
+            boxShadow: isOngoing ? '0 4px 10px rgba(16, 185, 129, 0.4)' : 'none'
           }}
         >
-          VIEW DETAILS
+          {isOngoing ? 'Join & Details ➔' : 'View Results'}
         </button>
       </div>
     </div>

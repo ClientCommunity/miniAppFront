@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FC } from 'react';
+import { haptics } from '../../utils/haptics';
 
 export interface WalletRecordsPageProps {
   onBack: () => void;
@@ -18,6 +19,7 @@ interface TransactionRecord {
   amount: string;
   isDiamond?: boolean;
   status: 'completed' | 'processing' | 'failed';
+  hash?: string;
 }
 
 const MOCK_RECORDS: TransactionRecord[] = [
@@ -30,7 +32,8 @@ const MOCK_RECORDS: TransactionRecord[] = [
     icon: './assets/wheel-of-fortune.png',
     isImageIcon: true,
     amount: '+$0.20',
-    status: 'completed'
+    status: 'completed',
+    hash: '0x8f2a1...4921b'
   },
   {
     id: 'tx-2',
@@ -42,7 +45,8 @@ const MOCK_RECORDS: TransactionRecord[] = [
     isImageIcon: true,
     amount: '+80',
     isDiamond: true,
-    status: 'completed'
+    status: 'completed',
+    hash: '0x7e1c4...9183a'
   },
   {
     id: 'tx-3',
@@ -54,7 +58,8 @@ const MOCK_RECORDS: TransactionRecord[] = [
     isImageIcon: true,
     amount: '+300',
     isDiamond: true,
-    status: 'completed'
+    status: 'completed',
+    hash: '0x3a9d2...3904f'
   },
   {
     id: 'tx-4',
@@ -65,16 +70,28 @@ const MOCK_RECORDS: TransactionRecord[] = [
     icon: '🏧',
     isImageIcon: false,
     amount: '-$1.00',
-    status: 'processing'
+    status: 'processing',
+    hash: '0x1b8c0...8210e'
   }
 ];
 
 export const WalletRecordsPage: FC<WalletRecordsPageProps> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
+  const [selectedRecord, setSelectedRecord] = useState<TransactionRecord | null>(null);
+  const [copiedHash, setCopiedHash] = useState(false);
 
   const filteredRecords = MOCK_RECORDS.filter(
     (rec) => activeTab === 'all' || rec.category === activeTab
   );
+
+  const handleCopyHash = (hash: string) => {
+    haptics.selection();
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(hash);
+      setCopiedHash(true);
+      setTimeout(() => setCopiedHash(false), 2000);
+    }
+  };
 
   return (
     <div
@@ -122,7 +139,10 @@ export const WalletRecordsPage: FC<WalletRecordsPageProps> = ({ onBack }) => {
         }}
       >
         <button
-          onClick={onBack}
+          onClick={() => {
+            haptics.impact('light');
+            onBack();
+          }}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -138,28 +158,28 @@ export const WalletRecordsPage: FC<WalletRecordsPageProps> = ({ onBack }) => {
             boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
           }}
         >
-          &lt; Back
+          ‹ Back
         </button>
 
         <h2
           style={{
             margin: 0,
             color: '#ffffff',
-            fontSize: '1.25rem',
+            fontSize: '1.2rem',
             fontWeight: 800,
             fontFamily: 'Georgia, serif'
           }}
         >
-          Transaction Records
+          Transaction History
         </h2>
 
         {/* Balance pill */}
         <div
           style={{
-            background: 'rgba(255, 255, 255, 0.1)',
+            background: 'rgba(255, 255, 255, 0.12)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: '20px',
-            padding: '0.2rem 0.6rem',
+            padding: '0.2rem 0.65rem',
             color: '#fbbf24',
             fontWeight: 800,
             fontSize: '0.85rem'
@@ -232,8 +252,7 @@ export const WalletRecordsPage: FC<WalletRecordsPageProps> = ({ onBack }) => {
             display: 'flex',
             gap: '0.5rem',
             overflowX: 'auto',
-            paddingBottom: '0.25rem',
-            scrollbarWidth: 'none'
+            paddingBottom: '0.25rem'
           }}
         >
           {(
@@ -246,7 +265,10 @@ export const WalletRecordsPage: FC<WalletRecordsPageProps> = ({ onBack }) => {
           ).map((tab) => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => {
+                haptics.selection();
+                setActiveTab(tab.key);
+              }}
               style={{
                 background:
                   activeTab === tab.key
@@ -277,15 +299,20 @@ export const WalletRecordsPage: FC<WalletRecordsPageProps> = ({ onBack }) => {
             filteredRecords.map((record) => (
               <div
                 key={record.id}
+                onClick={() => {
+                  haptics.impact('light');
+                  setSelectedRecord(record);
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '0.85rem 1rem',
-                  background: 'rgba(0, 0, 0, 0.22)',
+                  background: 'rgba(0, 0, 0, 0.25)',
                   borderRadius: '1rem',
                   border: '1px solid rgba(52, 211, 153, 0.25)',
-                  boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+                  cursor: 'pointer'
                 }}
               >
                 {/* Left: Icon & Info */}
@@ -330,7 +357,7 @@ export const WalletRecordsPage: FC<WalletRecordsPageProps> = ({ onBack }) => {
                       {record.title}
                     </span>
                     <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.65)', marginTop: '0.15rem' }}>
-                      {record.date} • {record.txId}
+                      {record.date} • {record.txId} ↗
                     </span>
                   </div>
                 </div>
@@ -407,6 +434,121 @@ export const WalletRecordsPage: FC<WalletRecordsPageProps> = ({ onBack }) => {
           )}
         </div>
       </div>
+
+      {/* Transaction Details Modal */}
+      {selectedRecord && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1.25rem'
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '360px',
+              background: 'linear-gradient(180deg, #064e3b 0%, #022c22 100%)',
+              border: '1px solid rgba(52, 211, 153, 0.5)',
+              borderRadius: '1.25rem',
+              padding: '1.25rem',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.6)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, color: '#fff', fontSize: '1.15rem', fontFamily: 'Georgia, serif' }}>
+                Transaction Receipt
+              </h3>
+              <button
+                onClick={() => setSelectedRecord(null)}
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  border: 'none',
+                  color: 'white',
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  cursor: 'pointer'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ background: 'rgba(0,0,0,0.25)', borderRadius: '0.75rem', padding: '0.9rem', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>AMOUNT</div>
+              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#facc15', fontFamily: 'Georgia, serif', margin: '0.2rem 0 0.6rem 0' }}>
+                {selectedRecord.amount}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', padding: '0.3rem 0', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                <span style={{ color: 'rgba(255,255,255,0.6)' }}>Status</span>
+                <span style={{ color: '#4ade80', fontWeight: 700, textTransform: 'uppercase' }}>{selectedRecord.status}</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', padding: '0.3rem 0', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                <span style={{ color: 'rgba(255,255,255,0.6)' }}>Reference ID</span>
+                <span style={{ color: '#ffffff', fontWeight: 700 }}>{selectedRecord.txId}</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', padding: '0.3rem 0', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                <span style={{ color: 'rgba(255,255,255,0.6)' }}>Timestamp</span>
+                <span style={{ color: '#ffffff', fontWeight: 600 }}>{selectedRecord.date}</span>
+              </div>
+            </div>
+
+            {selectedRecord.hash && (
+              <button
+                onClick={() => handleCopyHash(selectedRecord.hash!)}
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(180deg, #10b981 0%, #059669 100%)',
+                  border: '1px solid #6ee7b7',
+                  borderRadius: '0.75rem',
+                  padding: '0.7rem',
+                  color: 'white',
+                  fontWeight: 800,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  marginBottom: '0.5rem'
+                }}
+              >
+                {copiedHash ? 'Hash Copied! ✓' : `Copy Hash (${selectedRecord.hash}) 📋`}
+              </button>
+            )}
+
+            <button
+              onClick={() => {
+                // @ts-ignore
+                window.Telegram?.WebApp?.openLink?.('https://tonviewer.com') ||
+                  window.open('https://tonviewer.com', '_blank');
+              }}
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: '0.75rem',
+                padding: '0.6rem',
+                color: '#a7f3d0',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                cursor: 'pointer'
+              }}
+            >
+              View on Tonviewer ↗
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
