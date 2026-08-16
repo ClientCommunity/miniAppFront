@@ -11,6 +11,7 @@ import { TeamModal } from './components/TeamModal';
 import { RafflePage } from './components/raffle/RafflePage';
 import { TasksPage } from './components/tasks/TasksPage';
 import { WalletPage } from './components/wallet/WalletPage';
+import { requestServerSpin } from './services/spinService';
 import { throwConfetti } from './utils/confetti';
 
 const WHEEL_SEGMENTS: SpinSegment[] = [
@@ -262,6 +263,10 @@ function App() {
 
           <SpinWheel
             segments={WHEEL_SEGMENTS}
+            onSpinRequest={async () => {
+              const serverResult = await requestServerSpin(WHEEL_SEGMENTS);
+              return serverResult.targetIndex;
+            }}
             onSpinEnd={handleSpinEnd}
             theme="emerald"
             size={300}
