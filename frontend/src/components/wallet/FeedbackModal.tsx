@@ -426,7 +426,7 @@ export const FeedbackModal: FC<FeedbackModalProps> = ({ onClose }) => {
               <span
                 style={{
                   fontSize: '0.8rem',
-                  color: '#06b11dff',
+                  color: '#3214b8ff',
                   cursor: 'pointer',
                   textDecoration: 'underline'
                 }}
