@@ -13,6 +13,7 @@ import { TasksPage } from './components/tasks/TasksPage';
 import { WalletPage } from './components/wallet/WalletPage';
 import { requestServerSpin } from './services/spinService';
 import { throwConfetti } from './utils/confetti';
+import { haptics } from './utils/haptics';
 
 const WHEEL_SEGMENTS: SpinSegment[] = [
   { label: 'Diamond', value: 'gem', image: './assets/purple-diamond.png' },
@@ -30,15 +31,15 @@ const MOCK_TASKS = [
 ];
 
 const LEFT_CARDS = [
-  { title: 'Raffle', icon: './assets/raffleFeatureCardIcon.png', variant: 'emerald' as const },
+  { title: 'Raffle', icon: './assets/raffleFeatureCardIcon.png', variant: 'emerald' as const, badge: 'HOT', badgeColor: 'gold' as const },
   { title: 'Contest', icon: './assets/contestFeatureCardIcon.png', variant: 'colorful' as const },
-  { title: 'Gift', icon: './assets/giftcodeFeatureCardIcon.png', variant: 'gold' as const },
+  { title: 'Gift', icon: './assets/giftcodeFeatureCardIcon.png', variant: 'gold' as const, badge: 'FREE', badgeColor: 'red' as const },
   { title: 'Team', icon: './assets/inviteFeatureCardIcon.png', variant: 'emerald' as const }
 ];
 
 const RIGHT_CARDS = [
-  { title: '+ Spins', icon: './assets/wheel-of-fortune.png', variant: 'colorful' as const },
-  { title: 'Sign In', icon: './assets/signin-iconFetareCardIcon.png', variant: 'emerald' as const },
+  { title: '+ Spins', icon: './assets/wheel-of-fortune.png', variant: 'colorful' as const, badge: 'NEW', badgeColor: 'emerald' as const },
+  { title: 'Sign In', icon: './assets/signin-iconFetareCardIcon.png', variant: 'emerald' as const, badge: '1', badgeColor: 'red' as const },
   { title: 'Wallet', icon: './assets/icon-gold.png', variant: 'gold' as const }
 ];
 
@@ -77,6 +78,8 @@ function App() {
   const handleSpinEnd = (winner: SpinSegment) => {
     setRewardText(winner.label);
     setShowRewardModal(true);
+    haptics.notification('success');
+    haptics.playWinSound();
 
     if (winner.value !== '0' && winner.label !== 'Empty') {
       throwConfetti();
@@ -84,6 +87,7 @@ function App() {
   };
 
   const handleCollect = () => {
+    haptics.impact('medium');
     setShowRewardModal(false);
   };
 
@@ -101,29 +105,82 @@ function App() {
       }}>
         {/* User Profile (Left) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <img
-            src={userToDisplay.photo_url}
-            alt="Profile"
-            style={{ width: '36px', height: '36px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)' }}
-          />
+          <div style={{ position: 'relative' }}>
+            <img
+              src={userToDisplay.photo_url}
+              alt="Profile"
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                border: '2px solid #34d399',
+                boxShadow: '0 0 8px rgba(52, 211, 153, 0.4)'
+              }}
+            />
+            {/* Level badge */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '-2px',
+                right: '-2px',
+                background: '#f59e0b',
+                color: '#1e293b',
+                fontSize: '9px',
+                fontWeight: 900,
+                padding: '1px 4px',
+                borderRadius: '6px',
+                border: '1px solid #ffffff'
+              }}
+            >
+              LV1
+            </div>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: 'white', fontWeight: 800, fontSize: '0.85rem', lineHeight: 1.1 }}>{userToDisplay.first_name}</span>
-            <span style={{ color: 'var(--text-secondary)', fontSize: '0.65rem' }}>ID: {userToDisplay.id}</span>
+            <span style={{ color: 'white', fontWeight: 800, fontSize: '0.88rem', lineHeight: 1.1 }}>
+              {userToDisplay.first_name}
+            </span>
+            <span style={{ color: '#a7f3d0', fontSize: '0.68rem', fontWeight: 600 }}>ID: {userToDisplay.id}</span>
           </div>
         </div>
 
         {/* Asset Balances (Right) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
           {/* Energy Balance */}
-          <div style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+          <div
+            style={{
+              background: 'rgba(255,255,255,0.12)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: 'white',
+              padding: '0.22rem 0.55rem',
+              borderRadius: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+            }}
+          >
             <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>50</span>
+            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>50</span>
           </div>
 
           {/* Spin Balance */}
-          <div style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+          <div
+            style={{
+              background: 'rgba(255,255,255,0.12)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: 'white',
+              padding: '0.22rem 0.55rem',
+              borderRadius: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+            }}
+          >
             <img src="./assets/wheel-of-fortune.png" alt="Spins" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>12</span>
+            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>12</span>
           </div>
 
           {/* Diamond Balance */}
@@ -199,66 +256,104 @@ function App() {
 
         {/* Center Wheel & Progress Section */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: '1 1 auto', minWidth: 0, padding: '0 0.25rem', marginTop: '-20px' }}>
-          
-          {/* Balance Display */}
+            {/* Balance Display with Sparkle Glow */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-            <img src="./assets/icon-gold.png" alt="Coin" style={{ width: '30px', height: '30px', objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }} />
-            <span style={{ 
-              color: '#FFE81A', 
-              fontWeight: 900, 
-              fontSize: '1.75rem', 
-              fontStyle: 'italic',
-              textShadow: '0 2px 4px rgba(0,0,0,0.5)'
-            }}>$0.56</span>
+            <img
+              src="./assets/icon-gold.png"
+              alt="Coin"
+              style={{
+                width: '32px',
+                height: '32px',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 2px 6px rgba(250, 204, 21, 0.5))'
+              }}
+            />
+            <span
+              style={{
+                color: '#FFE81A',
+                fontWeight: 900,
+                fontSize: '1.85rem',
+                fontStyle: 'italic',
+                fontFamily: 'Georgia, serif',
+                textShadow: '0 2px 6px rgba(0,0,0,0.6), 0 0 10px rgba(254, 240, 138, 0.4)'
+              }}
+            >
+              $0.56
+            </span>
           </div>
 
-          {/* Progress Bar */}
-          <div style={{ 
-            width: '100%', 
-            maxWidth: '240px', 
-            height: '13px', 
-            background: 'rgba(255,255,255,0.2)', 
-            borderRadius: '10px',
-            position: 'relative',
-            marginBottom: '0.5rem',
-            boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)'
-          }}>
-            {/* Fill */}
-            <div style={{
-              width: '56%',
-              height: '100%',
-              background: 'linear-gradient(90deg, #F5A623 0%, #F8E71C 100%)',
+          {/* Upgraded Liquid Gold Milestone Progress Bar */}
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '250px',
+              height: '14px',
+              background: 'rgba(0, 0, 0, 0.35)',
               borderRadius: '10px',
               position: 'relative',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
-            }}>
+              marginBottom: '0.4rem',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)'
+            }}
+          >
+            {/* Shimmering Fill */}
+            <div
+              className="liquid-gold-shimmer"
+              style={{
+                width: '56%',
+                height: '100%',
+                borderRadius: '8px',
+                position: 'relative',
+                boxShadow: '0 0 8px rgba(250, 204, 21, 0.6)'
+              }}
+            >
               {/* Glowing Particle Tip */}
-              <div style={{
+              <div
+                style={{
+                  position: 'absolute',
+                  right: '-6px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '14px',
+                  height: '14px',
+                  background: '#ffffff',
+                  borderRadius: '50%',
+                  boxShadow: '0 0 12px 4px rgba(254, 240, 138, 0.9), 0 0 4px #fbbf24',
+                  zIndex: 2
+                }}
+              />
+            </div>
+
+            {/* $1 Goal Milestone Pin */}
+            <div
+              style={{
                 position: 'absolute',
-                right: '-7px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: '13px',
-                height: '13px',
-                background: 'rgba(255, 230, 0, 0.8)',
-                borderRadius: '50%',
-                boxShadow: '0 0 15px 5px rgba(248, 231, 28, 0.8)',
-                filter: 'blur(1.5px)'
-              }} />
+                right: '4px',
+                top: '-18px',
+                fontSize: '0.68rem',
+                fontWeight: 900,
+                color: '#fef08a',
+                fontFamily: 'Georgia, serif',
+                textShadow: '0 1px 2px rgba(0,0,0,0.8)'
+              }}
+            >
+              $1 Goal 🏁
             </div>
           </div>
 
           {/* Helper Text */}
-          <div style={{ 
-            color: 'white', 
-            fontSize: '0.85rem', 
-            fontFamily: 'Georgia, serif', 
-            fontStyle: 'italic', 
-            opacity: 0.95,
-            marginBottom: '1.75rem',
-            textShadow: '0 1px 3px rgba(0,0,0,0.6)'
-          }}>
-            Only $0.44 to cash out $1 !
+          <div
+            style={{
+              color: '#d1fae5',
+              fontSize: '0.82rem',
+              fontFamily: 'Georgia, serif',
+              fontStyle: 'italic',
+              opacity: 0.95,
+              marginBottom: '1.4rem',
+              textShadow: '0 1px 3px rgba(0,0,0,0.7)'
+            }}
+          >
+            Only <span style={{ color: '#fbbf24', fontWeight: 800 }}>$0.44</span> to cash out $1 instant TON USDT!
           </div>
 
           <SpinWheel

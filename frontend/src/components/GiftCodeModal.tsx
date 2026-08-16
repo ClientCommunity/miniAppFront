@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
+import { haptics } from '../utils/haptics';
+import { throwConfetti } from '../utils/confetti';
 
 export interface GiftCodeModalProps {
   onClose: () => void;
@@ -21,13 +23,32 @@ export const GiftCodeModal: FC<GiftCodeModalProps> = ({ onClose }) => {
     setTimeout(onClose, 300);
   };
 
+  const handlePaste = async () => {
+    try {
+      if (navigator?.clipboard?.readText) {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          setGiftCode(text.trim());
+          haptics.selection();
+        }
+      }
+    } catch {
+      // Ignore clipboard permission errors
+    }
+  };
+
   const handleClaim = () => {
     if (!giftCode.trim()) {
+      haptics.notification('error');
       setStatusMessage('Please enter a valid gift code');
       return;
     }
-    // Simulation / visual feedback
+
+    haptics.notification('success');
+    haptics.playWinSound();
+    throwConfetti();
     setStatusMessage('Gift code redeemed successfully! 🎉');
+
     setTimeout(() => {
       handleClose();
     }, 1200);
@@ -42,8 +63,8 @@ export const GiftCodeModal: FC<GiftCodeModalProps> = ({ onClose }) => {
         right: 0,
         bottom: 0,
         background: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'flex-end',
@@ -92,16 +113,18 @@ export const GiftCodeModal: FC<GiftCodeModalProps> = ({ onClose }) => {
             position: 'absolute',
             top: '1.1rem',
             right: '1.1rem',
-            background: 'transparent',
+            background: 'rgba(255,255,255,0.12)',
             border: 'none',
             color: 'white',
-            fontSize: '1.35rem',
+            fontSize: '1.2rem',
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
             cursor: 'pointer',
-            padding: '0.4rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            opacity: 0.85,
+            opacity: 0.9,
             zIndex: 10
           }}
         >
@@ -184,37 +207,63 @@ export const GiftCodeModal: FC<GiftCodeModalProps> = ({ onClose }) => {
             Enter a gift code to claim your rewards
           </p>
 
-          {/* Input Box */}
+          {/* Input Box with Paste Button */}
           <div style={{ width: '100%', marginBottom: '1rem' }}>
-            <input
-              type="text"
-              placeholder="Enter gift code"
-              value={giftCode}
-              onChange={(e) => {
-                setGiftCode(e.target.value);
-                setStatusMessage(null);
-              }}
+            <div
               style={{
-                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
                 background: 'rgba(0, 0, 0, 0.35)',
                 border: '1px solid rgba(52, 211, 153, 0.4)',
                 borderRadius: '0.75rem',
-                padding: '0.9rem 1.1rem',
-                color: '#ffffff',
-                fontSize: '0.95rem',
-                boxSizing: 'border-box',
-                outline: 'none',
+                padding: '0.35rem 0.5rem 0.35rem 1rem',
                 boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.4)'
               }}
-            />
+            >
+              <input
+                type="text"
+                placeholder="Enter gift code"
+                value={giftCode}
+                onChange={(e) => {
+                  setGiftCode(e.target.value);
+                  setStatusMessage(null);
+                }}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontSize: '0.95rem',
+                  outline: 'none'
+                }}
+              />
+              <button
+                type="button"
+                onClick={handlePaste}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  borderRadius: '0.5rem',
+                  padding: '0.35rem 0.75rem',
+                  color: '#ffffff',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  flexShrink: 0
+                }}
+              >
+                Paste
+              </button>
+            </div>
+
             {statusMessage && (
               <div
                 style={{
                   fontSize: '0.85rem',
-                  marginTop: '0.4rem',
+                  marginTop: '0.45rem',
                   color: statusMessage.includes('🎉') ? '#4ade80' : '#f87171',
                   textAlign: 'center',
-                  fontWeight: 600
+                  fontWeight: 700
                 }}
               >
                 {statusMessage}
@@ -234,6 +283,7 @@ export const GiftCodeModal: FC<GiftCodeModalProps> = ({ onClose }) => {
               color: '#1e293b',
               fontWeight: 900,
               fontSize: '1.05rem',
+              fontFamily: 'Georgia, serif',
               cursor: 'pointer',
               boxShadow: '0 4px 12px rgba(234, 179, 8, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.5)',
               transition: 'transform 0.1s ease',
@@ -243,7 +293,7 @@ export const GiftCodeModal: FC<GiftCodeModalProps> = ({ onClose }) => {
             onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
             onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
-            Claim
+            Claim Rewards
           </button>
         </div>
 
@@ -265,7 +315,6 @@ export const GiftCodeModal: FC<GiftCodeModalProps> = ({ onClose }) => {
               cursor: 'pointer'
             }}
             onClick={() => {
-              // Open community or telegram channel
               // @ts-ignore
               window.Telegram?.WebApp?.openTelegramLink?.('https://t.me/EarnCraftCommunity') ||
                 window.open('https://t.me/EarnCraftCommunity', '_blank');

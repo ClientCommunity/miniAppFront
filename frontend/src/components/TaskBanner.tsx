@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FC } from 'react';
+import { haptics } from '../utils/haptics';
 
 export interface TaskBannerProps {
   title: string;
@@ -21,12 +22,18 @@ export const TaskBanner: FC<TaskBannerProps> = ({
   const [isPressed, setIsPressed] = useState(false);
   const [isBtnPressed, setIsBtnPressed] = useState(false);
 
+  const handleClick = () => {
+    haptics.impact('light');
+    haptics.playClickSound();
+    if (onClick) onClick();
+  };
+
   const renderReward = () => {
-    if (!rewardAmount) return 'Go';
+    if (!rewardAmount) return 'GO';
     return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
         {rewardIcon.endsWith('.png') ? (
-          <img src={rewardIcon} alt="Reward" style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
+          <img src={rewardIcon} alt="Reward" style={{ width: '15px', height: '15px', objectFit: 'contain' }} />
         ) : (
           rewardIcon
         )}
@@ -37,69 +44,94 @@ export const TaskBanner: FC<TaskBannerProps> = ({
 
   return (
     <div
-      onClick={onClick}
+      onClick={handleClick}
       onMouseDown={() => setIsPressed(true)}
       onMouseUp={() => setIsPressed(false)}
       onMouseLeave={() => setIsPressed(false)}
       onTouchStart={() => setIsPressed(true)}
       onTouchEnd={() => setIsPressed(false)}
-      className="card task-banner"
       style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0.5rem 1rem',
-        background: 'linear-gradient(145deg, var(--task-card-bg-start) 0%, var(--task-card-bg-end) 100%)',
-        borderRadius: 'var(--border-radius-md)',
-        border: '1px solid var(--task-card-border)',
-        boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 4px 6px rgba(0, 0, 0, 0.2)',
-        color: 'white',
+        padding: '0.65rem 1rem',
+        background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.85) 0%, rgba(2, 44, 34, 0.95) 100%)',
+        borderRadius: '1.25rem',
+        border: '1px solid rgba(52, 211, 153, 0.45)',
+        boxShadow: isPressed
+          ? '0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.2)'
+          : '0 8px 20px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.35)',
+        color: '#ffffff',
         cursor: 'pointer',
         transform: isPressed ? 'scale(0.98)' : 'scale(1)',
-        transition: 'transform 0.1s ease',
-        minWidth: '85%', // For the peek-a-boo effect
+        transition: 'transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease',
+        minWidth: '85%',
         scrollSnapAlign: 'center',
         flexShrink: 0,
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)'
       }}
     >
+      {/* Left Icon & Text */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <div style={{ fontSize: '1.5rem', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))' }}>
+        <div style={{ fontSize: '1.6rem', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }}>
           {icon}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontWeight: 700, fontFamily: 'var(--font-family-display)', fontSize: '0.95rem', lineHeight: 1.1 }}>
+          <div style={{ fontWeight: 800, fontFamily: 'Georgia, serif', fontSize: '0.98rem', lineHeight: 1.15, color: '#ffffff' }}>
             {title}
           </div>
-          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.85)', marginTop: '0.1rem' }}>
+          <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.85)', marginTop: '0.15rem' }}>
             {subtitle}
           </div>
         </div>
       </div>
-      
-      <button 
-        onMouseDown={(e) => { e.stopPropagation(); setIsBtnPressed(true); }}
-        onMouseUp={(e) => { e.stopPropagation(); setIsBtnPressed(false); }}
+
+      {/* 3D Action Button */}
+      <button
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          setIsBtnPressed(true);
+        }}
+        onMouseUp={(e) => {
+          e.stopPropagation();
+          setIsBtnPressed(false);
+        }}
         onMouseLeave={() => setIsBtnPressed(false)}
-        onTouchStart={(e) => { e.stopPropagation(); setIsBtnPressed(true); }}
-        onTouchEnd={(e) => { e.stopPropagation(); setIsBtnPressed(false); }}
-        onClick={(e) => e.stopPropagation()}
+        onTouchStart={(e) => {
+          e.stopPropagation();
+          setIsBtnPressed(true);
+        }}
+        onTouchEnd={(e) => {
+          e.stopPropagation();
+          setIsBtnPressed(false);
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleClick();
+        }}
         style={{
-          padding: '0.35rem 1rem', 
-          borderRadius: 'var(--border-radius-sm)', 
-          background: 'var(--task-banner-btn-bg)', 
-          color: 'var(--task-banner-btn-text)', 
-          border: '1px solid var(--task-banner-btn-border)', 
-          boxShadow: isBtnPressed 
-            ? '0 0px 0 rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0,0,0,0.15)' 
-            : '0 4px 0 rgba(0, 0, 0, 0.25), 0 5px 5px rgba(0,0,0,0.15)', 
-          fontSize: '0.85rem', 
-          fontWeight: 900, 
+          padding: '0.45rem 1.15rem',
+          borderRadius: '0.85rem',
+          background: 'linear-gradient(180deg, #10b981 0%, #047857 100%)',
+          color: '#ffffff',
+          border: '1px solid rgba(167, 243, 208, 0.7)',
+          boxShadow: isBtnPressed
+            ? '0 1px 0 #022c22, inset 0 2px 4px rgba(0,0,0,0.4)'
+            : '0 4px 0 #022c22, 0 6px 12px rgba(0,0,0,0.35), inset 0 1px 1px rgba(255,255,255,0.5)',
+          fontSize: '0.88rem',
+          fontWeight: 900,
+          fontFamily: 'Georgia, serif',
           whiteSpace: 'nowrap',
           margin: 0,
-          transition: 'transform 0.1s, box-shadow 0.1s',
-          transform: isBtnPressed ? 'translateY(4px) scale(0.98)' : 'translateY(0) scale(1)',
-          cursor: 'pointer'
+          cursor: 'pointer',
+          transform: isBtnPressed ? 'translateY(3px)' : 'translateY(0)',
+          transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textShadow: '0 1px 2px rgba(0,0,0,0.5)'
         }}
       >
         {renderReward()}
