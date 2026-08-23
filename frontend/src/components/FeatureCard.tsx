@@ -44,12 +44,12 @@ export const FeatureCard: FC<FeatureCardProps> = ({
         btnBorder: '#fde68a'
       };
     }
-    // Emerald
+    // Emerald / Vibrant Jade
     return {
-      bg: 'linear-gradient(180deg, rgba(16, 185, 129, 0.35) 0%, rgba(2, 44, 34, 0.88) 100%)',
-      border: 'rgba(110, 231, 183, 0.5)',
-      btnBg: 'linear-gradient(180deg, #059669 0%, #047857 100%)',
-      btnBorder: '#6ee7b7'
+      bg: 'linear-gradient(180deg, rgba(5, 120, 75, 0.55) 0%, rgba(2, 50, 32, 0.92) 100%)',
+      border: 'rgba(0, 230, 118, 0.55)',
+      btnBg: 'linear-gradient(180deg, #00e676 0%, #00a854 100%)',
+      btnBorder: '#86efac'
     };
   };
 

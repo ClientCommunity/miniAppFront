@@ -31,13 +31,13 @@ export const TaskBanner: FC<TaskBannerProps> = ({
   const renderReward = () => {
     if (!rewardAmount) return 'GO';
     return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
         {rewardIcon.endsWith('.png') ? (
-          <img src={rewardIcon} alt="Reward" style={{ width: '15px', height: '15px', objectFit: 'contain' }} />
+          <img src={rewardIcon} alt="Reward" style={{ width: '13px', height: '13px', objectFit: 'contain' }} />
         ) : (
           rewardIcon
         )}
-        <span>{rewardAmount}</span>
+        <span>+{rewardAmount}</span>
       </span>
     );
   };
@@ -54,35 +54,46 @@ export const TaskBanner: FC<TaskBannerProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0.65rem 1rem',
-        background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.85) 0%, rgba(2, 44, 34, 0.95) 100%)',
-        borderRadius: '1.25rem',
-        border: '1px solid rgba(52, 211, 153, 0.45)',
+        padding: '0.55rem 0.85rem',
+        background: 'linear-gradient(135deg, rgba(5, 110, 68, 0.65) 0%, rgba(2, 55, 35, 0.9) 100%)',
+        borderRadius: '1rem',
+        border: '1px solid rgba(0, 230, 118, 0.45)',
         boxShadow: isPressed
-          ? '0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.2)'
-          : '0 8px 20px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.35)',
+          ? '0 2px 6px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.15)'
+          : '0 6px 16px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.25)',
         color: '#ffffff',
         cursor: 'pointer',
         transform: isPressed ? 'scale(0.98)' : 'scale(1)',
-        transition: 'transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease',
+        transition: 'transform 0.12s ease, box-shadow 0.12s ease',
         minWidth: '85%',
         scrollSnapAlign: 'center',
         flexShrink: 0,
         boxSizing: 'border-box',
         backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)'
+        WebkitBackdropFilter: 'blur(8px)',
+        fontFamily: 'Outfit, sans-serif'
       }}
     >
       {/* Left Icon & Text */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <div style={{ fontSize: '1.6rem', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: '1.4rem', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))', flexShrink: 0 }}>
           {icon}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontWeight: 800, fontFamily: 'Georgia, serif', fontSize: '0.98rem', lineHeight: 1.15, color: '#ffffff' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
+          <div
+            style={{
+              fontWeight: 700,
+              fontSize: '0.88rem',
+              lineHeight: 1.2,
+              color: '#ffffff',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}
+          >
             {title}
           </div>
-          <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.85)', marginTop: '0.15rem' }}>
+          <div style={{ fontSize: '0.74rem', color: 'rgba(255,255,255,0.85)', marginTop: '0.1rem' }}>
             {subtitle}
           </div>
         </div>
@@ -112,26 +123,25 @@ export const TaskBanner: FC<TaskBannerProps> = ({
           handleClick();
         }}
         style={{
-          padding: '0.45rem 1.15rem',
-          borderRadius: '0.85rem',
-          background: 'linear-gradient(180deg, #10b981 0%, #047857 100%)',
+          padding: '0.35rem 0.85rem',
+          borderRadius: '0.65rem',
+          background: 'linear-gradient(180deg, #00e676 0%, #00a854 100%)',
           color: '#ffffff',
-          border: '1px solid rgba(167, 243, 208, 0.7)',
+          border: '1px solid rgba(167, 243, 208, 0.8)',
           boxShadow: isBtnPressed
-            ? '0 1px 0 #022c22, inset 0 2px 4px rgba(0,0,0,0.4)'
-            : '0 4px 0 #022c22, 0 6px 12px rgba(0,0,0,0.35), inset 0 1px 1px rgba(255,255,255,0.5)',
-          fontSize: '0.88rem',
-          fontWeight: 900,
-          fontFamily: 'Georgia, serif',
+            ? '0 1px 0 #012a18, inset 0 2px 4px rgba(0,0,0,0.4)'
+            : '0 3px 0 #012a18, 0 4px 10px rgba(0, 230, 118, 0.35), inset 0 1px 1px rgba(255,255,255,0.5)',
+          fontSize: '0.82rem',
+          fontWeight: 800,
           whiteSpace: 'nowrap',
           margin: 0,
           cursor: 'pointer',
-          transform: isBtnPressed ? 'translateY(3px)' : 'translateY(0)',
-          transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+          transform: isBtnPressed ? 'translateY(2px)' : 'translateY(0)',
+          transition: 'transform 0.08s ease, box-shadow 0.08s ease',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+          flexShrink: 0
         }}
       >
         {renderReward()}

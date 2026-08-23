@@ -1,17 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap');
 
 :root {
-  /* Emerald Theme Colors */
-  --emerald-900: #064e31;
-  --emerald-800: #065f46;
-  --emerald-700: #047857;
-  --emerald-600: #008f40;
-  --emerald-500: #5fff7a;
-  --emerald-400: #34d399;
-  --emerald-300: #6ee7b7;
-  --emerald-200: #a7f3d0;
-  --emerald-100: #d1fae5;
-  --emerald-50: #ecfdf5;
+  /* Emerald & Luminous Jade Theme Colors */
+  --emerald-950: #00170d;
+  --emerald-900: #012a18;
+  --emerald-800: #024e2c;
+  --emerald-700: #057a44;
+  --emerald-600: #00a854;
+  --emerald-500: #00e676;
+  --emerald-400: #4ade80;
+  --emerald-300: #86efac;
+  --emerald-200: #bbf7d0;
+  --emerald-100: #dcfce7;
+  --emerald-50: #f0fdf4;
 
   /* Accent & Vibrant Colors */
   --accent-gold: #fbbf24;
@@ -27,20 +28,20 @@
   --text-inverse: #0f172a;
 
   /* Component Colors */
-  --feature-card-btn-bg: #008f40;
-  --feature-card-btn-border: #5fff7a;
+  --feature-card-btn-bg: #00a854;
+  --feature-card-btn-border: #00e676;
 
-  --task-card-bg-start: #06bf00;
-  --task-card-bg-end: #065f46;
-  --task-card-border: #99eea7;
-  --task-card-btn-bg: #ecd610f6;
+  --task-card-bg-start: #057a44;
+  --task-card-bg-end: #012a18;
+  --task-card-border: #00e676;
+  --task-card-btn-bg: #facc15;
   --task-card-btn-text: #0f172a;
 
-  --task-card-check-btn-bg: #e1f59360;
-  --task-card-check-btn-text: #181f12;
+  --task-card-check-btn-bg: #4ade8040;
+  --task-card-check-btn-text: #ffffff;
 
-  --task-banner-btn-bg: #0b933a;
-  --task-banner-btn-border: #5fff7a;
+  --task-banner-btn-bg: #00a854;
+  --task-banner-btn-border: #00e676;
   --task-banner-btn-text: #ffffff;
 
   /* Typography */
@@ -67,8 +68,8 @@
 
 body {
   font-family: var(--font-family-base);
-  /* Dark green at top, little dark green at bottom */
-  background: linear-gradient(to bottom, #0a7038 0%, #022c22 100%);
+  /* Luminous Royal Emerald background with deep malachite gradient */
+  background: radial-gradient(ellipse at 50% -10%, #057a44 0%, #024e2c 40%, #012a18 75%, #00170d 100%);
   background-attachment: fixed;
   color: var(--text-primary);
   line-height: 1.5;

@@ -141,8 +141,8 @@ function App() {
                 width: '38px',
                 height: '38px',
                 borderRadius: '50%',
-                border: '2px solid #34d399',
-                boxShadow: '0 0 8px rgba(52, 211, 153, 0.4)'
+                border: '2px solid #00e676',
+                boxShadow: '0 0 10px rgba(0, 230, 118, 0.5)'
               }}
             />
             {/* Level badge */}
@@ -442,25 +442,31 @@ function App() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '0.75rem',
+        gap: '0.65rem',
         width: '100%',
-        paddingTop: '0.5rem',
-        paddingBottom: '0.5rem',
+        paddingTop: '0.4rem',
+        paddingBottom: '0.4rem',
         flexShrink: 0
       }}>
         <div
-          className="card"
+          onClick={() => {
+            haptics.impact('light');
+            setShowTeamModal(true);
+          }}
           style={{
-            width: '65%',
-            background: 'linear-gradient(145deg, var(--task-card-bg-start) 0%, var(--task-card-bg-end) 100%)',
-            border: '1px solid var(--task-card-border)',
-            borderRadius: 'var(--border-radius-md)',
-            padding: '0.5rem 1rem',
+            flex: 1,
+            maxWidth: '260px',
+            background: 'linear-gradient(135deg, rgba(5, 115, 72, 0.65) 0%, rgba(2, 55, 36, 0.9) 100%)',
+            border: '1px solid rgba(0, 230, 118, 0.45)',
+            borderRadius: '1rem',
+            padding: '0.5rem 0.85rem',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.75rem',
-            boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 4px 6px rgba(0, 0, 0, 0.2)',
-            cursor: 'pointer'
+            gap: '0.65rem',
+            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.3)',
+            cursor: 'pointer',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -468,36 +474,39 @@ function App() {
               src="./assets/spin-ticket.png" 
               alt="Spin Ticket" 
               style={{ 
-                width: '28px', 
-                height: '28px', 
+                width: '26px', 
+                height: '26px', 
                 objectFit: 'contain',
-                filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))' 
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' 
               }} 
             />
           </div>
-          <div style={{ fontWeight: 700, fontFamily: 'var(--font-family-display)', fontSize: '0.95rem', color: 'white' }}>
+          <div style={{ fontWeight: 800, fontFamily: 'Outfit, sans-serif', fontSize: '0.88rem', color: '#ffffff' }}>
             Invite to earn spins
           </div>
         </div>
 
         <button
+          onClick={() => {
+            haptics.impact('light');
+            setShowTeamModal(true);
+          }}
           style={{
-            width: '48px',
-            height: '48px',
-            background: 'linear-gradient(145deg, var(--task-card-bg-start) 0%, var(--task-card-bg-end) 100%)',
-            border: '1px solid var(--task-card-border)',
-            borderRadius: 'var(--border-radius-md)',
+            width: '42px',
+            height: '42px',
+            background: 'linear-gradient(180deg, #00e676 0%, #00a854 100%)',
+            border: '1px solid rgba(167, 243, 208, 0.8)',
+            borderRadius: '1rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '1.25rem',
-            boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 4px 6px rgba(0, 0, 0, 0.2)',
+            boxShadow: '0 4px 12px rgba(0, 230, 118, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.5)',
             cursor: 'pointer',
             flexShrink: 0,
             padding: 0
           }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
           </svg>

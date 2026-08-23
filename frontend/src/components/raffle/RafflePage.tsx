@@ -33,7 +33,7 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
     <div style={{
       width: '100%',
       minHeight: '100vh',
-      background: 'radial-gradient(ellipse at 50% 0%, #0c6340 0%, #032b1d 60%, #01170f 100%)',
+      background: 'radial-gradient(ellipse at 50% -10%, #057a44 0%, #024e2c 40%, #012a18 75%, #00170d 100%)',
       position: 'absolute',
       top: 0,
       left: 0,

@@ -33,13 +33,13 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
   };
 
   const days = [
-    { day: 1, reward: 'Up to 80', icon: './assets/purple-diamond.png', active: true },
+    { day: 1, reward: '+80', icon: './assets/purple-diamond.png', active: true },
     { day: 2, reward: '+80', icon: './assets/purple-diamond.png' },
     { day: 3, reward: '+200', icon: './assets/giftIconInDailySignIn.png' },
     { day: 4, reward: '+90', icon: './assets/purple-diamond.png' },
     { day: 5, reward: '+90', icon: './assets/purple-diamond.png' },
     { day: 6, reward: '+90', icon: './assets/purple-diamond.png' },
-    { day: 7, reward: 'MEGA +6000', icon: './assets/giftIconInDailySignIn.png', isMega: true }
+    { day: 7, reward: 'MEGA 6K', icon: './assets/giftIconInDailySignIn.png', isMega: true }
   ];
 
   return (
@@ -65,16 +65,16 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
       <div
         style={{
           width: '100%',
-          background: 'linear-gradient(180deg, #0c6340 0%, #032b1d 100%)',
+          background: 'linear-gradient(180deg, #057a44 0%, #012a18 100%)',
           borderTopLeftRadius: '2rem',
           borderTopRightRadius: '2rem',
-          borderTop: '1px solid rgba(52, 211, 153, 0.45)',
+          borderTop: '1px solid rgba(0, 230, 118, 0.55)',
           transform: isVisible ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          padding: '2.25rem 1.25rem 2.5rem 1.25rem',
+          padding: '2rem 1.25rem 2.25rem 1.25rem',
           position: 'relative',
           boxShadow: '0 -15px 35px rgba(0,0,0,0.6)',
           fontFamily: 'Outfit, sans-serif'
@@ -104,43 +104,46 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
           ✕
         </button>
 
-        {/* Inner Binder Card */}
+        {/* Inner Binder Card with Dark Emerald Glass */}
         <div
           style={{
             width: '100%',
             maxWidth: '390px',
-            background: '#e3f7ea',
+            background: 'rgba(3, 30, 22, 0.85)',
+            border: '1px solid rgba(52, 211, 153, 0.35)',
             borderRadius: '1.5rem',
             position: 'relative',
-            paddingBottom: '1.5rem',
-            boxShadow: '0 20px 30px -5px rgba(0, 0, 0, 0.5)'
+            paddingBottom: '1.25rem',
+            boxShadow: '0 20px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255,255,255,0.1)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)'
           }}
         >
-          {/* Binder Straps / Pegs */}
+          {/* Binder Straps / Metallic Gold Pegs */}
           <div
             style={{
               position: 'absolute',
-              top: '-15px',
+              top: '-12px',
               left: '12%',
-              width: '16px',
-              height: '40px',
-              background: 'linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%)',
-              borderRadius: '10px',
+              width: '14px',
+              height: '32px',
+              background: 'linear-gradient(180deg, #fde047 0%, #b45309 100%)',
+              borderRadius: '8px',
               zIndex: 10,
-              boxShadow: 'inset -2px -2px 4px rgba(0,0,0,0.15), 0 4px 6px rgba(0,0,0,0.3)'
+              boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.6), 0 3px 6px rgba(0,0,0,0.4)'
             }}
           />
           <div
             style={{
               position: 'absolute',
-              top: '-15px',
+              top: '-12px',
               right: '12%',
-              width: '16px',
-              height: '40px',
-              background: 'linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%)',
-              borderRadius: '10px',
+              width: '14px',
+              height: '32px',
+              background: 'linear-gradient(180deg, #fde047 0%, #b45309 100%)',
+              borderRadius: '8px',
               zIndex: 10,
-              boxShadow: 'inset -2px -2px 4px rgba(0,0,0,0.15), 0 4px 6px rgba(0,0,0,0.3)'
+              boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.6), 0 3px 6px rgba(0,0,0,0.4)'
             }}
           />
 
@@ -149,20 +152,19 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
             style={{
               background: 'linear-gradient(180deg, #10b981 0%, #059669 100%)',
               borderRadius: '1.5rem 1.5rem 1rem 1rem',
-              padding: '1.2rem 1rem',
+              padding: '1.1rem 1rem',
               textAlign: 'center',
               position: 'relative',
-              marginBottom: '1rem',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.4)'
+              marginBottom: '0.9rem',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.4)'
             }}
           >
             <h2
               style={{
                 color: 'white',
                 margin: 0,
-                fontFamily: 'Georgia, serif',
                 fontWeight: 900,
-                fontSize: '1.35rem',
+                fontSize: '1.25rem',
                 textShadow: '0 2px 4px rgba(0,0,0,0.3)'
               }}
             >
@@ -173,12 +175,12 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.25rem',
-                background: 'rgba(0,0,0,0.2)',
+                background: 'rgba(0,0,0,0.25)',
                 padding: '0.2rem 0.65rem',
                 borderRadius: '12px',
-                marginTop: '0.4rem',
+                marginTop: '0.35rem',
                 color: '#fef08a',
-                fontSize: '0.75rem',
+                fontSize: '0.74rem',
                 fontWeight: 800
               }}
             >
@@ -192,9 +194,9 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '0.5rem',
-              padding: '0 1rem',
-              marginBottom: '1.25rem'
+              gap: '0.45rem',
+              padding: '0 0.85rem',
+              marginBottom: '1rem'
             }}
           >
             {days.map((d) => {
@@ -206,30 +208,30 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
                       ? 'linear-gradient(180deg, #10b981 0%, #047857 100%)'
                       : d.isMega
                       ? 'linear-gradient(180deg, #f59e0b 0%, #b45309 100%)'
-                      : '#ffffff',
+                      : 'rgba(0, 0, 0, 0.35)',
                     borderRadius: '0.75rem',
-                    padding: '0.5rem 0.15rem',
+                    padding: '0.45rem 0.15rem',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: d.active || d.isMega ? '0 4px 10px rgba(0,0,0,0.25)' : '0 2px 4px rgba(0,0,0,0.06)',
+                    boxShadow: d.active || d.isMega ? '0 4px 10px rgba(0,0,0,0.3)' : 'inset 0 1px 2px rgba(0,0,0,0.2)',
                     border: d.active
                       ? '2px solid #6ee7b7'
                       : d.isMega
                       ? '2px solid #fde68a'
-                      : '1px solid #e2e8f0',
-                    color: d.active || d.isMega ? '#ffffff' : '#475569',
-                    transform: d.active ? 'scale(1.04)' : 'none',
+                      : '1px solid rgba(255,255,255,0.08)',
+                    color: d.active || d.isMega ? '#ffffff' : '#94a3b8',
+                    transform: d.active ? 'scale(1.03)' : 'none',
                     zIndex: d.active ? 2 : 1,
                     position: 'relative'
                   }}
                 >
                   <div
                     style={{
-                      fontSize: '0.68rem',
+                      fontSize: '0.66rem',
                       fontWeight: 800,
-                      marginBottom: '0.2rem',
+                      marginBottom: '0.15rem',
                       color: d.active || d.isMega ? '#ffffff' : '#94a3b8'
                     }}
                   >
@@ -238,8 +240,8 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
 
                   <div
                     style={{
-                      fontSize: '1.4rem',
-                      marginBottom: '0.2rem',
+                      fontSize: '1.25rem',
+                      marginBottom: '0.15rem',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -250,8 +252,8 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
                       src={d.icon}
                       alt="Reward"
                       style={{
-                        width: d.isMega ? '28px' : '24px',
-                        height: d.isMega ? '28px' : '24px',
+                        width: d.isMega ? '24px' : '20px',
+                        height: d.isMega ? '24px' : '20px',
                         objectFit: 'contain'
                       }}
                     />
@@ -259,9 +261,9 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
 
                   <div
                     style={{
-                      fontSize: d.isMega ? '0.68rem' : '0.75rem',
-                      fontWeight: 900,
-                      fontFamily: 'Georgia, serif'
+                      fontSize: d.isMega ? '0.65rem' : '0.72rem',
+                      fontWeight: 800,
+                      color: d.active || d.isMega ? '#ffffff' : '#cbd5e1'
                     }}
                   >
                     {d.reward}
@@ -272,7 +274,7 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
           </div>
 
           {/* Action Buttons */}
-          <div style={{ padding: '0 1.25rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ padding: '0 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <button
               onClick={() => handleClaim(80)}
               disabled={claimed}
@@ -280,17 +282,16 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
                 width: '100%',
                 background: claimed
                   ? 'linear-gradient(180deg, #64748b 0%, #475569 100%)'
-                  : 'linear-gradient(180deg, #10b981 0%, #047857 100%)',
+                  : 'linear-gradient(180deg, #00e676 0%, #00a854 100%)',
                 color: 'white',
-                border: 'none',
-                borderRadius: '0.85rem',
-                padding: '0.85rem',
-                fontSize: '1.05rem',
+                border: '1px solid rgba(167, 243, 208, 0.8)',
+                borderRadius: '0.75rem',
+                padding: '0.75rem',
+                fontSize: '0.95rem',
                 fontWeight: 900,
-                fontFamily: 'Georgia, serif',
-                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4), inset 0 1px 1px rgba(255,255,255,0.4)',
+                boxShadow: '0 4px 18px rgba(0, 230, 118, 0.45), inset 0 1px 1px rgba(255,255,255,0.4)',
                 cursor: claimed ? 'default' : 'pointer',
-                marginBottom: '0.75rem',
+                marginBottom: '0.5rem',
                 transition: 'all 0.15s ease'
               }}
             >
@@ -302,10 +303,10 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: '#059669',
+                color: '#6ee7b7',
                 textDecoration: 'underline',
                 fontWeight: 700,
-                fontSize: '0.85rem',
+                fontSize: '0.8rem',
                 cursor: 'pointer'
               }}
             >

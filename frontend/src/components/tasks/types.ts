@@ -13,6 +13,7 @@ export interface TaskItem {
   isPlaceholder?: boolean;
   onAction?: () => void;
   hideButton?: boolean;
+  buttonText?: string;
 }
 
 export interface ReadyToClaimItem {

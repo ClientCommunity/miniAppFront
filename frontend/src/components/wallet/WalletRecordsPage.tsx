@@ -99,7 +99,7 @@ export const WalletRecordsPage: FC<WalletRecordsPageProps> = ({ onBack }) => {
         width: '100%',
         height: '100%',
         minHeight: '100vh',
-        background: 'radial-gradient(ellipse at 50% 0%, #0c6340 0%, #032b1d 60%, #01170f 100%)',
+        background: 'radial-gradient(ellipse at 50% -10%, #057a44 0%, #024e2c 40%, #012a18 75%, #00170d 100%)',
         position: 'absolute',
         top: 0,
         left: 0,
@@ -120,7 +120,7 @@ export const WalletRecordsPage: FC<WalletRecordsPageProps> = ({ onBack }) => {
           transform: 'translateX(-50%)',
           width: '320px',
           height: '240px',
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(0,0,0,0) 70%)',
+          background: 'radial-gradient(circle, rgba(0, 230, 118, 0.28) 0%, rgba(5, 122, 68, 0.12) 50%, rgba(0,0,0,0) 75%)',
           borderRadius: '50%',
           pointerEvents: 'none',
           zIndex: 1

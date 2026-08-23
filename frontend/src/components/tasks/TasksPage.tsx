@@ -68,7 +68,7 @@ const ALL_TASKS: TaskItem[] = [
   {
     id: 'social-1',
     category: 'socials',
-    title: 'Subscribe to EarnCraft Telegram Channel',
+    title: 'Subscribe to Telegram Channel',
     icon: '📣',
     rewardGems: 500,
     status: 'pending'
@@ -113,7 +113,7 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
         width: '100%',
         height: '100%',
         minHeight: '100vh',
-        background: 'radial-gradient(ellipse at 50% 0%, #0c6340 0%, #032b1d 60%, #01170f 100%)',
+        background: 'radial-gradient(ellipse at 50% -10%, #057a44 0%, #024e2c 40%, #012a18 75%, #00170d 100%)',
         position: 'absolute',
         top: 0,
         left: 0,
@@ -134,7 +134,7 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
           transform: 'translateX(-50%)',
           width: '320px',
           height: '240px',
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(0,0,0,0) 70%)',
+          background: 'radial-gradient(circle, rgba(0, 230, 118, 0.28) 0%, rgba(5, 122, 68, 0.12) 50%, rgba(0,0,0,0) 75%)',
           borderRadius: '50%',
           pointerEvents: 'none',
           zIndex: 1
@@ -147,7 +147,7 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '1.25rem 1rem 0.75rem 1rem',
+          padding: '1rem 1rem 0.65rem 1rem',
           position: 'relative',
           zIndex: 10
         }}
@@ -161,14 +161,14 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.4rem',
+            gap: '0.35rem',
             background: 'rgba(255, 255, 255, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.25)',
-            borderRadius: '20px',
-            padding: '0.35rem 0.85rem',
+            borderRadius: '16px',
+            padding: '0.3rem 0.75rem',
             color: '#ffffff',
             fontWeight: 800,
-            fontSize: '0.85rem',
+            fontSize: '0.82rem',
             cursor: 'pointer',
             boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
           }}
@@ -177,23 +177,23 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
         </button>
 
         {/* Resource Badges */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
           {/* Energy */}
-          <div style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '0.2rem 0.55rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>50</span>
+          <div style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '0.18rem 0.5rem', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '15px', height: '15px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>50</span>
           </div>
 
           {/* Spins */}
-          <div style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '0.2rem 0.55rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <img src="./assets/wheel-of-fortune.png" alt="Spins" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>12</span>
+          <div style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '0.18rem 0.5rem', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <img src="./assets/wheel-of-fortune.png" alt="Spins" style={{ width: '15px', height: '15px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>12</span>
           </div>
 
           {/* Diamonds */}
-          <div style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '0.2rem 0.65rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <img src="./assets/purple-diamond.png" alt="Diamond" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>760</span>
+          <div style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '0.18rem 0.55rem', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <img src="./assets/purple-diamond.png" alt="Diamond" style={{ width: '15px', height: '15px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>760</span>
           </div>
         </div>
       </div>
@@ -202,12 +202,12 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
       <div
         style={{
           flex: 1,
-          padding: '0.5rem 1rem 2rem 1rem',
+          padding: '0.35rem 0.9rem 2rem 0.9rem',
           position: 'relative',
           zIndex: 10,
           display: 'flex',
           flexDirection: 'column',
-          gap: '1.25rem'
+          gap: '1rem'
         }}
       >
         {/* Section 1: Ready To Claim */}
@@ -217,23 +217,22 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '0.6rem'
+              marginBottom: '0.45rem'
             }}
           >
             <h2
               style={{
-                fontSize: '1.25rem',
+                fontSize: '1.05rem',
                 fontWeight: 800,
                 color: '#ffffff',
-                margin: 0,
-                fontFamily: 'Georgia, serif'
+                margin: 0
               }}
             >
               Ready To Claim
             </h2>
             <span
               style={{
-                fontSize: '0.85rem',
+                fontSize: '0.78rem',
                 fontWeight: 800,
                 color: '#34d399'
               }}
@@ -252,12 +251,12 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
           ) : (
             <div
               style={{
-                padding: '1rem',
+                padding: '0.8rem',
                 textAlign: 'center',
                 color: 'rgba(255,255,255,0.6)',
-                fontSize: '0.9rem',
+                fontSize: '0.82rem',
                 background: 'rgba(0,0,0,0.25)',
-                borderRadius: '12px',
+                borderRadius: '10px',
                 border: '1px solid rgba(255,255,255,0.1)'
               }}
             >
@@ -271,9 +270,9 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
           <div
             style={{
               display: 'flex',
-              gap: '0.45rem',
+              gap: '0.4rem',
               overflowX: 'auto',
-              paddingBottom: '0.5rem'
+              paddingBottom: '0.35rem'
             }}
           >
             {[
@@ -291,24 +290,24 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
                 style={{
                   background:
                     activeCategory === tab.id
-                      ? 'linear-gradient(180deg, #10b981 0%, #047857 100%)'
+                      ? 'linear-gradient(180deg, #00e676 0%, #00a854 100%)'
                       : 'rgba(255, 255, 255, 0.08)',
                   color: '#ffffff',
                   border:
                     activeCategory === tab.id
-                      ? '1px solid #6ee7b7'
+                      ? '1px solid #86efac'
                       : '1px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: '20px',
-                  padding: '0.4rem 0.9rem',
-                  fontSize: '0.82rem',
+                  borderRadius: '16px',
+                  padding: '0.35rem 0.8rem',
+                  fontSize: '0.78rem',
                   fontWeight: 800,
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                   boxShadow:
                     activeCategory === tab.id
-                      ? '0 2px 8px rgba(16, 185, 129, 0.4)'
+                      ? '0 2px 10px rgba(0, 230, 118, 0.45)'
                       : 'none',
-                  transition: 'all 0.15s ease'
+                  transition: 'all 0.12s ease'
                 }}
               >
                 {tab.label}
@@ -317,7 +316,7 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
           </div>
 
           {/* Task List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginTop: '0.45rem' }}>
             {filteredTasks.length > 0 ? (
               filteredTasks.map((task) => (
                 <TaskCard key={task.id} task={task} onClaim={() => handleTaskClaim(task.id)} />
@@ -325,12 +324,12 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
             ) : (
               <div
                 style={{
-                  padding: '1.5rem',
+                  padding: '1.25rem',
                   textAlign: 'center',
                   color: 'rgba(255,255,255,0.6)',
-                  fontSize: '0.9rem',
+                  fontSize: '0.85rem',
                   background: 'rgba(0,0,0,0.2)',
-                  borderRadius: '12px'
+                  borderRadius: '10px'
                 }}
               >
                 No tasks in this category.

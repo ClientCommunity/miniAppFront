@@ -94,10 +94,10 @@ export const ConnectWalletModal: FC<ConnectWalletModalProps> = ({
       <div
         style={{
           width: '100%',
-          background: 'linear-gradient(180deg, #058245 0%, #024a27 100%)',
+          background: 'linear-gradient(180deg, #059669 0%, #013820 100%)',
           borderTopLeftRadius: '1.5rem',
           borderTopRightRadius: '1.5rem',
-          borderTop: '1px solid rgba(52, 211, 153, 0.5)',
+          borderTop: '1px solid rgba(0, 230, 118, 0.55)',
           boxShadow: '0 -10px 40px rgba(0,0,0,0.6)',
           transform: isVisible ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -332,15 +332,15 @@ export const ConnectWalletModal: FC<ConnectWalletModalProps> = ({
           <button
             onClick={handleSave}
             style={{
-              background: 'linear-gradient(180deg, #22c55e 0%, #16a34a 100%)',
-              border: '1px solid rgba(167, 243, 208, 0.6)',
+              background: 'linear-gradient(180deg, #00e676 0%, #00a854 100%)',
+              border: '1px solid rgba(167, 243, 208, 0.8)',
               borderRadius: '0.65rem',
               padding: '0.55rem 1.6rem',
               color: '#ffffff',
               fontWeight: 800,
               fontSize: '0.95rem',
               cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4)'
+              boxShadow: '0 2px 10px rgba(0, 230, 118, 0.4)'
             }}
           >
             Save

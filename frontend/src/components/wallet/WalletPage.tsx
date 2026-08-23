@@ -55,7 +55,7 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
         width: '100%',
         height: '100%',
         minHeight: '100vh',
-        background: 'radial-gradient(ellipse at 50% 0%, #0c6340 0%, #032b1d 60%, #01170f 100%)',
+        background: 'radial-gradient(ellipse at 50% -10%, #057a44 0%, #024e2c 40%, #012a18 75%, #00170d 100%)',
         position: 'absolute',
         top: 0,
         left: 0,
@@ -76,7 +76,7 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
           transform: 'translateX(-50%)',
           width: '320px',
           height: '240px',
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(0,0,0,0) 70%)',
+          background: 'radial-gradient(circle, rgba(0, 230, 118, 0.28) 0%, rgba(5, 122, 68, 0.12) 50%, rgba(0,0,0,0) 75%)',
           borderRadius: '50%',
           pointerEvents: 'none',
           zIndex: 1
@@ -425,16 +425,15 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
             onClick={handleWithdraw}
             style={{
               width: '100%',
-              background: 'linear-gradient(180deg, #22c55e 0%, #15803d 100%)',
-              border: '1px solid rgba(167, 243, 208, 0.6)',
+              background: 'linear-gradient(180deg, #00e676 0%, #00a854 60%, #008a3b 100%)',
+              border: '1px solid rgba(167, 243, 208, 0.8)',
               borderRadius: '1rem',
               padding: '1rem',
               color: '#ffffff',
               fontWeight: 900,
               fontSize: '1.1rem',
-              fontFamily: 'Georgia, serif',
               cursor: 'pointer',
-              boxShadow: '0 4px 20px rgba(34, 197, 94, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.4)',
+              boxShadow: '0 4px 20px rgba(0, 230, 118, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.5)',
               textAlign: 'center'
             }}
           >

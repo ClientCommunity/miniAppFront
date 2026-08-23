@@ -12,60 +12,75 @@ export const ReadyToClaimCard: FC<ReadyToClaimCardProps> = ({ item }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0.65rem 0.9rem',
-        background: 'linear-gradient(90deg, #028a4c 0%, #00b05b 50%, #028a4c 100%)',
-        borderRadius: '12px',
-        border: '1px solid rgba(52, 211, 153, 0.6)',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.3)',
+        padding: '0.5rem 0.85rem',
+        background: 'linear-gradient(90deg, #00994d 0%, #00d66c 50%, #00994d 100%)',
+        borderRadius: '0.9rem',
+        border: '1px solid rgba(0, 230, 118, 0.65)',
+        boxShadow: '0 4px 14px rgba(0, 214, 108, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.4)',
         color: 'white',
-        transition: 'transform 0.15s ease'
+        fontFamily: 'Outfit, sans-serif',
+        gap: '0.75rem'
       }}
     >
       {/* Left Icon & Title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <img
-          src={item.icon || './assets/inviteFeatureCardIcon.png'}
-          alt="Invite"
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flex: 1, minWidth: 0 }}>
+        <div
           style={{
             width: '36px',
             height: '36px',
-            objectFit: 'contain',
-            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+            borderRadius: '10px',
+            background: 'rgba(0, 0, 0, 0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
           }}
-        />
-        <span
+        >
+          <img
+            src={item.icon || './assets/inviteFeatureCardIcon.png'}
+            alt="Invite"
+            style={{
+              width: '26px',
+              height: '26px',
+              objectFit: 'contain',
+              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+            }}
+          />
+        </div>
+        <div
           style={{
             fontWeight: 700,
-            fontSize: '0.95rem',
+            fontSize: '0.88rem',
             color: '#ffffff',
-            fontFamily: 'Georgia, serif',
-            letterSpacing: '0.2px'
+            lineHeight: 1.2,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
           }}
         >
           {item.title}
-        </span>
+        </div>
       </div>
 
       {/* Right Claim Pill Button */}
       <button
         onClick={item.onClaim}
         style={{
-          display: 'flex',
+          display: 'inline-flex',
           alignItems: 'center',
-          gap: '0.35rem',
+          gap: '0.3rem',
           background: 'linear-gradient(180deg, #00d66c 0%, #009949 100%)',
-          border: '1px solid rgba(167, 243, 208, 0.6)',
-          borderRadius: '20px',
-          padding: '0.35rem 1rem',
+          border: '1px solid rgba(167, 243, 208, 0.7)',
+          borderRadius: '0.65rem',
+          padding: '0.35rem 0.85rem',
           color: '#ffffff',
-          fontWeight: 900,
-          fontStyle: 'italic',
-          fontFamily: 'Georgia, serif',
-          fontSize: '0.95rem',
+          fontWeight: 800,
+          fontSize: '0.85rem',
           boxShadow: '0 2px 6px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.4)',
           cursor: 'pointer',
           transition: 'transform 0.1s ease',
-          whiteSpace: 'nowrap'
+          whiteSpace: 'nowrap',
+          flexShrink: 0
         }}
         onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
         onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
@@ -74,9 +89,9 @@ export const ReadyToClaimCard: FC<ReadyToClaimCardProps> = ({ item }) => {
         <img
           src="./assets/purple-diamond.png"
           alt="Diamond"
-          style={{ width: '15px', height: '15px', objectFit: 'contain' }}
+          style={{ width: '14px', height: '14px', objectFit: 'contain' }}
         />
-        <span>{item.rewardGems}</span>
+        <span>+{item.rewardGems}</span>
       </button>
     </div>
   );
