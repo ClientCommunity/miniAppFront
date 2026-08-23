@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import type { FC } from 'react';
+import { haptics } from '../utils/haptics';
 
 export interface SpinSegment {
   label: string;
@@ -16,163 +17,236 @@ interface SpinWheelProps {
   spinDuration?: number;
 }
 
-interface SliceStyle {
-  start: string;
-  mid: string;
-  end: string;
-  shadow: string;
+interface GemstoneTheme {
+  name: string;
+  chromaticCore: string;
+  vividMid: string;
+  deepBody: string;
+  darkEdge: string;
+  rimBevel: string;
 }
 
-// Curated Royal Casino Luxury Gemstone & Gold Palette
-const LUXURY_PALETTE: SliceStyle[] = [
-  { start: '#7e22ce', mid: '#9333ea', end: '#3b0764', shadow: '#2e1065' }, // Amethyst Velvet Purple
-  { start: '#d97706', mid: '#f59e0b', end: '#78350f', shadow: '#451a03' }, // Warm Amber Gold
-  { start: '#047857', mid: '#059669', end: '#022c22', shadow: '#064e3b' }, // Imperial Jade Emerald
-  { start: '#be123c', mid: '#e11d48', end: '#4c0519', shadow: '#881337' }, // Royal Crimson Ruby
-  { start: '#0284c7', mid: '#0ea5e9', end: '#164e63', shadow: '#0c4a6e' }, // Deep Sapphire Cyan
-  { start: '#059669', mid: '#10b981', end: '#064e3b', shadow: '#022c22' }  // Vibrant Emerald Mint
+// 12 Ultra-Saturated Royal Gemstone Themes (Pure Color Vibrancy, No Pastel Washout)
+const LUXURY_GEMSTONES: GemstoneTheme[] = [
+  {
+    name: 'Royal Amethyst',
+    chromaticCore: '#e879f9',
+    vividMid: '#a855f7',
+    deepBody: '#7e22ce',
+    darkEdge: '#2e1065',
+    rimBevel: 'rgba(232, 121, 249, 0.75)'
+  },
+  {
+    name: 'Molten Amber Gold',
+    chromaticCore: '#fde047',
+    vividMid: '#f59e0b',
+    deepBody: '#b45309',
+    darkEdge: '#451a03',
+    rimBevel: 'rgba(254, 240, 138, 0.85)'
+  },
+  {
+    name: 'Imperial Jade Emerald',
+    chromaticCore: '#34d399',
+    vividMid: '#10b981',
+    deepBody: '#047857',
+    darkEdge: '#022c22',
+    rimBevel: 'rgba(52, 211, 153, 0.75)'
+  },
+  {
+    name: 'Burning Crimson Ruby',
+    chromaticCore: '#fb7185',
+    vividMid: '#f43f5e',
+    deepBody: '#be123c',
+    darkEdge: '#4c0519',
+    rimBevel: 'rgba(251, 113, 133, 0.75)'
+  },
+  {
+    name: 'Electric Sapphire',
+    chromaticCore: '#38bdf8',
+    vividMid: '#0284c7',
+    deepBody: '#0369a1',
+    darkEdge: '#082f49',
+    rimBevel: 'rgba(56, 189, 248, 0.75)'
+  },
+  {
+    name: 'Vibrant Mint Peridot',
+    chromaticCore: '#6ee7b7',
+    vividMid: '#14b8a6',
+    deepBody: '#0f766e',
+    darkEdge: '#042f2e',
+    rimBevel: 'rgba(110, 231, 183, 0.75)'
+  },
+  {
+    name: 'Tangerine Carnelian',
+    chromaticCore: '#fdba74',
+    vividMid: '#f97316',
+    deepBody: '#c2410c',
+    darkEdge: '#431407',
+    rimBevel: 'rgba(253, 186, 116, 0.75)'
+  },
+  {
+    name: 'Royal Tanzanite',
+    chromaticCore: '#a5b4fc',
+    vividMid: '#6366f1',
+    deepBody: '#4338ca',
+    darkEdge: '#1e1b4b',
+    rimBevel: 'rgba(165, 180, 252, 0.75)'
+  }
 ];
 
 export const SpinWheel: FC<SpinWheelProps> = ({
   segments,
-  size = 320,
-  theme = 'emerald',
+  size = 260,
   onSpinRequest,
   onSpinEnd,
   spinDuration = 5200
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const coreWrapperRef = useRef<HTMLDivElement>(null);
 
   const [isSpinning, setIsSpinning] = useState(false);
   const [currentRotation, setCurrentRotation] = useState(0);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [loadedCount, setLoadedCount] = useState(0);
   const [isButtonPressed, setIsButtonPressed] = useState(false);
   const [bulbPhase, setBulbPhase] = useState(0);
   const loadedImagesRef = useRef<Record<string, HTMLImageElement>>({});
 
-  // Cycle marquee bulbs animation
+  // Sizing metrics
+  const frameThickness = 22;
+  const coreSize = Math.max(120, size - frameThickness * 2 + 4);
+  const hubSize = coreSize * 0.38;
+
+  // Cycle marquee bulbs chase effect
   useEffect(() => {
     const interval = setInterval(() => {
       setBulbPhase((prev) => (prev + 1) % 2);
-    }, isSpinning ? 120 : 600);
+    }, isSpinning ? 90 : 500);
     return () => clearInterval(interval);
   }, [isSpinning]);
 
+  // Preload segment images & trigger redraw when each image finishes loading
   useEffect(() => {
     const urls = segments.map((s) => s.image).filter(Boolean) as string[];
-    if (urls.length === 0) {
-      setImagesLoaded(true);
-      return;
-    }
+    if (urls.length === 0) return;
 
-    let loadedCount = 0;
     urls.forEach((url) => {
-      if (loadedImagesRef.current[url]) {
-        loadedCount++;
-        if (loadedCount === urls.length) setImagesLoaded(true);
-        return;
-      }
+      if (loadedImagesRef.current[url]) return;
       const img = new Image();
       img.src = url;
       img.onload = () => {
         loadedImagesRef.current[url] = img;
-        loadedCount++;
-        if (loadedCount === urls.length) {
-          setImagesLoaded(true);
-        }
+        setLoadedCount((c) => c + 1);
       };
     });
   }, [segments]);
 
-  // Render Hyper-Realistic 3D Casino Canvas Wheel
-  useEffect(() => {
-    if (!imagesLoaded) return;
+  // ═══════════════════════════════════════════════════════════════════
+  // HIGH-DPI CANVAS RENDER: 3D CONVEX GEMSTONE CUSHION ROTATING CORE
+  // ═══════════════════════════════════════════════════════════════════
+  const drawWheel = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const dpr = typeof window !== 'undefined' ? Math.max(window.devicePixelRatio || 1, 2) : 2;
+    const renderSize = coreSize * dpr;
+
+    canvas.width = renderSize;
+    canvas.height = renderSize;
+
+    ctx.save();
+    ctx.scale(dpr, dpr);
+
     const numSegments = segments.length;
-    if (numSegments === 0) return;
+    if (numSegments === 0) {
+      ctx.restore();
+      return;
+    }
 
     const arc = (2 * Math.PI) / numSegments;
-    const radius = size / 2;
-    const cx = radius;
-    const cy = radius;
-    const innerRadius = radius - 14;
-    const hubRadius = size * 0.16;
+    const cx = coreSize / 2;
+    const cy = coreSize / 2;
+    const innerRadius = coreSize / 2 - 1;
+    const hubRadius = hubSize / 2;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, coreSize, coreSize);
 
-    // ==========================================
-    // 1. OUTER HEAVY GOLD CASINO BEVELED RIM
-    // ==========================================
-    const rimGradient = ctx.createLinearGradient(0, 0, size, size);
-    rimGradient.addColorStop(0, '#fef08a');
-    rimGradient.addColorStop(0.2, '#ca8a04');
-    rimGradient.addColorStop(0.4, '#fef08a');
-    rimGradient.addColorStop(0.65, '#854d0e');
-    rimGradient.addColorStop(0.85, '#eab308');
-    rimGradient.addColorStop(1, '#fef08a');
-
+    // ─────────────────────────────────────────────────────────────────
+    // 1. BASE ROTATING BACKPLATE
+    // ─────────────────────────────────────────────────────────────────
     ctx.beginPath();
-    ctx.arc(cx, cy, radius - 2, 0, 2 * Math.PI);
-    ctx.fillStyle = rimGradient;
+    ctx.arc(cx, cy, innerRadius, 0, 2 * Math.PI);
+    ctx.fillStyle = '#060a12';
     ctx.fill();
 
-    // Outer Dark Bezel Inset
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius - 9, 0, 2 * Math.PI);
-    ctx.fillStyle = '#090d16';
-    ctx.fill();
-
-    // Engraved Golden Bead Track Ring
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius - 11, 0, 2 * Math.PI);
-    ctx.strokeStyle = 'rgba(251, 191, 36, 0.6)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // ==========================================
-    // 2. LUXURY GEMSTONE SLICES (CONVEX 3D DEPTH)
-    // ==========================================
+    // ─────────────────────────────────────────────────────────────────
+    // 2. 3D CONVEX GEMSTONE SLICES (Segment-Local Pillow Geometry)
+    // ─────────────────────────────────────────────────────────────────
     for (let i = 0; i < numSegments; i++) {
       const angle = i * arc;
-      const palette = LUXURY_PALETTE[i % LUXURY_PALETTE.length];
+      const gemTheme = LUXURY_GEMSTONES[i % LUXURY_GEMSTONES.length];
+      const midAngle = angle + arc / 2;
 
-      // Multi-stop radial gradient for rich 3D convex dome look
-      const segGradient = ctx.createRadialGradient(
+      ctx.save();
+
+      // Base Sector Path Clip
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, innerRadius, angle, angle + arc);
+      ctx.closePath();
+      ctx.clip();
+
+      // Calculate the centroid of THIS specific segment slice
+      const sliceCenterDist = (hubRadius + innerRadius) * 0.58;
+      const sliceCenterX = cx + Math.cos(midAngle) * sliceCenterDist;
+      const sliceCenterY = cy + Math.sin(midAngle) * sliceCenterDist;
+
+      // Layer 2A: Segment-Local 3D Convex Radial Gradient (Pillow Cushion Shading)
+      const localGrad = ctx.createRadialGradient(
+        sliceCenterX,
+        sliceCenterY,
+        2,
+        sliceCenterX,
+        sliceCenterY,
+        innerRadius * 0.68
+      );
+      localGrad.addColorStop(0, gemTheme.chromaticCore);
+      localGrad.addColorStop(0.32, gemTheme.vividMid);
+      localGrad.addColorStop(0.72, gemTheme.deepBody);
+      localGrad.addColorStop(1, gemTheme.darkEdge);
+
+      ctx.fillStyle = localGrad;
+      ctx.fill();
+
+      // Layer 2B: Angular Depth Shading (Wheel center falloff for unified depth)
+      const depthShadow = ctx.createRadialGradient(
         cx,
         cy,
-        hubRadius * 0.8,
+        innerRadius * 0.75,
         cx,
         cy,
         innerRadius
       );
-      segGradient.addColorStop(0, palette.start);
-      segGradient.addColorStop(0.45, palette.mid);
-      segGradient.addColorStop(0.85, palette.end);
-      segGradient.addColorStop(1, palette.shadow);
+      depthShadow.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      depthShadow.addColorStop(1, 'rgba(0, 0, 0, 0.45)');
 
-      ctx.beginPath();
-      ctx.fillStyle = segGradient;
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, innerRadius, angle, angle + arc);
-      ctx.lineTo(cx, cy);
+      ctx.fillStyle = depthShadow;
       ctx.fill();
 
-      // Delicate inner gold arc highlight on outer edge of slice
+      // Layer 2C: Inset Pillow Bevel Edge Contour Highlights
       ctx.beginPath();
-      ctx.arc(cx, cy, innerRadius - 4, angle + 0.04, angle + arc - 0.04);
-      ctx.strokeStyle = 'rgba(254, 240, 138, 0.25)';
-      ctx.lineWidth = 2;
+      ctx.arc(cx, cy, innerRadius - 2.5, angle + 0.025, angle + arc - 0.025);
+      ctx.strokeStyle = gemTheme.rimBevel;
+      ctx.lineWidth = 2.5;
       ctx.stroke();
+
+      ctx.restore();
     }
 
-    // ==========================================
-    // 3. ASSET PEDESTALS, 3D ICONS & LABELS
-    // ==========================================
+    // ─────────────────────────────────────────────────────────────────
+    // 3. DIRECT FLOATING 3D REWARD ASSET ICONS (High-Contrast Float)
+    // ─────────────────────────────────────────────────────────────────
     for (let i = 0; i < numSegments; i++) {
       const angle = i * arc;
       const midAngle = angle + arc / 2;
@@ -182,176 +256,207 @@ export const SpinWheel: FC<SpinWheelProps> = ({
       ctx.translate(cx, cy);
       ctx.rotate(midAngle);
 
-      const itemDistance = innerRadius * 0.64;
+      const itemDistance = innerRadius * 0.60;
+      const iconRenderSize = coreSize > 200 ? 36 : 28;
 
-      // Soft Luminous Aura / Halo behind asset
-      const auraGradient = ctx.createRadialGradient(
+      // 3A: Soft Saturated Ambient Flare behind asset
+      const ambientGlow = ctx.createRadialGradient(
         itemDistance,
         0,
-        2,
+        1,
         itemDistance,
         0,
-        24
+        iconRenderSize * 0.75
       );
-      auraGradient.addColorStop(0, 'rgba(255, 255, 255, 0.28)');
-      auraGradient.addColorStop(0.6, 'rgba(254, 240, 138, 0.12)');
-      auraGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ambientGlow.addColorStop(0, 'rgba(255, 255, 255, 0.35)');
+      ambientGlow.addColorStop(0.5, 'rgba(254, 240, 138, 0.15)');
+      ambientGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
       ctx.beginPath();
-      ctx.arc(itemDistance, 0, 24, 0, 2 * Math.PI);
-      ctx.fillStyle = auraGradient;
+      ctx.arc(itemDistance, 0, iconRenderSize * 0.75, 0, 2 * Math.PI);
+      ctx.fillStyle = ambientGlow;
       ctx.fill();
 
-      // Render 3D Icon or Label
-      if (segment.image && loadedImagesRef.current[segment.image]) {
-        const img = loadedImagesRef.current[segment.image];
-        const imgSize = size > 300 ? 34 : 28;
+      // 3B: Draw 3D Asset Image Floating Directly with Deep Drop Shadow
+      const img = segment.image ? loadedImagesRef.current[segment.image] : null;
 
-        // Realistic asset drop shadow
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
-        ctx.shadowBlur = 8;
+      if (img && img.complete && img.naturalWidth > 0) {
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+        ctx.shadowBlur = 10;
         ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 3;
+        ctx.shadowOffsetY = 4;
 
         ctx.drawImage(
           img,
-          itemDistance - imgSize / 2,
-          -imgSize / 2,
-          imgSize,
-          imgSize
+          itemDistance - iconRenderSize / 2,
+          -iconRenderSize / 2,
+          iconRenderSize,
+          iconRenderSize
         );
       } else {
-        ctx.font = '900 13px Georgia, serif';
+        ctx.font = `900 ${coreSize > 200 ? 12 : 10}px Georgia, serif`;
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-        ctx.shadowBlur = 6;
-        ctx.fillText(segment.label, itemDistance, 5);
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+        ctx.shadowBlur = 5;
+        ctx.shadowOffsetY = 1;
+        ctx.fillText(segment.label, itemDistance, 4);
       }
+
       ctx.restore();
     }
 
-    // ==========================================
-    // 4. 3D EXTRUDED GOLD DIVIDER SPOKES & RIVETS
-    // ==========================================
-    for (let i = 0; i < numSegments; i++) {
-      const angle = i * arc;
-      const cosA = Math.cos(angle);
-      const sinA = Math.sin(angle);
-
-      const startX = cx + cosA * (hubRadius + 4);
-      const startY = cy + sinA * (hubRadius + 4);
-      const endX = cx + cosA * (innerRadius - 2);
-      const endY = cy + sinA * (innerRadius - 2);
-
-      // Layer 1: Dark Depth Shadow Ray
-      ctx.beginPath();
-      ctx.moveTo(startX + 1, startY + 1);
-      ctx.lineTo(endX + 1, endY + 1);
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.65)';
-      ctx.lineWidth = 3.5;
-      ctx.stroke();
-
-      // Layer 2: Metallic Gold Body
-      ctx.beginPath();
-      ctx.moveTo(startX, startY);
-      ctx.lineTo(endX, endY);
-      ctx.strokeStyle = '#eab308';
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-
-      // Layer 3: Top Specular Gold Highlight
-      ctx.beginPath();
-      ctx.moveTo(startX - 0.75, startY - 0.75);
-      ctx.lineTo(endX - 0.75, endY - 0.75);
-      ctx.strokeStyle = '#fef08a';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // Outer Gold Ball Rivet Stud
-      const outerRivetX = cx + cosA * (innerRadius - 3);
-      const outerRivetY = cy + sinA * (innerRadius - 3);
-      const outerRivetGrad = ctx.createRadialGradient(
-        outerRivetX - 1,
-        outerRivetY - 1,
-        0,
-        outerRivetX,
-        outerRivetY,
-        4
-      );
-      outerRivetGrad.addColorStop(0, '#ffffff');
-      outerRivetGrad.addColorStop(0.4, '#fbbf24');
-      outerRivetGrad.addColorStop(1, '#78350f');
-
-      ctx.beginPath();
-      ctx.arc(outerRivetX, outerRivetY, 3.5, 0, 2 * Math.PI);
-      ctx.fillStyle = outerRivetGrad;
-      ctx.fill();
-    }
-
-    // ==========================================
-    // 5. SUNKEN WHEEL CAVITY INNER DROP SHADOW
-    // ==========================================
-    const cavityShadow = ctx.createRadialGradient(
-      cx,
-      cy,
-      innerRadius - 22,
-      cx,
-      cy,
-      innerRadius
-    );
-    cavityShadow.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    cavityShadow.addColorStop(0.7, 'rgba(0, 0, 0, 0.2)');
-    cavityShadow.addColorStop(1, 'rgba(0, 0, 0, 0.6)');
-
-    ctx.beginPath();
-    ctx.arc(cx, cy, innerRadius, 0, 2 * Math.PI);
-    ctx.fillStyle = cavityShadow;
-    ctx.fill();
-
-    // ==========================================
-    // 6. GLOSSY SPECULAR LACQUER SHEEN OVERLAY
-    // ==========================================
+    // ─────────────────────────────────────────────────────────────────
+    // 4. HIGH-GLOSS CURVED WATCH-GLASS LACQUER SHEEN
+    // ─────────────────────────────────────────────────────────────────
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx, cy, innerRadius, 0, 2 * Math.PI);
     ctx.clip();
 
-    const glossGrad = ctx.createLinearGradient(0, 0, size * 0.75, size * 0.75);
-    glossGrad.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
-    glossGrad.addColorStop(0.35, 'rgba(255, 255, 255, 0.04)');
-    glossGrad.addColorStop(0.7, 'rgba(255, 255, 255, 0)');
+    const glassSheen = ctx.createLinearGradient(0, 0, coreSize * 0.8, coreSize * 0.8);
+    glassSheen.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
+    glassSheen.addColorStop(0.35, 'rgba(255, 255, 255, 0.05)');
+    glassSheen.addColorStop(0.65, 'rgba(255, 255, 255, 0)');
+    glassSheen.addColorStop(0.85, 'rgba(255, 255, 255, 0.04)');
+    glassSheen.addColorStop(1, 'rgba(255, 255, 255, 0.12)');
 
-    ctx.fillStyle = glossGrad;
+    ctx.fillStyle = glassSheen;
     ctx.fill();
     ctx.restore();
 
-    // ==========================================
-    // 7. CENTER HUB GOLDEN COLLAR TRACK
-    // ==========================================
-    // Outer Shadow
-    ctx.beginPath();
-    ctx.arc(cx, cy, hubRadius + 5, 0, 2 * Math.PI);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
-    ctx.fill();
+    // ─────────────────────────────────────────────────────────────────
+    // 5. PHOTOREALISTIC 3D ORNATE GOLDEN DIVIDER PILLARS & SOCKET JOINTS
+    // ─────────────────────────────────────────────────────────────────
+    for (let i = 0; i < numSegments; i++) {
+      const angle = i * arc;
 
-    // Metallic Gold Ring Collar
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+
+      const x0 = hubRadius + 1;
+      const x1 = innerRadius - 1;
+      const w0 = 2.2; // Hub end half-width
+      const w1 = 3.0; // Outer rim socket half-width
+
+      // 5A: Deep Directional Cast Shadow (Elevation above gemstone slices)
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetX = 1;
+      ctx.shadowOffsetY = 2.5;
+
+      ctx.beginPath();
+      ctx.moveTo(x0, -w0 - 1);
+      ctx.lineTo(x1, -w1 - 1);
+      ctx.lineTo(x1, w1 + 1);
+      ctx.lineTo(x0, w0 + 1);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fill();
+      ctx.restore();
+
+      // 5B: Sculpted Tapered 3D Pillar Body (Perpendicular Metallic Gold Gradient)
+      const pillarGrad = ctx.createLinearGradient(0, -w1, 0, w1);
+      pillarGrad.addColorStop(0.00, '#78350f'); // Deep bronze bottom shadow
+      pillarGrad.addColorStop(0.18, '#b45309'); // Burnished bronze
+      pillarGrad.addColorStop(0.38, '#fbbf24'); // Radiant 24k gold body
+      pillarGrad.addColorStop(0.50, '#fef9c3'); // Specular center crest ridge
+      pillarGrad.addColorStop(0.68, '#f59e0b'); // Warm honey gold
+      pillarGrad.addColorStop(0.85, '#d97706'); // Deep gold bevel
+      pillarGrad.addColorStop(1.00, '#451a03'); // Dark edge shadow
+
+      ctx.beginPath();
+      ctx.moveTo(x0, -w0);
+      ctx.lineTo(x1 - 3, -w1);
+      ctx.arc(x1 - 3, 0, w1, -Math.PI / 2, Math.PI / 2);
+      ctx.lineTo(x0, w0);
+      ctx.arc(x0, 0, w0, Math.PI / 2, -Math.PI / 2);
+      ctx.closePath();
+      ctx.fillStyle = pillarGrad;
+      ctx.fill();
+
+      // 5C: Center Ridge Specular Highlight Line
+      const crestGrad = ctx.createLinearGradient(x0, 0, x1, 0);
+      crestGrad.addColorStop(0.0, 'rgba(254, 240, 138, 0.3)');
+      crestGrad.addColorStop(0.25, '#ffffff');
+      crestGrad.addColorStop(0.75, '#fef08a');
+      crestGrad.addColorStop(1.0, 'rgba(254, 240, 138, 0.3)');
+
+      ctx.beginPath();
+      ctx.moveTo(x0 + 3, -0.4);
+      ctx.lineTo(x1 - 5, -0.4);
+      ctx.strokeStyle = crestGrad;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // 5D: Inner Hub Socket Clasp Bracket
+      const hubSocketGrad = ctx.createRadialGradient(
+        x0 + 1, -1, 0,
+        x0 + 1, 0, w0 * 1.5
+      );
+      hubSocketGrad.addColorStop(0.0, '#ffffff');
+      hubSocketGrad.addColorStop(0.3, '#fef08a');
+      hubSocketGrad.addColorStop(0.7, '#d97706');
+      hubSocketGrad.addColorStop(1.0, '#582803');
+
+      ctx.beginPath();
+      ctx.arc(x0 + 1, 0, w0 * 1.3, 0, 2 * Math.PI);
+      ctx.fillStyle = hubSocketGrad;
+      ctx.fill();
+
+      // 5E: Outer 3D Spherical Ball Socket Rivet
+      const rivetX = x1 - 3.5;
+      const rivetR = 4.2;
+
+      const rivetGrad = ctx.createRadialGradient(
+        rivetX - 1.2, -1.2, 0,
+        rivetX, 0, rivetR
+      );
+      rivetGrad.addColorStop(0.0, '#ffffff');
+      rivetGrad.addColorStop(0.25, '#fef08a');
+      rivetGrad.addColorStop(0.60, '#fbbf24');
+      rivetGrad.addColorStop(0.85, '#ca8a04');
+      rivetGrad.addColorStop(1.00, '#451a03');
+
+      ctx.beginPath();
+      ctx.arc(rivetX, 0, rivetR, 0, 2 * Math.PI);
+      ctx.fillStyle = rivetGrad;
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetX = 1;
+      ctx.shadowOffsetY = 2;
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+
+      ctx.restore();
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // 6. INNER ROTATING HUB COLLAR BINDING RING
+    // ─────────────────────────────────────────────────────────────────
     ctx.beginPath();
     ctx.arc(cx, cy, hubRadius + 3, 0, 2 * Math.PI);
     ctx.strokeStyle = '#fef08a';
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 2;
     ctx.stroke();
 
-    ctx.beginPath();
-    ctx.arc(cx, cy, hubRadius, 0, 2 * Math.PI);
-    ctx.fillStyle = '#0f172a';
-    ctx.fill();
-  }, [segments, size, theme, imagesLoaded]);
+    ctx.restore();
+  }, [segments, coreSize, hubSize, loadedCount]);
 
-  // Mathematical Predetermined Spin Engine
+  useEffect(() => {
+    drawWheel();
+  }, [drawWheel]);
+
+  // ═══════════════════════════════════════════════════════════════════
+  // PREDETERMINED ENGINE (Pure Frontend now, Drop-in Backend Ready)
+  // ═══════════════════════════════════════════════════════════════════
   const spin = async () => {
     if (isSpinning || segments.length === 0) return;
     setIsSpinning(true);
+    haptics.impact('heavy');
+    haptics.playClickSound();
 
     try {
       let targetIndex = 0;
@@ -369,7 +474,7 @@ export const SpinWheel: FC<SpinWheelProps> = ({
       const degreesPerSegment = 360 / numSegments;
 
       const segmentCenterAngle = targetIndex * degreesPerSegment + degreesPerSegment / 2;
-      const jitter = (Math.random() - 0.5) * (degreesPerSegment * 0.6);
+      const jitter = (Math.random() - 0.5) * (degreesPerSegment * 0.55);
 
       const targetStopMod = (270 - segmentCenterAngle - jitter + 3600) % 360;
       const currentMod = currentRotation % 360;
@@ -378,9 +483,9 @@ export const SpinWheel: FC<SpinWheelProps> = ({
       const minFullSpins = 7;
       const targetRotation = currentRotation + minFullSpins * 360 + delta;
 
-      if (wrapperRef.current) {
-        wrapperRef.current.style.transition = `transform ${spinDuration}ms cubic-bezier(0.12, 0.9, 0.2, 1.02)`;
-        wrapperRef.current.style.transform = `rotate(${targetRotation}deg)`;
+      if (coreWrapperRef.current) {
+        coreWrapperRef.current.style.transition = `transform ${spinDuration}ms cubic-bezier(0.12, 0.92, 0.18, 1.02)`;
+        coreWrapperRef.current.style.transform = `rotate(${targetRotation}deg)`;
       }
 
       setTimeout(() => {
@@ -399,13 +504,16 @@ export const SpinWheel: FC<SpinWheelProps> = ({
     }
   };
 
-  // 16 Casino Marquee Bulbs
-  const BULB_COUNT = 16;
+  // ═══════════════════════════════════════════════════════════════════
+  // 20 CASINO MARQUEE LIGHT BULBS ON STATIC FRAME
+  // ═══════════════════════════════════════════════════════════════════
+  const BULB_COUNT = 20;
+  const bulbRadius = size / 2 - 5.5;
+
   const bulbs = Array.from({ length: BULB_COUNT }).map((_, i) => {
     const angle = (i * 2 * Math.PI) / BULB_COUNT;
-    const distance = size / 2 - 6;
-    const x = size / 2 + Math.cos(angle) * distance;
-    const y = size / 2 + Math.sin(angle) * distance;
+    const x = size / 2 + Math.cos(angle) * bulbRadius;
+    const y = size / 2 + Math.sin(angle) * bulbRadius;
     const isLit = (i + bulbPhase) % 2 === 0;
 
     return { x, y, isLit };
@@ -418,153 +526,316 @@ export const SpinWheel: FC<SpinWheelProps> = ({
         flexDirection: 'column',
         alignItems: 'center',
         position: 'relative',
-        userSelect: 'none'
+        userSelect: 'none',
+        width: `${size}px`,
+        height: `${size}px`
       }}
     >
-      {/* 1. Ambient Golden Halo / Sunburst Rays Behind Wheel */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 1. ATMOSPHERIC ROTATING SUNBURST LIGHT RAYS                   */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div
+        className="sunburst-rays"
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: `${size * 1.5}px`,
+          height: `${size * 1.5}px`,
+          borderRadius: '50%',
+          opacity: isSpinning ? 0.7 : 0.35,
+          transition: 'opacity 0.6s ease',
+          pointerEvents: 'none',
+          zIndex: 0
+        }}
+      />
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 2. AMBIENT EMERALD-GOLD HALO GLOW                             */}
+      {/* ───────────────────────────────────────────────────────────── */}
       <div
         style={{
           position: 'absolute',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: `${size * 1.3}px`,
-          height: `${size * 1.3}px`,
+          width: `${size * 1.25}px`,
+          height: `${size * 1.25}px`,
           borderRadius: '50%',
           background: isSpinning
-            ? 'radial-gradient(circle, rgba(250, 204, 21, 0.25) 0%, rgba(16, 185, 129, 0.15) 50%, rgba(0,0,0,0) 75%)'
-            : 'radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(0,0,0,0) 70%)',
+            ? 'radial-gradient(circle, rgba(250, 204, 21, 0.35) 0%, rgba(16, 185, 129, 0.22) 45%, rgba(0,0,0,0) 75%)'
+            : 'radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, rgba(0,0,0,0) 70%)',
           pointerEvents: 'none',
           zIndex: 1,
-          transition: 'all 0.5s ease',
-          filter: 'blur(8px)'
+          transition: 'all 0.6s ease',
+          filter: 'blur(10px)'
         }}
       />
 
-      {/* 2. Wheel Stage & Frame Container */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 3. ROTATING INNER WHEEL CORE (Sitting under hollow frame)     */}
+      {/* ───────────────────────────────────────────────────────────── */}
       <div
         style={{
-          width: `${size}px`,
-          height: `${size}px`,
-          position: 'relative',
-          zIndex: 5,
-          filter: 'drop-shadow(0 16px 28px rgba(0, 0, 0, 0.65))'
+          position: 'absolute',
+          top: `${(size - coreSize) / 2}px`,
+          left: `${(size - coreSize) / 2}px`,
+          width: `${coreSize}px`,
+          height: `${coreSize}px`,
+          borderRadius: '50%',
+          overflow: 'hidden',
+          zIndex: 4,
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.7)'
         }}
       >
-        {/* Animated Canvas Wrapper */}
         <div
-          ref={wrapperRef}
+          ref={coreWrapperRef}
           style={{
             width: '100%',
             height: '100%',
             transform: `rotate(${currentRotation}deg)`
           }}
         >
-          <canvas ref={canvasRef} width={size} height={size} style={{ width: '100%', height: '100%' }} />
-        </div>
-
-        {/* 3. Marquee Bulbs Overlay */}
-        {bulbs.map((bulb, idx) => (
-          <div
-            key={idx}
-            style={{
-              position: 'absolute',
-              left: `${bulb.x}px`,
-              top: `${bulb.y}px`,
-              transform: 'translate(-50%, -50%)',
-              width: '6px',
-              height: '6px',
-              borderRadius: '50%',
-              backgroundColor: bulb.isLit ? '#fef08a' : '#713f12',
-              boxShadow: bulb.isLit
-                ? '0 0 8px 2px rgba(254, 240, 138, 0.9), 0 0 2px #ffffff'
-                : 'inset 0 1px 2px rgba(0,0,0,0.8)',
-              zIndex: 8,
-              transition: 'background-color 0.15s ease, box-shadow 0.15s ease'
-            }}
-          />
-        ))}
-
-        {/* 4. Top Golden Pointer (Casino Flapper) */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '-7%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '16%',
-            zIndex: 15,
-            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.65))',
-            pointerEvents: 'none'
-          }}
-        >
-          <svg width="100%" height="100%" viewBox="0 0 24 32" fill="url(#flapperGoldGradient)" stroke="#854d0e" strokeWidth="1.5">
-            <defs>
-              <linearGradient id="flapperGoldGradient" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#fef08a" />
-                <stop offset="45%" stopColor="#eab308" />
-                <stop offset="85%" stopColor="#a16207" />
-                <stop offset="100%" stopColor="#ca8a04" />
-              </linearGradient>
-            </defs>
-            <path d="M12 30 L2 10 L12 2 L22 10 Z" />
-            {/* Center needle gem */}
-            <circle cx="12" cy="11" r="3.5" fill="#f87171" stroke="#ffffff" strokeWidth="0.75" />
-          </svg>
-        </div>
-
-        {/* 5. Center 3D Spin Button */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '32%',
-            height: '32%',
-            zIndex: 20
-          }}
-        >
-          <button
-            onClick={spin}
-            disabled={isSpinning}
-            onMouseDown={() => !isSpinning && setIsButtonPressed(true)}
-            onMouseUp={() => setIsButtonPressed(false)}
-            onMouseLeave={() => setIsButtonPressed(false)}
-            onTouchStart={() => !isSpinning && setIsButtonPressed(true)}
-            onTouchEnd={() => setIsButtonPressed(false)}
+          <canvas
+            ref={canvasRef}
             style={{
               width: '100%',
               height: '100%',
-              borderRadius: '50%',
-              background: isSpinning
-                ? 'linear-gradient(180deg, #475569 0%, #1e293b 100%)'
-                : 'linear-gradient(180deg, #22c55e 0%, #059669 60%, #047857 100%)',
-              color: '#ffffff',
-              border: '3px solid #fbbf24',
-              boxShadow: isButtonPressed
-                ? '0 1px 0 #022c22, inset 0 4px 10px rgba(0,0,0,0.6)'
-                : isSpinning
-                ? '0 2px 0 #0f172a, inset 0 2px 4px rgba(0,0,0,0.4)'
-                : '0 6px 0 #064e3b, 0 12px 18px rgba(0,0,0,0.6), inset 0 2px 3px rgba(255,255,255,0.6)',
-              fontSize: '1.2rem',
-              fontWeight: 900,
-              fontFamily: 'Georgia, serif',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              cursor: isSpinning ? 'not-allowed' : 'pointer',
-              transition: 'all 0.1s ease',
-              transform: isButtonPressed ? 'translateY(5px)' : 'translateY(0)',
-              textShadow: '0 2px 4px rgba(0,0,0,0.6)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0
+              display: 'block'
             }}
-          >
-            {isSpinning ? '...' : 'SPIN'}
-          </button>
+          />
         </div>
+      </div>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 4. STATIC HOLLOW CASINO FRAME OVERLAY (100% Hollow Center)    */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 300 300"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: `${size}px`,
+          height: `${size}px`,
+          pointerEvents: 'none',
+          zIndex: 10,
+          filter: 'drop-shadow(0 16px 32px rgba(0,0,0,0.85))'
+        }}
+      >
+        <defs>
+          {/* Metallic Gold Beveled Frame Gradient */}
+          <linearGradient id="frameGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#fef08a" />
+            <stop offset="18%" stopColor="#ca8a04" />
+            <stop offset="38%" stopColor="#fef08a" />
+            <stop offset="60%" stopColor="#854d0e" />
+            <stop offset="82%" stopColor="#eab308" />
+            <stop offset="100%" stopColor="#ca8a04" />
+          </linearGradient>
+
+          {/* Mask ensuring center is completely hollow */}
+          <mask id="hollowFrameMask">
+            <rect x="0" y="0" width="300" height="300" fill="white" />
+            <circle cx="150" cy="150" r="126" fill="black" />
+          </mask>
+        </defs>
+
+        {/* Outer Heavy Gold Beveled Ring */}
+        <g mask="url(#hollowFrameMask)">
+          <circle cx="150" cy="150" r="149" fill="url(#frameGoldGrad)" />
+          {/* Recessed Dark Channel */}
+          <circle cx="150" cy="150" r="139" fill="#060913" stroke="rgba(234, 179, 8, 0.5)" strokeWidth="1" />
+        </g>
+
+        {/* Outer Gold Rim Highlight & Shadow Strokes */}
+        <circle cx="150" cy="150" r="148.5" fill="none" stroke="rgba(254, 240, 138, 0.7)" strokeWidth="1.2" />
+        <circle cx="150" cy="150" r="144" fill="none" stroke="#582803" strokeWidth="0.8" />
+        <circle cx="150" cy="150" r="126.5" fill="none" stroke="rgba(254, 240, 138, 0.6)" strokeWidth="1.5" />
+
+        {/* Golden Micro-Bead Pearl Track */}
+        <circle
+          cx="150"
+          cy="150"
+          r="133"
+          fill="none"
+          stroke="#fbbf24"
+          strokeWidth="2.4"
+          strokeDasharray="2.2 4.2"
+          strokeLinecap="round"
+        />
+
+        {/* 4 Corner Metallic Fastener Studs */}
+        {[45, 135, 225, 315].map((deg) => {
+          const rad = (deg * Math.PI) / 180;
+          const sx = 150 + Math.cos(rad) * 144;
+          const sy = 150 + Math.sin(rad) * 144;
+          return (
+            <circle
+              key={deg}
+              cx={sx}
+              cy={sy}
+              r="2.5"
+              fill="#ffffff"
+              stroke="#ca8a04"
+              strokeWidth="0.8"
+            />
+          );
+        })}
+      </svg>
+
+      {/* 20 Marquee Bulbs Mounted on Gold Rim Ring */}
+      {bulbs.map((bulb, idx) => (
+        <div
+          key={idx}
+          style={{
+            position: 'absolute',
+            left: `${bulb.x}px`,
+            top: `${bulb.y}px`,
+            transform: 'translate(-50%, -50%)',
+            width: '7.5px',
+            height: '7.5px',
+            borderRadius: '50%',
+            backgroundColor: bulb.isLit ? '#fffdf0' : '#78350f',
+            border: bulb.isLit ? '1px solid #ffffff' : '1px solid #451a03',
+            boxShadow: bulb.isLit
+              ? '0 0 10px 3px rgba(254, 240, 138, 0.95), 0 0 3px #ffffff, inset 0 1px 2px #ffffff'
+              : 'inset 0 1px 2px rgba(0,0,0,0.8), 0 1px 1px rgba(255,255,255,0.15)',
+            zIndex: 12,
+            transition: 'background-color 0.1s ease, box-shadow 0.1s ease'
+          }}
+        />
+      ))}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 5. TOP 3D ORNATE POINTER FLAPPER WITH RUBY GEMSTONE            */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '-10px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '34px',
+          height: '42px',
+          zIndex: 30,
+          filter: 'drop-shadow(0 6px 12px rgba(0, 0, 0, 0.8))',
+          pointerEvents: 'none'
+        }}
+      >
+        <svg width="100%" height="100%" viewBox="0 0 38 46" fill="none">
+          <defs>
+            <linearGradient id="flapperGold" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#fef08a" />
+              <stop offset="30%" stopColor="#eab308" />
+              <stop offset="65%" stopColor="#854d0e" />
+              <stop offset="100%" stopColor="#ca8a04" />
+            </linearGradient>
+            <radialGradient id="rubyGlow" cx="40%" cy="35%" r="65%">
+              <stop offset="0%" stopColor="#fca5a5" />
+              <stop offset="35%" stopColor="#f43f5e" />
+              <stop offset="75%" stopColor="#be123c" />
+              <stop offset="100%" stopColor="#4c0519" />
+            </radialGradient>
+          </defs>
+
+          {/* Gold Pointer Body */}
+          <path
+            d="M19 44 L3 14 Q3 4 19 4 Q35 4 35 14 Z"
+            fill="url(#flapperGold)"
+            stroke="#582803"
+            strokeWidth="1.5"
+          />
+
+          {/* Inner Highlight Ridge */}
+          <path
+            d="M19 40 L6 14 Q6 7 19 7 Q32 7 32 14 Z"
+            fill="none"
+            stroke="rgba(254, 240, 138, 0.6)"
+            strokeWidth="1"
+          />
+
+          {/* Faceted Ruby Jewel Cabochon */}
+          <circle cx="19" cy="15" r="5.5" fill="url(#rubyGlow)" stroke="#ffffff" strokeWidth="0.8" />
+          <circle cx="19" cy="15" r="7" fill="none" stroke="rgba(244, 63, 94, 0.5)" strokeWidth="1.5" />
+          <circle cx="17.5" cy="13.5" r="1.2" fill="#ffffff" />
+        </svg>
+      </div>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 6. CENTER 3D TACTILE SPIN BUTTON WITH HEAVY GOLD COLLAR       */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: `${hubSize}px`,
+          height: `${hubSize}px`,
+          zIndex: 25
+        }}
+      >
+        {/* Outer Heavy Gold Beveled Collar Frame */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: '-5px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #fef08a 0%, #ca8a04 35%, #854d0e 70%, #fef08a 100%)',
+            boxShadow: '0 6px 16px rgba(0,0,0,0.8), inset 0 2px 3px rgba(255,255,255,0.7)',
+            border: '1px solid rgba(254, 240, 138, 0.8)'
+          }}
+        />
+
+        {/* 3D Tactile Emerald Green SPIN Button */}
+        <button
+          onClick={spin}
+          disabled={isSpinning}
+          onMouseDown={() => !isSpinning && setIsButtonPressed(true)}
+          onMouseUp={() => setIsButtonPressed(false)}
+          onMouseLeave={() => setIsButtonPressed(false)}
+          onTouchStart={() => !isSpinning && setIsButtonPressed(true)}
+          onTouchEnd={() => setIsButtonPressed(false)}
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            borderRadius: '50%',
+            background: isSpinning
+              ? 'linear-gradient(180deg, #475569 0%, #1e293b 100%)'
+              : `
+                radial-gradient(circle at 35% 30%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 45%),
+                linear-gradient(180deg, #22c55e 0%, #059669 55%, #047857 100%)
+              `,
+            color: '#ffffff',
+            border: '2.5px solid #fbbf24',
+            boxShadow: isButtonPressed
+              ? '0 1px 0 #022c22, inset 0 5px 12px rgba(0,0,0,0.8)'
+              : isSpinning
+              ? '0 2px 0 #0f172a, inset 0 2px 4px rgba(0,0,0,0.4)'
+              : '0 6px 0 #064e3b, 0 12px 18px rgba(0,0,0,0.75), inset 0 2px 4px rgba(255,255,255,0.6)',
+            fontSize: coreSize > 200 ? '1.15rem' : '0.95rem',
+            fontWeight: 900,
+            fontFamily: 'Georgia, serif',
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            cursor: isSpinning ? 'not-allowed' : 'pointer',
+            transition: 'all 0.08s ease',
+            transform: isButtonPressed ? 'translateY(4px)' : 'translateY(0)',
+            textShadow: '0 2px 4px rgba(0,0,0,0.7), 0 0 8px rgba(251, 191, 36, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            overflow: 'hidden'
+          }}
+        >
+          {isSpinning ? '...' : 'SPIN'}
+        </button>
       </div>
     </div>
   );

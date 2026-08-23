@@ -222,3 +222,40 @@ button {
   animation: pulseGlow 2.5s infinite ease-in-out;
 }
 
+/* Sunburst Light Rays Behind Spin Wheel */
+@keyframes sunburstRotate {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.sunburst-rays {
+  background: conic-gradient(
+    rgba(251, 191, 36, 0.08) 0deg,
+    transparent 18deg,
+    rgba(251, 191, 36, 0.06) 36deg,
+    transparent 54deg,
+    rgba(16, 185, 129, 0.06) 72deg,
+    transparent 90deg,
+    rgba(251, 191, 36, 0.08) 108deg,
+    transparent 126deg,
+    rgba(16, 185, 129, 0.06) 144deg,
+    transparent 162deg,
+    rgba(251, 191, 36, 0.06) 180deg,
+    transparent 198deg,
+    rgba(251, 191, 36, 0.08) 216deg,
+    transparent 234deg,
+    rgba(16, 185, 129, 0.06) 252deg,
+    transparent 270deg,
+    rgba(251, 191, 36, 0.06) 288deg,
+    transparent 306deg,
+    rgba(16, 185, 129, 0.08) 324deg,
+    transparent 342deg,
+    rgba(251, 191, 36, 0.08) 360deg
+  );
+  animation: sunburstRotate 20s linear infinite;
+}
+
