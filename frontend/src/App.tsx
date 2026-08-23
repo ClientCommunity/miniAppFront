@@ -383,7 +383,7 @@ function App() {
               textShadow: '0 1px 3px rgba(0,0,0,0.7)'
             }}
           >
-            Only <span style={{ color: '#fbbf24', fontWeight: 800 }}>$0.44</span> to cash out $1 instant TON USDT!
+            Only <span style={{ color: '#fbbf24', fontWeight: 800 }}>$0.44</span> to cash out $1 instant USDT (BEP20)!
           </div>
 
           <SpinWheel

@@ -43,7 +43,7 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
     haptics.notification('success');
     haptics.playWinSound();
     throwConfetti();
-    alert(`Withdrawal request of $${withdrawAmount.toFixed(2)} USDT submitted to ${walletAddress}!`);
+    alert(`Withdrawal request of $${withdrawAmount.toFixed(2)} USDT (BEP20) submitted to ${walletAddress}!`);
   };
 
   const fee = withdrawAmount * 0.05;
@@ -225,16 +225,20 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div
                     style={{
-                      background: 'rgba(6, 78, 59, 0.8)',
-                      border: '1px solid rgba(52, 211, 153, 0.5)',
+                      background: 'rgba(217, 119, 6, 0.25)',
+                      border: '1px solid rgba(251, 191, 36, 0.6)',
                       borderRadius: '1rem',
                       padding: '0.25rem 0.75rem',
-                      color: '#6ee7b7',
+                      color: '#fbbf24',
                       fontSize: '0.85rem',
-                      fontWeight: 700
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem'
                     }}
                   >
-                    💎 TON (USDT)
+                    <span>🟡</span>
+                    <span>USDT (BEP-20)</span>
                   </div>
 
                   <button
@@ -276,7 +280,7 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
                     wordBreak: 'break-all'
                   }}
                 >
-                  {walletConnected ? `Connected: ${walletAddress}` : 'Not connected (Tap Connect to bind TON wallet)'}
+                  {walletConnected ? `Connected: ${walletAddress}` : 'Not connected (Tap Connect to bind BEP-20 wallet)'}
                 </div>
               </div>
             </div>
@@ -434,7 +438,7 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
               textAlign: 'center'
             }}
           >
-            {walletConnected ? `Withdraw $${withdrawAmount.toFixed(2)} USDT 🚀` : 'Connect TON Wallet to Withdraw'}
+            {walletConnected ? `Withdraw $${withdrawAmount.toFixed(2)} USDT (BEP20) 🚀` : 'Connect BEP-20 Wallet to Withdraw'}
           </button>
         </div>
       </div>

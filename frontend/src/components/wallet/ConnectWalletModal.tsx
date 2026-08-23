@@ -30,19 +30,28 @@ export const ConnectWalletModal: FC<ConnectWalletModalProps> = ({
   };
 
   const handleGetPhone = () => {
-    // Simulated auto-fill from telegram user or prompt
     setPhone('+1 (555) 019-2834');
   };
 
-  const handleConnectTon = () => {
-    // Simulated TON wallet connection
-    const mockTonAddress = 'UQDr9a...8f9a';
-    setAddress(mockTonAddress);
+  const handlePasteAddress = async () => {
+    try {
+      if (navigator?.clipboard?.readText) {
+        const text = await navigator.clipboard.readText();
+        if (text && text.trim()) {
+          setAddress(text.trim());
+          return;
+        }
+      }
+    } catch {
+      // Fallback if clipboard access is denied
+    }
+    // Mock BEP20 EVM address
+    setAddress('0x71C289a61B5d9f04C2a01340BFe89a9f');
   };
 
   const handleSave = () => {
     if (!address.trim()) {
-      alert('Please enter or connect a wallet address');
+      alert('Please enter or paste a valid BEP-20 wallet address');
       return;
     }
     onSave({ address, phone });
@@ -112,7 +121,7 @@ export const ConnectWalletModal: FC<ConnectWalletModalProps> = ({
               fontFamily: 'Georgia, serif'
             }}
           >
-            Add USDT (TON)
+            Add USDT (BEP-20)
           </h2>
           <button
             onClick={handleClose}
@@ -135,18 +144,22 @@ export const ConnectWalletModal: FC<ConnectWalletModalProps> = ({
           </button>
         </div>
 
-        {/* TON USDT Subtitle Section */}
+        {/* USDT BEP-20 Subtitle Section */}
         <div style={{ marginBottom: '1.25rem' }}>
           <h3
             style={{
               margin: '0 0 0.15rem 0',
-              color: '#ffffff',
+              color: '#fbbf24',
               fontSize: '1.15rem',
               fontWeight: 800,
-              fontFamily: 'Georgia, serif'
+              fontFamily: 'Georgia, serif',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
             }}
           >
-            TON USDT
+            <span>🟡</span>
+            <span>USDT (BEP-20)</span>
           </h3>
           <p
             style={{
@@ -155,7 +168,7 @@ export const ConnectWalletModal: FC<ConnectWalletModalProps> = ({
               fontSize: '0.85rem'
             }}
           >
-            USDT on TON network
+            USDT on BNB Smart Chain (BEP20)
           </p>
         </div>
 
@@ -192,7 +205,7 @@ export const ConnectWalletModal: FC<ConnectWalletModalProps> = ({
                 type="text"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="++1  Click to get phone"
+                placeholder="+1 Click to get phone"
                 style={{
                   background: 'transparent',
                   border: 'none',
@@ -236,7 +249,7 @@ export const ConnectWalletModal: FC<ConnectWalletModalProps> = ({
                 lineHeight: 1.2
               }}
             >
-              Wallet<br />Address
+              BEP-20<br />Address
             </span>
 
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -255,7 +268,7 @@ export const ConnectWalletModal: FC<ConnectWalletModalProps> = ({
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Click to connect TC"
+                  placeholder="0x... Paste BEP20 Address"
                   style={{
                     background: 'transparent',
                     border: 'none',
@@ -267,12 +280,12 @@ export const ConnectWalletModal: FC<ConnectWalletModalProps> = ({
                 />
               </div>
 
-              {/* Connect TON Button */}
+              {/* Paste / Connect BEP-20 Button */}
               <button
-                onClick={handleConnectTon}
+                onClick={handlePasteAddress}
                 style={{
-                  background: 'linear-gradient(180deg, #0284c7 0%, #0369a1 100%)',
-                  border: '1px solid rgba(56, 189, 248, 0.6)',
+                  background: 'linear-gradient(180deg, #f59e0b 0%, #d97706 100%)',
+                  border: '1px solid rgba(254, 240, 138, 0.6)',
                   borderRadius: '0.75rem',
                   padding: '0.6rem 0.85rem',
                   color: '#ffffff',
@@ -282,15 +295,16 @@ export const ConnectWalletModal: FC<ConnectWalletModalProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.35rem',
-                  boxShadow: '0 2px 6px rgba(2, 132, 199, 0.4)',
+                  boxShadow: '0 2px 6px rgba(217, 119, 6, 0.4)',
                   flexShrink: 0,
                   whiteSpace: 'nowrap'
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2L2 9l10 13 10-13L12 2zm0 3.5l6.5 4.5L12 18.5 5.5 10 12 5.5z" />
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
                 </svg>
-                <span>Connect TON</span>
+                <span>Paste</span>
               </button>
             </div>
           </div>

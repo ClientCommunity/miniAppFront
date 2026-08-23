@@ -63,7 +63,7 @@ const MOCK_RECORDS: TransactionRecord[] = [
   },
   {
     id: 'tx-4',
-    title: 'USDT (TON) Withdrawal',
+    title: 'USDT (BEP20) Withdrawal',
     category: 'withdrawals',
     date: 'Aug 12, 2026',
     txId: 'TX-78210',
