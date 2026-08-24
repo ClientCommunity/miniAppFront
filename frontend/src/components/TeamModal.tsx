@@ -301,7 +301,7 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
             <img
               src="./assets/ticket_animated.gif"
               alt="Spin Ticket"
-              style={{ width: '26px', height: '26px', objectFit: 'contain' }}
+              style={{ width: '34px', height: '34px', objectFit: 'contain' }}
             />
             <span style={{ color: '#facc15' }}>1 Free Spin</span>
           </div>

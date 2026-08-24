@@ -172,70 +172,80 @@ function App() {
         </div>
 
         {/* Asset Balances (Right) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-          {/* Energy Balance */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          {/* Energy Balance (Amber-Gold Jewel Capsule) */}
           <div
             style={{
-              background: 'rgba(255,255,255,0.12)',
+              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(180, 83, 9, 0.38) 100%)',
               backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              color: 'white',
-              padding: '0.22rem 0.55rem',
-              borderRadius: '20px',
+              WebkitBackdropFilter: 'blur(8px)',
+              border: '1px solid rgba(251, 191, 36, 0.55)',
+              color: '#fef08a',
+              padding: '0.2rem 0.55rem',
+              borderRadius: '18px',
               display: 'flex',
               alignItems: 'center',
               gap: '0.25rem',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+              boxShadow: '0 2px 8px rgba(245, 158, 11, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.35)',
+              height: '28px',
+              boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '18px', height: '18px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }} />
             <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>50</span>
           </div>
 
-          {/* Spin Balance */}
+          {/* Spin Balance (Emerald-Jade Jewel Capsule) */}
           <div
             style={{
-              background: 'rgba(255,255,255,0.12)',
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(4, 120, 87, 0.38) 100%)',
               backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              color: 'white',
-              padding: '0.22rem 0.55rem',
-              borderRadius: '20px',
+              WebkitBackdropFilter: 'blur(8px)',
+              border: '1px solid rgba(52, 211, 153, 0.55)',
+              color: '#a7f3d0',
+              padding: '0.2rem 0.55rem',
+              borderRadius: '18px',
               display: 'flex',
               alignItems: 'center',
               gap: '0.25rem',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.35)',
+              height: '28px',
+              boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/ticket_animated.gif" alt="Spins" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+            <img src="./assets/ticket_animated.gif" alt="Spins" style={{ width: '29px', height: '29px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
             <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>12</span>
           </div>
 
-          {/* Diamond Balance */}
+          {/* Diamond Balance (Royal-Amethyst Jewel Capsule + Deposit Badge) */}
           <div 
             onClick={() => setCurrentPage('tasks')}
             style={{ 
               position: 'relative',
-              background: 'rgba(255,255,255,0.1)', 
+              background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.28) 0%, rgba(107, 33, 168, 0.42) 100%)', 
               backdropFilter: 'blur(8px)', 
-              border: '1px solid rgba(255,255,255,0.15)', 
-              color: 'white', 
-              padding: '0.2rem 0.65rem 0.2rem 0.5rem', 
-              borderRadius: '20px', 
+              WebkitBackdropFilter: 'blur(8px)',
+              border: '1px solid rgba(192, 132, 252, 0.6)', 
+              color: '#ffffff', 
+              padding: '0.2rem 0.65rem 0.2rem 0.45rem', 
+              borderRadius: '18px', 
               display: 'flex', 
               alignItems: 'center', 
               gap: '0.25rem',
               cursor: 'pointer',
+              boxShadow: '0 2px 10px rgba(168, 85, 247, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.35)',
+              height: '28px',
+              boxSizing: 'border-box',
               transition: 'transform 0.1s ease'
             }}
             onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
             onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
             onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
-            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '25px', height: '25px', objectFit: 'contain' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>124</span>
+            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '24px', height: '24px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>124</span>
 
-            {/* Green plus badge */}
+            {/* Glowing plus badge */}
             <div
               style={{
                 position: 'absolute',
@@ -244,14 +254,15 @@ function App() {
                 width: '13px',
                 height: '13px',
                 borderRadius: '50%',
-                background: '#22c55e',
+                background: 'linear-gradient(180deg, #00e676 0%, #00a854 100%)',
                 color: 'white',
                 fontSize: '10px',
                 fontWeight: 900,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 0 4px rgba(34, 197, 94, 0.8)'
+                boxShadow: '0 0 6px rgba(0, 230, 118, 0.9), inset 0 1px 1px rgba(255,255,255,0.6)',
+                border: '1px solid #ffffff'
               }}
             >
               +
@@ -474,10 +485,10 @@ function App() {
               src="./assets/ticket_animated.gif" 
               alt="Spin Ticket" 
               style={{ 
-                width: '30px', 
-                height: '30px', 
+                width: '38px', 
+                height: '38px', 
                 objectFit: 'contain',
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' 
+                filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.5))' 
               }} 
             />
           </div>
