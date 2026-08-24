@@ -197,9 +197,9 @@ export const RaffleCard: FC<RaffleCardProps> = ({
             + {coinRewardStr}
           </span>
           <img
-            src="./assets/purple-diamond.png"
+            src="./assets/diamond_animated.gif"
             alt="Diamond"
-            style={{ width: '20px', height: '20px', objectFit: 'contain' }}
+            style={{ width: '30px', height: '30px', objectFit: 'contain' }}
           />
         </div>
       </div>

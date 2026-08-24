@@ -13,8 +13,8 @@ const PRIZE_TIERS = [
   { medal: '🥇', rank: '1st Prize', amount: '$8.00', multiplier: 'x 1 Winner', highlight: true },
   { medal: '🥈', rank: '2nd Prize', amount: '$3.00', multiplier: 'x 2 Winners', highlight: false },
   { medal: '🥉', rank: '3rd Prize', amount: '$1.00', multiplier: 'x 6 Winners', highlight: false },
-  { medal: '💎', rank: '4th Prize', amount: '5,000', icon: './assets/purple-diamond.png', multiplier: 'x 20 Winners', highlight: false },
-  { medal: '💎', rank: '5th Prize', amount: '800', icon: './assets/purple-diamond.png', multiplier: 'x 1,125 Winners', highlight: false },
+  { medal: '💎', rank: '4th Prize', amount: '5,000', icon: './assets/diamond_animated.gif', multiplier: 'x 20 Winners', highlight: false },
+  { medal: '💎', rank: '5th Prize', amount: '800', icon: './assets/diamond_animated.gif', multiplier: 'x 1,125 Winners', highlight: false },
 ];
 
 export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
@@ -110,11 +110,11 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
             <span style={{ fontWeight: 800, fontSize: '0.8rem', color: '#fff' }}>50</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255, 255, 255, 0.12)', borderRadius: '1rem', padding: '0.2rem 0.6rem', gap: '0.3rem' }}>
-            <img src="./assets/wheel-of-fortune.png" alt="Spin" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
+            <img src="./assets/ticket_animated.gif" alt="Spin" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
             <span style={{ fontWeight: 800, fontSize: '0.8rem', color: '#fff' }}>12</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255, 255, 255, 0.12)', borderRadius: '1rem', padding: '0.2rem 0.6rem', gap: '0.3rem' }}>
-            <img src="./assets/purple-diamond.png" alt="Diamond" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
+            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
             <span style={{ fontWeight: 800, fontSize: '0.8rem', color: '#fff' }}>760</span>
           </div>
         </div>
@@ -197,7 +197,7 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.95rem', fontWeight: 800, fontFamily: 'Georgia, serif' }}>
             <span style={{ color: '#fbbf24' }}>${raffle.cashReward}</span>
             <span style={{ color: '#fff' }}>+ {raffle.coinRewardStr}</span>
-            <img src="./assets/purple-diamond.png" alt="Diamond" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
           </div>
         </div>
 

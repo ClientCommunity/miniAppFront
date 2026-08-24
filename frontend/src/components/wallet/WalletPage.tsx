@@ -129,13 +129,13 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
 
           {/* Spins */}
           <div style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '0.18rem 0.5rem', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <img src="./assets/wheel-of-fortune.png" alt="Spins" style={{ width: '15px', height: '15px', objectFit: 'contain' }} />
+            <img src="./assets/ticket_animated.gif" alt="Spins" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
             <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>12</span>
           </div>
 
           {/* Diamonds */}
           <div style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '0.18rem 0.55rem', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <img src="./assets/purple-diamond.png" alt="Diamond" style={{ width: '15px', height: '15px', objectFit: 'contain' }} />
+            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
             <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>760</span>
           </div>
         </div>

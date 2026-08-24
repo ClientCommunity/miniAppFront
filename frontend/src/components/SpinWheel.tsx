@@ -277,23 +277,8 @@ export const SpinWheel: FC<SpinWheelProps> = ({
       ctx.fillStyle = ambientGlow;
       ctx.fill();
 
-      // 3B: Draw 3D Asset Image Floating Directly with Deep Drop Shadow
-      const img = segment.image ? loadedImagesRef.current[segment.image] : null;
-
-      if (img && img.complete && img.naturalWidth > 0) {
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-        ctx.shadowBlur = 10;
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 4;
-
-        ctx.drawImage(
-          img,
-          itemDistance - iconRenderSize / 2,
-          -iconRenderSize / 2,
-          iconRenderSize,
-          iconRenderSize
-        );
-      } else {
+      // 3B: Fallback text only if no segment image
+      if (!segment.image) {
         ctx.font = `900 ${coreSize > 200 ? 12 : 10}px Georgia, serif`;
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffffff';
@@ -594,6 +579,7 @@ export const SpinWheel: FC<SpinWheelProps> = ({
           style={{
             width: '100%',
             height: '100%',
+            position: 'relative',
             transform: `rotate(${currentRotation}deg)`
           }}
         >
@@ -605,6 +591,49 @@ export const SpinWheel: FC<SpinWheelProps> = ({
               display: 'block'
             }}
           />
+
+          {/* Real-time Animated Segment Icons Overlay (Supports live rotating GIFs & 3D assets) */}
+          {segments.map((segment, i) => {
+            const arc = (2 * Math.PI) / segments.length;
+            const midAngle = i * arc + arc / 2;
+            const itemDistance = (coreSize / 2 - 1) * 0.60;
+            const iconSize = coreSize > 200 ? 54 : 44;
+            const x = coreSize / 2 + Math.cos(midAngle) * itemDistance;
+            const y = coreSize / 2 + Math.sin(midAngle) * itemDistance;
+            const rotationDeg = (midAngle * 180) / Math.PI + 90;
+
+            if (!segment.image) return null;
+
+            return (
+              <div
+                key={i}
+                style={{
+                  position: 'absolute',
+                  left: `${x}px`,
+                  top: `${y}px`,
+                  width: `${iconSize}px`,
+                  height: `${iconSize}px`,
+                  transform: `translate(-50%, -50%) rotate(${rotationDeg}deg)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents: 'none',
+                  zIndex: 5
+                }}
+              >
+                <img
+                  src={segment.image}
+                  alt={segment.label}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.85))'
+                  }}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
 

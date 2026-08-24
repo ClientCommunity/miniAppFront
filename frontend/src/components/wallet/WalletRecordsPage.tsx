@@ -29,7 +29,7 @@ const MOCK_RECORDS: TransactionRecord[] = [
     category: 'spins',
     date: 'Today, 14:32',
     txId: 'TX-84921',
-    icon: './assets/wheel-of-fortune.png',
+    icon: './assets/ticket_animated.gif',
     isImageIcon: true,
     amount: '+$0.20',
     status: 'completed',
@@ -238,7 +238,7 @@ export const WalletRecordsPage: FC<WalletRecordsPageProps> = ({ onBack }) => {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Total Gems</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <img src="./assets/purple-diamond.png" alt="Diamond" style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
+              <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '23px', height: '23px', objectFit: 'contain' }} />
               <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#ffffff', fontFamily: 'Georgia, serif' }}>
                 760
               </span>
@@ -367,9 +367,9 @@ export const WalletRecordsPage: FC<WalletRecordsPageProps> = ({ onBack }) => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                     {record.isDiamond && (
                       <img
-                        src="./assets/purple-diamond.png"
+                        src="./assets/diamond_animated.gif"
                         alt="Diamond"
-                        style={{ width: '14px', height: '14px', objectFit: 'contain' }}
+                        style={{ width: '23px', height: '23px', objectFit: 'contain' }}
                       />
                     )}
                     <span

@@ -33,12 +33,12 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
   };
 
   const days = [
-    { day: 1, reward: '+80', icon: './assets/purple-diamond.png', active: true },
-    { day: 2, reward: '+80', icon: './assets/purple-diamond.png' },
+    { day: 1, reward: '+80', icon: './assets/diamond_animated.gif', active: true },
+    { day: 2, reward: '+80', icon: './assets/diamond_animated.gif' },
     { day: 3, reward: '+200', icon: './assets/giftIconInDailySignIn.png' },
-    { day: 4, reward: '+90', icon: './assets/purple-diamond.png' },
-    { day: 5, reward: '+90', icon: './assets/purple-diamond.png' },
-    { day: 6, reward: '+90', icon: './assets/purple-diamond.png' },
+    { day: 4, reward: '+90', icon: './assets/diamond_animated.gif' },
+    { day: 5, reward: '+90', icon: './assets/diamond_animated.gif' },
+    { day: 6, reward: '+90', icon: './assets/diamond_animated.gif' },
     { day: 7, reward: 'MEGA 6K', icon: './assets/giftIconInDailySignIn.png', isMega: true }
   ];
 
@@ -252,8 +252,8 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
                       src={d.icon}
                       alt="Reward"
                       style={{
-                        width: d.isMega ? '24px' : '20px',
-                        height: d.isMega ? '24px' : '20px',
+                        width: d.isMega ? '32px' : '30px',
+                        height: d.isMega ? '32px' : '30px',
                         objectFit: 'contain'
                       }}
                     />

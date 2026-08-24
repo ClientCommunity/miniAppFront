@@ -17,12 +17,12 @@ import { throwConfetti } from './utils/confetti';
 import { haptics } from './utils/haptics';
 
 const WHEEL_SEGMENTS: SpinSegment[] = [
-  { label: 'Diamond', value: 'gem', image: './assets/purple-diamond.png' },
+  { label: 'Diamond', value: 'gem', image: './assets/diamond_animated.gif' },
   { label: 'Coins', value: 'coins', image: './assets/coin_3d.png' },
-  { label: 'Diamond', value: 'gem', image: './assets/purple-diamond.png' },
+  { label: 'Diamond', value: 'gem', image: './assets/diamond_animated.gif' },
   { label: 'Jackpot', value: 'jackpot', image: './assets/money_bag_3d.png' },
-  { label: 'Tickets', value: 'tickets', image: './assets/admission_tickets_3d.png' },
-  { label: 'Diamond', value: 'gem', image: './assets/purple-diamond.png' }
+  { label: 'Tickets', value: 'tickets', image: './assets/ticket_animated.gif' },
+  { label: 'Diamond', value: 'gem', image: './assets/diamond_animated.gif' }
 ];
 
 const MOCK_TASKS = [
@@ -207,7 +207,7 @@ function App() {
               boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
             }}
           >
-            <img src="./assets/wheel-of-fortune.png" alt="Spins" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+            <img src="./assets/ticket_animated.gif" alt="Spins" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
             <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>12</span>
           </div>
 
@@ -232,7 +232,7 @@ function App() {
             onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
             onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
-            <img src="./assets/purple-diamond.png" alt="Diamond" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '25px', height: '25px', objectFit: 'contain' }} />
             <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>124</span>
 
             {/* Green plus badge */}
@@ -471,11 +471,11 @@ function App() {
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img 
-              src="./assets/spin-ticket.png" 
+              src="./assets/ticket_animated.gif" 
               alt="Spin Ticket" 
               style={{ 
-                width: '26px', 
-                height: '26px', 
+                width: '30px', 
+                height: '30px', 
                 objectFit: 'contain',
                 filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' 
               }} 

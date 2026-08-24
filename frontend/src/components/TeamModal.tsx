@@ -299,9 +299,9 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
             />
             <span>Invite 1 Friend =</span>
             <img
-              src="./assets/spin-ticket.png"
+              src="./assets/ticket_animated.gif"
               alt="Spin Ticket"
-              style={{ width: '22px', height: '22px', objectFit: 'contain' }}
+              style={{ width: '26px', height: '26px', objectFit: 'contain' }}
             />
             <span style={{ color: '#facc15' }}>1 Free Spin</span>
           </div>

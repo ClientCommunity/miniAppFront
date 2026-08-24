@@ -42,7 +42,7 @@ const ALL_TASKS: TaskItem[] = [
     id: 'special-3',
     category: 'special',
     title: 'Join EarnCraft VIP Get More Rewards',
-    icon: './assets/wheel-of-fortune.png',
+    icon: './assets/ticket_animated.gif',
     rewardGems: 3200,
     secondaryRewardGems: 1,
     status: 'pending'
@@ -51,7 +51,7 @@ const ALL_TASKS: TaskItem[] = [
     id: 'daily-1',
     category: 'daily',
     title: 'Spin the Lucky Wheel 5 times',
-    icon: './assets/wheel-of-fortune.png',
+    icon: './assets/ticket_animated.gif',
     rewardGems: 160,
     progress: { current: 3, total: 5 },
     status: 'pending'
@@ -186,13 +186,13 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
 
           {/* Spins */}
           <div style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '0.18rem 0.5rem', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <img src="./assets/wheel-of-fortune.png" alt="Spins" style={{ width: '15px', height: '15px', objectFit: 'contain' }} />
+            <img src="./assets/ticket_animated.gif" alt="Spins" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
             <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>12</span>
           </div>
 
           {/* Diamonds */}
           <div style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '0.18rem 0.55rem', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <img src="./assets/purple-diamond.png" alt="Diamond" style={{ width: '15px', height: '15px', objectFit: 'contain' }} />
+            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
             <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>760</span>
           </div>
         </div>

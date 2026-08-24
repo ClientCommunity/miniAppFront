@@ -156,11 +156,11 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
             <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>0</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255, 255, 255, 0.15)', borderRadius: '1rem', padding: '0.2rem 0.6rem 0.2rem 0.2rem', gap: '0.3rem' }}>
-            <img src="./assets/wheel-of-fortune.png" alt="Spin" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+            <img src="./assets/ticket_animated.gif" alt="Spin" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
             <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>1</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255, 255, 255, 0.15)', borderRadius: '1rem', padding: '0.2rem 0.6rem 0.2rem 0.2rem', gap: '0.3rem' }}>
-            <img src="./assets/purple-diamond.png" alt="Diamond" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
             <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>680</span>
           </div>
         </div>

@@ -115,9 +115,9 @@ export const TaskCard: FC<TaskCardProps> = ({ task, onClaim }) => {
             }}
           >
             <img
-              src="./assets/purple-diamond.png"
+              src="./assets/diamond_animated.gif"
               alt="Diamond"
-              style={{ width: '13px', height: '13px', objectFit: 'contain' }}
+              style={{ width: '22px', height: '22px', objectFit: 'contain' }}
             />
             <span>+{task.rewardGems || 100}</span>
           </div>
