@@ -18,9 +18,9 @@ import { haptics } from './utils/haptics';
 
 const WHEEL_SEGMENTS: SpinSegment[] = [
   { label: 'Diamond', value: 'gem', image: './assets/diamond_animated.gif' },
-  { label: 'Coins', value: 'coins', image: './assets/coin_3d.png' },
+  { label: 'Coins', value: 'coins', image: './assets/SingleCoin_animated.gif' },
   { label: 'Diamond', value: 'gem', image: './assets/diamond_animated.gif' },
-  { label: 'Jackpot', value: 'jackpot', image: './assets/money_bag_3d.png' },
+  { label: 'Jackpot', value: 'jackpot', image: './assets/coinSack_animated.gif' },
   { label: 'Tickets', value: 'tickets', image: './assets/ticket_animated.gif' },
   { label: 'Diamond', value: 'gem', image: './assets/diamond_animated.gif' }
 ];
@@ -34,14 +34,14 @@ const MOCK_TASKS = [
 const LEFT_CARDS = [
   { title: 'Raffle', icon: './assets/raffleFeatureCardIcon.png', variant: 'emerald' as const, badge: 'HOT', badgeColor: 'gold' as const },
   { title: 'Contest', icon: './assets/contestTrophy_animated.gif', variant: 'colorful' as const },
-  { title: 'Gift', icon: './assets/giftcodeFeatureCardIcon.png', variant: 'gold' as const, badge: 'FREE', badgeColor: 'red' as const },
+  { title: 'Gift', icon: './assets/GiftBox_animated.gif', variant: 'gold' as const, badge: 'FREE', badgeColor: 'red' as const },
   { title: 'Team', icon: './assets/inviteFeatureCardIcon.png', variant: 'emerald' as const }
 ];
 
 const RIGHT_CARDS = [
-  { title: '+ Spins', icon: './assets/wheel-of-fortune.png', variant: 'colorful' as const, badge: 'NEW', badgeColor: 'emerald' as const },
+  { title: '+ Spins', icon: './assets/SpinWheel_animated.gif', variant: 'colorful' as const, badge: 'NEW', badgeColor: 'emerald' as const },
   { title: 'Sign In', icon: './assets/signin-iconFetareCardIcon.png', variant: 'emerald' as const, badge: '1', badgeColor: 'red' as const },
-  { title: 'Wallet', icon: './assets/icon-gold.png', variant: 'gold' as const }
+  { title: 'Wallet', icon: './assets/SingleCoin_animated.gif', variant: 'gold' as const }
 ];
 
 function App() {
@@ -448,15 +448,14 @@ function App() {
         ))}
       </div>
 
-      {/* Invite Row */}
+      {/* Unified Bottom Invite CTA Bar */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '0.65rem',
         width: '100%',
-        paddingTop: '0.4rem',
-        paddingBottom: '0.4rem',
+        paddingTop: '0.25rem',
+        paddingBottom: '0.25rem',
         flexShrink: 0
       }}>
         <div
@@ -465,63 +464,69 @@ function App() {
             setShowTeamModal(true);
           }}
           style={{
-            flex: 1,
-            maxWidth: '260px',
-            background: 'linear-gradient(135deg, rgba(5, 115, 72, 0.65) 0%, rgba(2, 55, 36, 0.9) 100%)',
-            border: '1px solid rgba(0, 230, 118, 0.45)',
-            borderRadius: '1rem',
-            padding: '0.5rem 0.85rem',
+            width: '100%',
+            maxWidth: '360px',
+            height: '44px',
+            background: 'linear-gradient(135deg, rgba(6, 125, 78, 0.72) 0%, rgba(1, 45, 28, 0.92) 100%)',
+            border: '1px solid rgba(0, 230, 118, 0.55)',
+            borderRadius: '1.25rem',
+            padding: '0 0.85rem',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
             gap: '0.65rem',
-            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.3)',
+            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3)',
             cursor: 'pointer',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)'
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            boxSizing: 'border-box',
+            transition: 'transform 0.1s ease'
           }}
+          onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
+          onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+          onTouchStart={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
+          onTouchEnd={(e) => (e.currentTarget.style.transform = 'scale(1)')}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* Left: Ticket GIF */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <img 
               src="./assets/ticket_animated.gif" 
               alt="Spin Ticket" 
               style={{ 
-                width: '38px', 
-                height: '38px', 
+                width: '32px', 
+                height: '32px', 
                 objectFit: 'contain',
-                filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.5))' 
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' 
               }} 
             />
           </div>
-          <div style={{ fontWeight: 800, fontFamily: 'Outfit, sans-serif', fontSize: '0.88rem', color: '#ffffff' }}>
-            Invite to earn spins
+
+          {/* Center: CTA Text */}
+          <div style={{ fontWeight: 800, fontFamily: 'Outfit, sans-serif', fontSize: '0.85rem', color: '#ffffff', textAlign: 'center', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            Invite Friends &amp; Earn Free Spins
+          </div>
+
+          {/* Right: Sleek Forward Arrow Badge */}
+          <div
+            style={{
+              width: '26px',
+              height: '26px',
+              borderRadius: '50%',
+              background: 'linear-gradient(180deg, #00e676 0%, #00a854 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.8)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 6px rgba(0, 230, 118, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.6)',
+              flexShrink: 0
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
           </div>
         </div>
-
-        <button
-          onClick={() => {
-            haptics.impact('light');
-            setShowTeamModal(true);
-          }}
-          style={{
-            width: '42px',
-            height: '42px',
-            background: 'linear-gradient(180deg, #00e676 0%, #00a854 100%)',
-            border: '1px solid rgba(167, 243, 208, 0.8)',
-            borderRadius: '1rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(0, 230, 118, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.5)',
-            cursor: 'pointer',
-            flexShrink: 0,
-            padding: 0
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-        </button>
       </div>
 
       {/* Reward Modal */}

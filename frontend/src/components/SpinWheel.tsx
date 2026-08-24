@@ -114,7 +114,7 @@ export const SpinWheel: FC<SpinWheelProps> = ({
   // Sizing metrics
   const frameThickness = 22;
   const coreSize = Math.max(120, size - frameThickness * 2 + 4);
-  const hubSize = coreSize * 0.38;
+  const hubSize = coreSize * 0.30;
 
   // Cycle marquee bulbs chase effect
   useEffect(() => {
@@ -256,7 +256,7 @@ export const SpinWheel: FC<SpinWheelProps> = ({
       ctx.translate(cx, cy);
       ctx.rotate(midAngle);
 
-      const itemDistance = innerRadius * 0.60;
+      const itemDistance = innerRadius * 0.68;
       const iconRenderSize = coreSize > 200 ? 36 : 28;
 
       // 3A: Soft Saturated Ambient Flare behind asset
@@ -596,7 +596,7 @@ export const SpinWheel: FC<SpinWheelProps> = ({
           {segments.map((segment, i) => {
             const arc = (2 * Math.PI) / segments.length;
             const midAngle = i * arc + arc / 2;
-            const itemDistance = (coreSize / 2 - 1) * 0.60;
+            const itemDistance = (coreSize / 2 - 1) * 0.68;
             const iconSize = coreSize > 200 ? 54 : 44;
             const x = coreSize / 2 + Math.cos(midAngle) * itemDistance;
             const y = coreSize / 2 + Math.sin(midAngle) * itemDistance;
@@ -628,7 +628,12 @@ export const SpinWheel: FC<SpinWheelProps> = ({
                     width: '100%',
                     height: '100%',
                     objectFit: 'contain',
-                    filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.85))'
+                    filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.85))',
+                    transform: segment.image?.includes('coinSack')
+                      ? 'scale(0.84)'
+                      : segment.image?.includes('SingleCoin')
+                      ? 'scale(0.70)'
+                      : 'scale(1)'
                   }}
                 />
               </div>
@@ -812,7 +817,7 @@ export const SpinWheel: FC<SpinWheelProps> = ({
         <div
           style={{
             position: 'absolute',
-            inset: '-5px',
+            inset: '-4px',
             borderRadius: '50%',
             background: 'linear-gradient(135deg, #fef08a 0%, #ca8a04 35%, #854d0e 70%, #fef08a 100%)',
             boxShadow: '0 6px 16px rgba(0,0,0,0.8), inset 0 2px 3px rgba(255,255,255,0.7)',
@@ -847,11 +852,11 @@ export const SpinWheel: FC<SpinWheelProps> = ({
               : isSpinning
               ? '0 2px 0 #0f172a, inset 0 2px 4px rgba(0,0,0,0.4)'
               : '0 6px 0 #064e3b, 0 12px 18px rgba(0,0,0,0.75), inset 0 2px 4px rgba(255,255,255,0.6)',
-            fontSize: coreSize > 200 ? '1.15rem' : '0.95rem',
+            fontSize: coreSize > 200 ? '0.94rem' : '0.80rem',
             fontWeight: 900,
             fontFamily: 'Georgia, serif',
             textTransform: 'uppercase',
-            letterSpacing: '0.06em',
+            letterSpacing: '0.05em',
             cursor: isSpinning ? 'not-allowed' : 'pointer',
             transition: 'all 0.08s ease',
             transform: isButtonPressed ? 'translateY(4px)' : 'translateY(0)',
