@@ -127,34 +127,47 @@ export const FeatureCard: FC<FeatureCardProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           width: '100%',
-          padding: '0.15rem',
+          padding: '0.1rem',
           boxSizing: 'border-box'
         }}
       >
-        {icon.endsWith('.png') ? (
-          <img
-            src={icon}
-            alt={title}
-            style={{
-              maxWidth: '82%',
-              maxHeight: '82%',
-              objectFit: 'contain',
-              filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.45))',
-              transform: isPressed ? 'scale(0.95)' : 'scale(1)',
-              transition: 'transform 0.15s ease'
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              fontSize: '1.85rem',
-              lineHeight: 1,
-              filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.4))'
-            }}
-          >
-            {icon}
-          </div>
-        )}
+        <div
+          style={{
+            width: '38px',
+            height: '38px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative'
+          }}
+        >
+          {(icon.endsWith('.png') || icon.endsWith('.jpg') || icon.endsWith('.svg') || icon.endsWith('.gif') || icon.endsWith('.webp') || icon.includes('/')) ? (
+            <img
+              src={icon}
+              alt={title}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.45))',
+                transform: isPressed
+                  ? (icon.endsWith('.gif') ? 'scale(1.05)' : 'scale(0.92)')
+                  : (icon.endsWith('.gif') ? 'scale(1.15)' : 'scale(1)'),
+                transition: 'transform 0.15s ease'
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                fontSize: '1.75rem',
+                lineHeight: 1,
+                filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.4))'
+              }}
+            >
+              {icon}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 3D Beveled Title Label */}

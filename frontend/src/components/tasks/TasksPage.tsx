@@ -178,69 +178,69 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
 
         {/* Resource Badges */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          {/* Energy Balance (Amber-Gold Jewel Capsule) */}
+          {/* Energy Balance */}
           <div
             style={{
-              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(180, 83, 9, 0.38) 100%)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              border: '1px solid rgba(251, 191, 36, 0.55)',
-              color: '#fef08a',
-              padding: '0.2rem 0.55rem',
-              borderRadius: '18px',
+              background: 'rgba(0, 0, 0, 0.42)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255, 255, 255, 0.16)',
+              color: '#ffffff',
+              padding: '0.18rem 0.55rem',
+              borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
               gap: '0.25rem',
-              boxShadow: '0 2px 8px rgba(245, 158, 11, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.35)',
+              boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
               height: '28px',
               boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '18px', height: '18px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }} />
+            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '17px', height: '17px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }} />
             <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>50</span>
           </div>
 
-          {/* Spin Balance (Emerald-Jade Jewel Capsule) */}
+          {/* Spin Balance */}
           <div
             style={{
-              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(4, 120, 87, 0.38) 100%)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              border: '1px solid rgba(52, 211, 153, 0.55)',
-              color: '#a7f3d0',
-              padding: '0.2rem 0.55rem',
-              borderRadius: '18px',
+              background: 'rgba(0, 0, 0, 0.42)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255, 255, 255, 0.16)',
+              color: '#ffffff',
+              padding: '0.18rem 0.55rem',
+              borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
               gap: '0.25rem',
-              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.35)',
+              boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
               height: '28px',
               boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/ticket_animated.gif" alt="Spins" style={{ width: '29px', height: '29px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
+            <img src="./assets/ticket_animated.gif" alt="Spins" style={{ width: '26px', height: '26px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
             <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>12</span>
           </div>
 
-          {/* Diamond Balance (Royal-Amethyst Jewel Capsule) */}
+          {/* Diamond Balance */}
           <div
             style={{
-              background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.28) 0%, rgba(107, 33, 168, 0.42) 100%)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              border: '1px solid rgba(192, 132, 252, 0.6)',
+              background: 'rgba(0, 0, 0, 0.42)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255, 255, 255, 0.16)',
               color: '#ffffff',
-              padding: '0.2rem 0.55rem',
-              borderRadius: '18px',
+              padding: '0.18rem 0.55rem',
+              borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
               gap: '0.25rem',
-              boxShadow: '0 2px 10px rgba(168, 85, 247, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.35)',
+              boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
               height: '28px',
               boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '24px', height: '24px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
+            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '23px', height: '23px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
             <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>760</span>
           </div>
         </div>

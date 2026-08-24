@@ -68,13 +68,13 @@ export const TaskCard: FC<TaskCardProps> = ({ task, onClaim }) => {
         }}
       >
         {typeof task.icon === 'string' &&
-        (task.icon.endsWith('.png') || task.icon.endsWith('.jpg') || task.icon.endsWith('.svg') || task.isIconImage) ? (
+        (task.icon.endsWith('.png') || task.icon.endsWith('.jpg') || task.icon.endsWith('.svg') || task.icon.endsWith('.gif') || task.icon.endsWith('.webp') || task.icon.includes('/') || task.isIconImage) ? (
           <img
             src={task.icon}
             alt="Task Icon"
             style={{
-              width: '24px',
-              height: '24px',
+              width: task.icon.endsWith('.gif') ? '28px' : '24px',
+              height: task.icon.endsWith('.gif') ? '28px' : '24px',
               objectFit: 'contain',
               filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
             }}
