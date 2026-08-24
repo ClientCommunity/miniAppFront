@@ -218,19 +218,19 @@ function App() {
           </div>
 
           {/* Diamond Balance (+ Deposit Badge) */}
-          <div 
+          <div
             onClick={() => setCurrentPage('tasks')}
-            style={{ 
+            style={{
               position: 'relative',
-              background: 'rgba(0, 0, 0, 0.42)', 
-              backdropFilter: 'blur(12px)', 
+              background: 'rgba(0, 0, 0, 0.42)',
+              backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255, 255, 255, 0.16)', 
-              color: '#ffffff', 
-              padding: '0.18rem 0.65rem 0.18rem 0.45rem', 
-              borderRadius: '16px', 
-              display: 'flex', 
-              alignItems: 'center', 
+              border: '1px solid rgba(255, 255, 255, 0.16)',
+              color: '#ffffff',
+              padding: '0.18rem 0.65rem 0.18rem 0.45rem',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
               gap: '0.25rem',
               cursor: 'pointer',
               boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
@@ -277,27 +277,27 @@ function App() {
         {/* Left Column (4 Cards Vertical) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.42rem', flexShrink: 0, justifyContent: 'center' }}>
           {LEFT_CARDS.map(card => (
-            <FeatureCard 
-              key={card.title} 
-              {...card} 
+            <FeatureCard
+              key={card.title}
+              {...card}
               onClick={
                 card.title === 'Raffle'
                   ? () => setCurrentPage('raffle')
                   : card.title === 'Contest'
-                  ? () => setShowContestModal(true)
-                  : card.title === 'Gift'
-                  ? () => setShowGiftModal(true)
-                  : card.title === 'Team'
-                  ? () => setShowTeamModal(true)
-                  : undefined
+                    ? () => setShowContestModal(true)
+                    : card.title === 'Gift'
+                      ? () => setShowGiftModal(true)
+                      : card.title === 'Team'
+                        ? () => setShowTeamModal(true)
+                        : undefined
               }
             />
           ))}
         </div>
 
         {/* Center Wheel & Progress Section */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: '1 1 auto', minWidth: 0, padding: '0 0.25rem', marginTop: '-20px' }}>
-            {/* Balance Display with Sparkle Glow */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: '1 1 auto', minWidth: 0, padding: '0 0.25rem', marginTop: '-60px' }}>
+          {/* Balance Display with Sparkle Glow */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
             <img
               src="./assets/icon-gold.png"
@@ -390,7 +390,7 @@ function App() {
               fontFamily: 'Georgia, serif',
               fontStyle: 'italic',
               opacity: 0.95,
-              marginBottom: '1.4rem',
+              marginBottom: '1.1rem',
               textShadow: '0 1px 3px rgba(0,0,0,0.7)'
             }}
           >
@@ -419,10 +419,10 @@ function App() {
                 card.title === '+ Spins'
                   ? () => setCurrentPage('tasks')
                   : card.title === 'Sign In'
-                  ? () => setShowDailyRewards(true)
-                  : card.title === 'Wallet'
-                  ? () => setCurrentPage('wallet')
-                  : undefined
+                    ? () => setShowDailyRewards(true)
+                    : card.title === 'Wallet'
+                      ? () => setCurrentPage('wallet')
+                      : undefined
               }
             />
           ))}
@@ -490,15 +490,15 @@ function App() {
         >
           {/* Left: Ticket GIF */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <img 
-              src="./assets/ticket_animated.gif" 
-              alt="Spin Ticket" 
-              style={{ 
-                width: '32px', 
-                height: '32px', 
+            <img
+              src="./assets/ticket_animated.gif"
+              alt="Spin Ticket"
+              style={{
+                width: '32px',
+                height: '32px',
                 objectFit: 'contain',
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' 
-              }} 
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
+              }}
             />
           </div>
 
