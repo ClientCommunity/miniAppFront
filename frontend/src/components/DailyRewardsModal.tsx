@@ -2,22 +2,52 @@ import type { FC } from 'react';
 import { useEffect, useState } from 'react';
 import { haptics } from '../utils/haptics';
 import { throwConfetti } from '../utils/confetti';
+import { notifyToast } from '../utils/debugToast';
+import {
+  getCachedDailyRewards,
+  fetchDailyRewardsData,
+  claimDailyReward
+} from '../services/dataService';
+import type { DailyRewardsStatusData } from '../types/api';
 
 export interface DailyRewardsModalProps {
   onClose: () => void;
+  onClaimSuccess?: (rewardGems: number) => void;
 }
 
-import { getInitialDailyRewards, fetchDailyRewardsData, claimDailyReward } from '../services/dataService';
-
-export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
+export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose, onClaimSuccess }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [claimed, setClaimed] = useState(false);
-  const [dailyData, setDailyData] = useState(() => getInitialDailyRewards());
+  const [dailyData, setDailyData] = useState<DailyRewardsStatusData | null>(() => getCachedDailyRewards());
+  const [loading, setLoading] = useState(() => dailyData === null);
+  const [error, setError] = useState<string | null>(null);
+  const [isClaiming, setIsClaiming] = useState(false);
+
+  const loadData = (force: boolean = false) => {
+    if (!force && dailyData) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    fetchDailyRewardsData(force)
+      .then((data) => {
+        if (data) {
+          setDailyData(data);
+        } else {
+          setError('Failed to load daily rewards from server.');
+        }
+      })
+      .catch((err) => {
+        setError(err?.message || 'Failed to load daily rewards.');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
 
   useEffect(() => {
-    fetchDailyRewardsData().then((data) => {
-      if (data) setDailyData(data);
-    });
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -27,22 +57,43 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
   }, []);
 
   const handleClose = () => {
+    haptics.impact('light');
     setIsVisible(false);
     setTimeout(onClose, 300);
   };
 
-  const handleClaim = async (_amount?: number) => {
+  const currentDay = dailyData?.currentDay || 1;
+  const canClaimToday = dailyData?.canClaimToday ?? false;
+  const days = dailyData?.days || [];
+
+  const handleClaim = async () => {
+    if (!canClaimToday || isClaiming) return;
+
+    setIsClaiming(true);
     haptics.notification('success');
     haptics.playWinSound();
     throwConfetti();
-    setClaimed(true);
-    await claimDailyReward();
+
+    // Optimistically update local claim state
+    setDailyData((prev) => (prev ? { ...prev, canClaimToday: false } : null));
+
+    try {
+      const res = await claimDailyReward();
+      if (res.success) {
+        const gemsWon = res.data?.rewardGems || 80;
+        onClaimSuccess?.(gemsWon);
+        notifyToast(`🎁 Claimed Day ${currentDay} Reward (+${gemsWon} 💎)!`, 'success', 3000);
+      } else {
+        notifyToast(`🔴 ${res.message || 'Failed to claim reward'}`, 'error', 4000);
+      }
+    } catch (err: any) {
+      notifyToast(`🔴 ${err?.message || 'Failed to claim daily reward.'}`, 'error', 4000);
+    }
+
     setTimeout(() => {
       handleClose();
     }, 1200);
   };
-
-  const days = dailyData.days || [];
 
   return (
     <div
@@ -63,6 +114,19 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
         WebkitBackdropFilter: 'blur(6px)'
       }}
     >
+      {/* Dark overlay backdrop click */}
+      <div
+        onClick={handleClose}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0
+        }}
+      />
+
       {/* Outer Bottom Sheet Container */}
       <div
         style={{
@@ -76,10 +140,12 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          padding: '2rem 1.25rem 2.25rem 1.25rem',
+          padding: '1.75rem 1.25rem 2.25rem 1.25rem',
           position: 'relative',
           boxShadow: '0 -15px 35px rgba(0,0,0,0.6)',
-          fontFamily: 'Outfit, sans-serif'
+          fontFamily: 'Outfit, sans-serif',
+          zIndex: 1,
+          boxSizing: 'border-box'
         }}
       >
         {/* Close Button */}
@@ -111,7 +177,7 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
           style={{
             width: '100%',
             maxWidth: '390px',
-            background: 'rgba(3, 30, 22, 0.85)',
+            background: 'rgba(3, 30, 22, 0.90)',
             border: '1px solid rgba(52, 211, 153, 0.35)',
             borderRadius: '1.5rem',
             position: 'relative',
@@ -187,119 +253,353 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
               }}
             >
               <span>🔥</span>
-              <span>Day 1 Streak Active (+10% Spin Luck!)</span>
+              <span>{dailyData?.streakBonus || `Day ${currentDay} Streak Active (+10% Spin Luck!)`}</span>
             </div>
           </div>
 
-          {/* Days Grid Layout */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '0.45rem',
-              padding: '0 0.85rem',
-              marginBottom: '1rem'
-            }}
-          >
-            {days.map((d) => {
-              return (
-                <div
-                  key={d.day}
-                  style={{
-                    background: d.active
-                      ? 'linear-gradient(180deg, #10b981 0%, #047857 100%)'
-                      : d.isMega
-                      ? 'linear-gradient(180deg, #f59e0b 0%, #b45309 100%)'
-                      : 'rgba(0, 0, 0, 0.35)',
-                    borderRadius: '0.75rem',
-                    padding: '0.45rem 0.15rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: d.active || d.isMega ? '0 4px 10px rgba(0,0,0,0.3)' : 'inset 0 1px 2px rgba(0,0,0,0.2)',
-                    border: d.active
-                      ? '2px solid #6ee7b7'
-                      : d.isMega
-                      ? '2px solid #fde68a'
-                      : '1px solid rgba(255,255,255,0.08)',
-                    color: d.active || d.isMega ? '#ffffff' : '#94a3b8',
-                    transform: d.active ? 'scale(1.03)' : 'none',
-                    zIndex: d.active ? 2 : 1,
-                    position: 'relative'
-                  }}
-                >
+          {/* ══════════════════════════════════════════════════════════
+              1. SKELETON LOADING STATE (Glow-Wave 7-Day Grid)
+              ══════════════════════════════════════════════════════════ */}
+          {loading ? (
+            <div className="page-reveal-fade">
+              {/* Shimmering 7-Day Skeleton Grid */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: '0.45rem',
+                  padding: '0 0.85rem',
+                  marginBottom: '1rem'
+                }}
+              >
+                {[1, 2, 3, 4, 5, 6, 7].map((num) => (
                   <div
+                    key={num}
+                    className="skeleton-glow-box"
                     style={{
-                      fontSize: '0.66rem',
-                      fontWeight: 800,
-                      marginBottom: '0.15rem',
-                      color: d.active || d.isMega ? '#ffffff' : '#94a3b8'
-                    }}
-                  >
-                    Day {d.day}
-                  </div>
-
-                  <div
-                    style={{
-                      fontSize: '1.25rem',
-                      marginBottom: '0.15rem',
+                      borderRadius: '0.75rem',
+                      height: '84px',
                       display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      filter: d.active || d.isMega ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' : 'none'
+                      padding: '0.45rem 0.15rem',
+                      gap: '0.35rem'
                     }}
                   >
-                    <img
-                      src={d.icon}
-                      alt="Reward"
+                    <div
                       style={{
-                        width: d.isMega ? '32px' : '30px',
-                        height: d.isMega ? '32px' : '30px',
-                        objectFit: 'contain'
+                        width: '32px',
+                        height: '10px',
+                        borderRadius: '4px',
+                        background: 'rgba(255, 255, 255, 0.15)'
+                      }}
+                    />
+                    <div
+                      style={{
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '50%',
+                        background: 'rgba(255, 255, 255, 0.18)'
+                      }}
+                    />
+                    <div
+                      style={{
+                        width: '26px',
+                        height: '8px',
+                        borderRadius: '4px',
+                        background: 'rgba(255, 255, 255, 0.12)'
                       }}
                     />
                   </div>
+                ))}
+              </div>
 
-                  <div
-                    style={{
-                      fontSize: d.isMega ? '0.65rem' : '0.72rem',
-                      fontWeight: 800,
-                      color: d.active || d.isMega ? '#ffffff' : '#cbd5e1'
-                    }}
-                  >
-                    {d.reward}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Action Buttons */}
-          <div style={{ padding: '0 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <button
-              onClick={() => handleClaim(80)}
-              disabled={claimed}
+              {/* Shimmering Button Skeleton */}
+              <div style={{ padding: '0 1rem' }}>
+                <div
+                  className="skeleton-glow-box"
+                  style={{
+                    width: '100%',
+                    height: '46px',
+                    borderRadius: '0.75rem',
+                    marginBottom: '0.5rem'
+                  }}
+                />
+              </div>
+            </div>
+          ) : error || !dailyData ? (
+            /* ══════════════════════════════════════════════════════════
+               2. EXPLICIT SERVER ERROR STATE
+               ══════════════════════════════════════════════════════════ */
+            <div
               style={{
-                width: '100%',
-                background: claimed
-                  ? 'linear-gradient(180deg, #64748b 0%, #475569 100%)'
-                  : 'linear-gradient(180deg, #00e676 0%, #00a854 100%)',
-                color: 'white',
-                border: '1px solid rgba(167, 243, 208, 0.8)',
-                borderRadius: '0.75rem',
-                padding: '0.75rem',
-                fontSize: '0.95rem',
-                fontWeight: 900,
-                boxShadow: '0 4px 18px rgba(0, 230, 118, 0.45), inset 0 1px 1px rgba(255,255,255,0.4)',
-                cursor: claimed ? 'default' : 'pointer',
-                marginBottom: '0.5rem',
-                transition: 'all 0.15s ease'
+                padding: '1.5rem 1rem',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '0.65rem'
               }}
             >
-              {claimed ? 'Claimed! ✓' : 'Claim Daily Reward 💎'}
-            </button>
+              <div style={{ color: '#f87171', fontSize: '0.88rem', fontWeight: 700 }}>
+                ⚠️ {error || 'Failed to load daily rewards from server.'}
+              </div>
+              <button
+                onClick={() => loadData(true)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  color: 'white',
+                  borderRadius: '0.5rem',
+                  padding: '0.4rem 1rem',
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  fontWeight: 800
+                }}
+              >
+                🔄 Retry Connection
+              </button>
+            </div>
+          ) : (
+            /* ══════════════════════════════════════════════════════════
+               3. LIVE DATA RENDER (Refined Subtle Aesthetics)
+               ══════════════════════════════════════════════════════════ */
+            <div className="page-reveal-fade">
+              {/* Days Grid Layout (Days 1 to 7) */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: '0.45rem',
+                  padding: '0 0.85rem',
+                  marginBottom: '1rem'
+                }}
+              >
+                {days.map((d) => {
+                  const dayNum = d.day;
+                  let isClaimed = false;
+                  let isReadyToday = false;
+                  let isNextTomorrow = false;
+                  let isLocked = false;
 
+                  if (canClaimToday) {
+                    if (dayNum < currentDay) {
+                      isClaimed = true;
+                    } else if (dayNum === currentDay) {
+                      isReadyToday = true;
+                    } else {
+                      isLocked = true;
+                    }
+                  } else {
+                    if (dayNum <= currentDay) {
+                      isClaimed = true;
+                    } else if (dayNum === currentDay + 1) {
+                      isNextTomorrow = true;
+                    } else {
+                      isLocked = true;
+                    }
+                  }
+
+                  return (
+                    <div
+                      key={d.day}
+                      style={{
+                        background: isReadyToday
+                          ? 'linear-gradient(180deg, #10b981 0%, #047857 100%)'
+                          : isNextTomorrow
+                          ? 'linear-gradient(180deg, rgba(245, 158, 11, 0.22) 0%, rgba(180, 83, 9, 0.30) 100%)'
+                          : d.isMega && !isClaimed
+                          ? 'linear-gradient(180deg, #f59e0b 0%, #b45309 100%)'
+                          : isClaimed
+                          ? 'rgba(0, 0, 0, 0.40)'
+                          : 'rgba(0, 0, 0, 0.28)',
+                        borderRadius: '0.75rem',
+                        padding: '0.45rem 0.15rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: isReadyToday
+                          ? '0 4px 10px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.3)'
+                          : 'inset 0 1px 2px rgba(0,0,0,0.2)',
+                        border: isReadyToday
+                          ? '2px solid #6ee7b7'
+                          : isNextTomorrow
+                          ? '1px dashed #fbbf24'
+                          : isClaimed
+                          ? '1px solid rgba(74, 222, 128, 0.4)'
+                          : d.isMega
+                          ? '2px solid #fde68a'
+                          : '1px solid rgba(255,255,255,0.08)',
+                        color: isReadyToday || isNextTomorrow || d.isMega ? '#ffffff' : isClaimed ? '#a7f3d0' : '#94a3b8',
+                        transform: isReadyToday ? 'scale(1.02)' : 'none',
+                        opacity: isLocked ? 0.45 : 1,
+                        zIndex: isReadyToday ? 5 : isNextTomorrow ? 4 : 1,
+                        position: 'relative',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      {/* Status Badge Tag */}
+                      {isClaimed && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '-6px',
+                            background: 'linear-gradient(180deg, #10b981 0%, #059669 100%)',
+                            color: 'white',
+                            fontSize: '8px',
+                            fontWeight: 900,
+                            padding: '1px 5px',
+                            borderRadius: '6px',
+                            border: '1px solid #6ee7b7',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                            zIndex: 10
+                          }}
+                        >
+                          ✓ Claimed
+                        </div>
+                      )}
+
+                      {isReadyToday && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '-6px',
+                            background: 'linear-gradient(180deg, #facc15 0%, #ca8a04 100%)',
+                            color: '#1e293b',
+                            fontSize: '8px',
+                            fontWeight: 900,
+                            padding: '1px 5px',
+                            borderRadius: '6px',
+                            border: '1px solid #ffffff',
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+                            zIndex: 10
+                          }}
+                        >
+                          READY ⭐
+                        </div>
+                      )}
+
+                      {isNextTomorrow && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '-6px',
+                            background: 'linear-gradient(180deg, #fbbf24 0%, #d97706 100%)',
+                            color: '#1e293b',
+                            fontSize: '8px',
+                            fontWeight: 900,
+                            padding: '1px 4px',
+                            borderRadius: '6px',
+                            border: '1px solid #fef08a',
+                            zIndex: 10
+                          }}
+                        >
+                          NEXT ⏳
+                        </div>
+                      )}
+
+                      {isLocked && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '3px',
+                            right: '4px',
+                            fontSize: '9px',
+                            opacity: 0.6
+                          }}
+                        >
+                          🔒
+                        </div>
+                      )}
+
+                      {/* Day Label */}
+                      <div
+                        style={{
+                          fontSize: '0.66rem',
+                          fontWeight: 800,
+                          marginBottom: '0.15rem',
+                          color: isReadyToday ? '#fef08a' : isNextTomorrow ? '#fde68a' : isClaimed ? '#86efac' : '#94a3b8'
+                        }}
+                      >
+                        Day {d.day}
+                      </div>
+
+                      {/* Reward Icon */}
+                      <div
+                        style={{
+                          fontSize: '1.25rem',
+                          marginBottom: '0.15rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          filter: isReadyToday || d.isMega ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.25))' : isClaimed ? 'grayscale(0.3)' : 'none'
+                        }}
+                      >
+                        <img
+                          src={d.icon}
+                          alt="Reward"
+                          style={{
+                            width: d.isMega ? '32px' : '30px',
+                            height: d.isMega ? '32px' : '30px',
+                            objectFit: 'contain'
+                          }}
+                        />
+                      </div>
+
+                      {/* Reward Text */}
+                      <div
+                        style={{
+                          fontSize: d.isMega ? '0.65rem' : '0.72rem',
+                          fontWeight: 800,
+                          color: isReadyToday ? '#ffffff' : isNextTomorrow ? '#fef08a' : isClaimed ? '#86efac' : '#cbd5e1'
+                        }}
+                      >
+                        {d.reward}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Action Button Section */}
+              <div style={{ padding: '0 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <button
+                  onClick={handleClaim}
+                  disabled={!canClaimToday || isClaiming}
+                  style={{
+                    width: '100%',
+                    background: canClaimToday
+                      ? 'linear-gradient(180deg, #00e676 0%, #00a854 100%)'
+                      : 'rgba(255, 255, 255, 0.12)',
+                    color: canClaimToday ? '#ffffff' : 'rgba(255, 255, 255, 0.45)',
+                    border: canClaimToday ? '1px solid rgba(167, 243, 208, 0.8)' : '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '0.75rem',
+                    padding: '0.78rem',
+                    fontSize: '0.96rem',
+                    fontWeight: 900,
+                    fontFamily: 'Georgia, serif',
+                    boxShadow: canClaimToday ? '0 4px 14px rgba(0, 168, 84, 0.35), inset 0 1px 1px rgba(255,255,255,0.4)' : 'none',
+                    cursor: canClaimToday ? 'pointer' : 'not-allowed',
+                    marginBottom: '0.5rem',
+                    transition: 'all 0.15s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem'
+                  }}
+                >
+                  {canClaimToday
+                    ? `Claim Day ${currentDay} Reward 💎`
+                    : '✓ Claimed Today (Come Back Tomorrow)'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Close Link */}
+          <div style={{ textAlign: 'center', marginTop: '0.35rem' }}>
             <button
               onClick={handleClose}
               style={{
@@ -309,10 +609,11 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
                 textDecoration: 'underline',
                 fontWeight: 700,
                 fontSize: '0.8rem',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                padding: '0.25rem'
               }}
             >
-              Come back tomorrow
+              Close
             </button>
           </div>
         </div>

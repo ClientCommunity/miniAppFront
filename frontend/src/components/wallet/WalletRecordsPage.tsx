@@ -27,7 +27,7 @@ import { useEffect } from 'react';
 
 export const WalletRecordsPage: FC<WalletRecordsPageProps> = ({ onBack }) => {
   const [records, setRecords] = useState<TransactionRecord[]>(
-    () => (getInitialWalletData().recentTransactions || []) as unknown as TransactionRecord[]
+    () => ((getInitialWalletData()?.recentTransactions || []) as unknown as TransactionRecord[])
   );
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [selectedRecord, setSelectedRecord] = useState<TransactionRecord | null>(null);

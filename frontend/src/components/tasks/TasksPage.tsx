@@ -18,27 +18,38 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
   const initialData = getInitialTasksPageData();
   const [activeCategory, setActiveCategory] = useState<TaskCategory>('all');
   const [readyItem, setReadyItem] = useState<ReadyToClaimItem | null>(
-    (initialData.readyToClaim as ReadyToClaimItem) || null
+    (initialData?.readyToClaim as ReadyToClaimItem) || null
   );
-  const [tasks, setTasks] = useState<TaskItem[]>((initialData.tasks || []) as unknown as TaskItem[]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [tasks, setTasks] = useState<TaskItem[]>((initialData?.tasks || []) as unknown as TaskItem[]);
+  const [isLoading, setIsLoading] = useState(() => initialData === null);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadTasks = () => {
+    setIsLoading(true);
+    setError(null);
+    fetchTasksPageData()
+      .then((data) => {
+        if (data) {
+          if (data.readyToClaim !== undefined) {
+            setReadyItem((data.readyToClaim as unknown as ReadyToClaimItem) || null);
+          }
+          if (data.tasks) {
+            setTasks(data.tasks as unknown as TaskItem[]);
+          }
+        } else {
+          setError('Failed to load tasks from server.');
+        }
+      })
+      .catch((err) => {
+        setError(err?.message || 'Failed to load tasks.');
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
 
   useEffect(() => {
-    fetchTasksPageData().then((data) => {
-      if (data) {
-        if (data.readyToClaim !== undefined) {
-          setReadyItem((data.readyToClaim as unknown as ReadyToClaimItem) || null);
-        }
-        if (data.tasks) {
-          setTasks(data.tasks as unknown as TaskItem[]);
-        }
-      }
-    });
-
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
+    loadTasks();
   }, []);
 
   const handleClaimReady = () => {
@@ -371,6 +382,38 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
                   />
                 </div>
               ))
+            ) : error ? (
+              <div
+                style={{
+                  padding: '1.5rem',
+                  textAlign: 'center',
+                  color: '#f87171',
+                  fontSize: '0.88rem',
+                  background: 'rgba(0,0,0,0.3)',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '0.65rem'
+                }}
+              >
+                <span>⚠️ {error}</span>
+                <button
+                  onClick={loadTasks}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    color: 'white',
+                    borderRadius: '0.5rem',
+                    padding: '0.35rem 0.9rem',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    fontWeight: 800
+                  }}
+                >
+                  🔄 Retry Loading Tasks
+                </button>
+              </div>
             ) : filteredTasks.length > 0 ? (
               <div className="page-reveal-fade" style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                 {filteredTasks.map((task) => (

@@ -18,15 +18,22 @@ import { getInitialContestData, fetchContestData } from '../services/dataService
 
 export const ContestLeaderboardModal: FC<ContestLeaderboardModalProps> = ({ onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [contestData, setContestData] = useState(() => getInitialContestData());
-  const [timeLeft, setTimeLeft] = useState((contestData as any).timeLeft || contestData.endsIn || '2d 14h 32m 45s');
+  const [contestData, setContestData] = useState<any>(() => getInitialContestData() || {
+    topWinners: [],
+    otherRankings: [],
+    endsIn: '2d 14h 32m 45s'
+  });
+  const [timeLeft, setTimeLeft] = useState(contestData?.timeLeft || contestData?.endsIn || '2d 14h 32m 45s');
 
-  const TOP_WINNERS = (contestData.topWinners || []) as LeaderboardUser[];
-  const OTHER_RANKINGS = (contestData.otherRankings || []) as LeaderboardUser[];
+  const TOP_WINNERS = (contestData?.topWinners || []) as LeaderboardUser[];
+  const OTHER_RANKINGS = (contestData?.otherRankings || []) as LeaderboardUser[];
 
   useEffect(() => {
     fetchContestData('spins').then((data) => {
-      if (data) setContestData(data);
+      if (data) {
+        setContestData(data);
+        if (data.endsIn) setTimeLeft(data.endsIn);
+      }
     });
   }, []);
 

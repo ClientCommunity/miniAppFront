@@ -24,6 +24,10 @@ import {
   authenticateTelegram
 } from './services/dataService';
 import type { UserProfile } from './types/api';
+import { DebugToastContainer } from './components/debug/DebugToastContainer';
+import { notifyToast } from './utils/debugToast';
+import appConfig from './config.json';
+import api from './api/client';
 
 const WHEEL_SEGMENTS = getInitialWheelSegments();
 const MOCK_TASKS = getInitialMockTasksBanner();
@@ -94,64 +98,96 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Telegram Authentication & Live Profile Sync
+  // Telegram Authentication & Deep-Link Referral Boot Sync
   useEffect(() => {
     // @ts-ignore
     const tg = window.Telegram?.WebApp;
+    if (tg?.ready) {
+      tg.ready();
+      tg.expand?.();
+    }
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.startsWith('#') ? window.location.hash.substring(1) : window.location.hash);
+
     const initData = tg?.initData || '';
-    const startParam = tg?.initDataUnsafe?.start_param || '';
+    const startParam =
+      tg?.initDataUnsafe?.start_param ||
+      searchParams.get('tgWebAppStartParam') ||
+      searchParams.get('startapp') ||
+      searchParams.get('start_param') ||
+      hashParams.get('tgWebAppStartParam') ||
+      '';
+
+    if (startParam) {
+      notifyToast(`🎟 Referral Detected: ${startParam}`, 'info', 3500);
+    }
+
+    if (appConfig.useMockData) {
+      notifyToast('🟡 Mock Mode Active (Using data.json)', 'info', 4000);
+    } else {
+      notifyToast(`🔗 Connecting to ${api.getBaseUrl()}`, 'info', 3000);
+    }
 
     authenticateTelegram(initData, startParam).then((res) => {
       if (res.user) {
         setUserProfile(res.user);
+        if (!appConfig.useMockData) {
+          notifyToast('🟢 Backend Connection Established!', 'success', 3500);
+        }
+      } else if (!appConfig.useMockData) {
+        notifyToast(`🔴 Failed to authenticate on server: ${res.error || 'Check backend'}`, 'error', 5000);
       }
     });
   }, []);
 
-  const handleSpinEnd = (winner: SpinSegment) => {
-    setRewardText(winner.label);
-    setShowRewardModal(true);
-    haptics.notification('success');
-    haptics.playWinSound();
+    const handleSpinEnd = (winner: SpinSegment) => {
+      setRewardText(winner.label);
+      setShowRewardModal(true);
+      haptics.notification('success');
+      haptics.playWinSound();
 
-    if (winner.value !== '0' && winner.label !== 'Empty') {
-      throwConfetti();
-    }
+      if (winner.value !== '0' && winner.label !== 'Empty') {
+        throwConfetti();
+      }
 
-    // Refresh or update balance locally after spin
-    setUserProfile((prev) => {
-      const isCoin = winner.value === 'coins';
-      const isGem = winner.value === 'gem';
-      const isJackpot = winner.value === 'jackpot';
-      const newBal = isCoin ? prev.balance_usd + 0.2 : isJackpot ? 1.0 : prev.balance_usd;
-      return {
-        ...prev,
-        spins: Math.max(0, prev.spins - 1),
-        diamonds: isGem ? prev.diamonds + 80 : prev.diamonds,
-        balance_usd: newBal,
-        goal_left: Math.max(0, (prev.goal_usd || 1.0) - newBal)
-      };
-    });
-  };
+      // Refresh or update balance locally after spin
+      setUserProfile((prev) => {
+        const isCoin = winner.value === 'coins';
+        const isGem = winner.value === 'gem';
+        const isJackpot = winner.value === 'jackpot';
+        const newBal = isCoin ? prev.balance_usd + 0.2 : isJackpot ? 1.0 : prev.balance_usd;
+        return {
+          ...prev,
+          spins: Math.max(0, prev.spins - 1),
+          diamonds: isGem ? prev.diamonds + 80 : prev.diamonds,
+          balance_usd: newBal,
+          goal_left: Math.max(0, (prev.goal_usd || 1.0) - newBal)
+        };
+      });
+    };
 
-  const handleCollect = () => {
-    haptics.impact('medium');
-    setShowRewardModal(false);
-  };
+    const handleCollect = () => {
+      haptics.impact('medium');
+      setShowRewardModal(false);
+    };
 
-  const progressPercent = Math.min(
-    100,
-    Math.max(0, Math.round((userProfile.balance_usd / (userProfile.goal_usd || 1.0)) * 100))
-  );
+    const progressPercent = Math.min(
+      100,
+      Math.max(0, Math.round((userProfile.balance_usd / (userProfile.goal_usd || 1.0)) * 100))
+    );
 
-  return (
-    <>
-      {/* 1. INITIAL APP LAUNCH SPLASH (1.8s) */}
-      {isInitialLoading && (
-        <AppLaunchSplash onLoaded={() => setIsInitialLoading(false)} duration={1800} />
-      )}
+    return (
+      <>
+        {/* Floating Debug Toast Container */}
+        <DebugToastContainer />
 
-      <div className="layout-container" style={{ height: '100dvh', overflow: 'hidden', padding: '0.25rem 0.5rem 0.5rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0', justifyContent: 'center' }}>
+        {/* 1. INITIAL APP LAUNCH SPLASH (1.8s) */}
+        {isInitialLoading && (
+          <AppLaunchSplash onLoaded={() => setIsInitialLoading(false)} duration={1800} />
+        )}
+
+        <div className="layout-container" style={{ height: '100dvh', overflow: 'hidden', padding: '0.25rem 0.5rem 0.5rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0', justifyContent: 'center' }}>
 
       {/* Top Header / Asset Balances */}
       <div style={{
@@ -584,7 +620,15 @@ function App() {
 
       {/* Daily Rewards Modal (10s Pop-up) */}
       {showDailyRewards && (
-        <DailyRewardsModal onClose={() => setShowDailyRewards(false)} />
+        <DailyRewardsModal
+          onClose={() => setShowDailyRewards(false)}
+          onClaimSuccess={(gems) => {
+            setUserProfile((prev) => ({
+              ...prev,
+              diamonds: prev.diamonds + (gems || 80)
+            }));
+          }}
+        />
       )}
 
       {/* Gift Code Modal */}

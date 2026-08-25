@@ -31,45 +31,83 @@ export const getConfig = (): AppConfig => {
   return appConfig as AppConfig;
 };
 
-// 0. Synchronous Initial Mock Getters (for instant component state initialization)
+// 0. Initial State Getters (Only returns mock if useMockData is enabled in config.json)
 export const getInitialUserProfile = (): UserProfile => {
-  return mockData.userProfile as unknown as UserProfile;
+  if (appConfig.useMockData) {
+    return mockData.userProfile as unknown as UserProfile;
+  }
+  return {
+    id: 0,
+    telegram_id: 0,
+    username: '',
+    first_name: 'Connecting...',
+    photo_url: '',
+    balance_usd: 0.0,
+    spins: 0,
+    diamonds: 0,
+    energy: 0,
+    max_energy: 100,
+    level: 1,
+    goal_usd: 1.0,
+    goal_left: 1.0,
+    ton_wallet: '',
+    phone: '',
+    is_admin: false
+  };
 };
 
 export const getInitialWheelSegments = (): SpinSegment[] => {
   return mockData.wheelSegments as SpinSegment[];
 };
 
-export const getInitialDailyRewards = (): DailyRewardsStatusData => {
-  return mockData.dailyRewards as unknown as DailyRewardsStatusData;
+export const getInitialDailyRewards = (): DailyRewardsStatusData | null => {
+  if (appConfig.useMockData) {
+    return mockData.dailyRewards as unknown as DailyRewardsStatusData;
+  }
+  return null;
 };
 
-export const getInitialTeamData = (): TeamStatsData => {
-  return mockData.teamData as unknown as TeamStatsData;
+export const getInitialTeamData = (): TeamStatsData | null => {
+  if (appConfig.useMockData) {
+    return mockData.teamData as unknown as TeamStatsData;
+  }
+  return null;
 };
 
-export const getInitialContestData = (): ContestLeaderboardData => {
-  return mockData.contests as unknown as ContestLeaderboardData;
+export const getInitialContestData = (): ContestLeaderboardData | null => {
+  if (appConfig.useMockData) {
+    return mockData.contests as unknown as ContestLeaderboardData;
+  }
+  return null;
 };
 
-export const getInitialTasksPageData = (): TasksPageData => {
-  return mockData.tasksPage as unknown as TasksPageData;
+export const getInitialTasksPageData = (): TasksPageData | null => {
+  if (appConfig.useMockData) {
+    return mockData.tasksPage as unknown as TasksPageData;
+  }
+  return null;
 };
 
-export const getInitialWalletData = (): WalletInfoData => {
-  return mockData.walletPage as unknown as WalletInfoData;
+export const getInitialWalletData = (): WalletInfoData | null => {
+  if (appConfig.useMockData) {
+    return mockData.walletPage as unknown as WalletInfoData;
+  }
+  return null;
 };
 
 export const getInitialRafflesData = (): {
   ongoing: RaffleCardData[];
   ended: RaffleCardData[];
   prizeTiers: any[];
-} => {
-  return mockData.rafflesPage as unknown as {
-    ongoing: RaffleCardData[];
-    ended: RaffleCardData[];
-    prizeTiers: any[];
-  };
+} | null => {
+  if (appConfig.useMockData) {
+    return mockData.rafflesPage as unknown as {
+      ongoing: RaffleCardData[];
+      ended: RaffleCardData[];
+      prizeTiers: any[];
+    };
+  }
+  return null;
 };
 
 export const getInitialMockTasksBanner = () => {
@@ -109,16 +147,14 @@ export const authenticateTelegram = async (
     };
   }
 
-  console.warn('[DataService] /auth/telegram failed, using mock data fallback:', res.error);
   return {
-    success: true,
-    user: mockData.userProfile as unknown as UserProfile,
-    token: 'mock_jwt_token_12345'
+    success: false,
+    error: res.error || res.message || 'Telegram authentication failed on server.'
   };
 };
 
 // 2. User Profile (GET /user/profile)
-export const fetchUserProfile = async (): Promise<UserProfile> => {
+export const fetchUserProfile = async (): Promise<UserProfile | null> => {
   if (appConfig.useMockData) {
     return mockData.userProfile as unknown as UserProfile;
   }
@@ -128,7 +164,7 @@ export const fetchUserProfile = async (): Promise<UserProfile> => {
     return res.data;
   }
 
-  return mockData.userProfile as unknown as UserProfile;
+  return null;
 };
 
 // 3. Server-Authoritative Spin Execution (POST /spin)
@@ -166,45 +202,69 @@ export const performServerSpin = async (): Promise<SpinResultData> => {
     return res.data;
   }
 
-  console.warn('[DataService] /spin failed, using fallback spin:', res.error);
-  const segments = mockData.wheelSegments;
-  const randomIdx = Math.floor(Math.random() * segments.length);
-  const chosen = segments[randomIdx];
-  return {
-    targetIndex: randomIdx,
-    isDouble: false,
-    reward: {
-      id: `rew-${Date.now()}`,
-      label: chosen.label,
-      value: chosen.value,
-      amount: chosen.value === 'jackpot' ? '$10.00' : chosen.value === 'coins' ? '$0.20' : '+80 💎',
-      image: chosen.image
-    },
-    txId: `TX-${Math.floor(10000 + Math.random() * 90000)}`,
-    timestamp: Date.now(),
-    userBalance: {
-      spins: 11,
-      diamonds: 204,
-      balance_usd: 0.76,
-      energy: 50,
-      goal_usd: 1.0,
-      goal_left: 0.24
-    }
-  };
+  throw new Error(res.error || res.message || 'Server spin request failed');
 };
 
-// 4. Daily Rewards (GET /daily-rewards & POST /daily-rewards/claim)
-export const fetchDailyRewardsData = async (): Promise<DailyRewardsStatusData> => {
+// 4. Daily Rewards (Session-Cached per app opening)
+let cachedDailyRewards: DailyRewardsStatusData | null = null;
+
+export const getCachedDailyRewards = (): DailyRewardsStatusData | null => {
+  if (cachedDailyRewards) return cachedDailyRewards;
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = sessionStorage.getItem('cached_daily_rewards');
+      if (saved) {
+        cachedDailyRewards = JSON.parse(saved);
+        return cachedDailyRewards;
+      }
+    } catch {}
+  }
+  return null;
+};
+
+export const setCachedDailyRewards = (data: DailyRewardsStatusData) => {
+  cachedDailyRewards = data;
+  if (typeof window !== 'undefined') {
+    try {
+      sessionStorage.setItem('cached_daily_rewards', JSON.stringify(data));
+    } catch {}
+  }
+};
+
+export const fetchDailyRewardsData = async (forceRefresh: boolean = false): Promise<DailyRewardsStatusData | null> => {
   if (appConfig.useMockData) {
     return mockData.dailyRewards as unknown as DailyRewardsStatusData;
   }
 
-  const res = await api.get<DailyRewardsStatusData>('/daily-rewards');
-  if (res.success && res.data) {
-    return res.data;
+  if (!forceRefresh) {
+    const cached = getCachedDailyRewards();
+    if (cached) return cached;
   }
 
-  return mockData.dailyRewards as unknown as DailyRewardsStatusData;
+  const res = await api.get<any>('/daily-rewards');
+  if (res.success && res.data) {
+    const raw = res.data;
+    const rawDays = raw.days || [];
+
+    const normalized: DailyRewardsStatusData = {
+      currentDay: raw.currentDay ?? raw.current_day ?? 1,
+      canClaimToday: raw.canClaimToday ?? raw.can_claim_today ?? false,
+      streakActive: raw.streakActive ?? raw.streak_active ?? false,
+      streakBonus: raw.streakBonus || raw.streak_bonus || 'Day Streak',
+      days: rawDays.map((d: any, idx: number) => ({
+        day: d.day || idx + 1,
+        reward: d.reward || '+80',
+        icon: d.icon || (idx === 2 || idx === 6 ? './assets/giftIconInDailySignIn.png' : './assets/diamond_animated.gif'),
+        active: d.active ?? false,
+        isMega: d.isMega ?? d.is_mega ?? (idx === 6)
+      }))
+    };
+
+    setCachedDailyRewards(normalized);
+    return normalized;
+  }
+
+  return null;
 };
 
 export const claimDailyReward = async (): Promise<{ success: boolean; message?: string; data?: ClaimDailyRewardData }> => {
@@ -223,6 +283,16 @@ export const claimDailyReward = async (): Promise<{ success: boolean; message?: 
   }
 
   const res = await api.post<ClaimDailyRewardData>('/daily-rewards/claim');
+  if (res.success) {
+    const cached = getCachedDailyRewards();
+    if (cached) {
+      setCachedDailyRewards({
+        ...cached,
+        canClaimToday: false
+      });
+    }
+  }
+
   return {
     success: res.success,
     message: res.message || (res.success ? 'Claimed daily reward!' : res.error),
@@ -231,21 +301,37 @@ export const claimDailyReward = async (): Promise<{ success: boolean; message?: 
 };
 
 // 5. Referral Team (GET /team)
-export const fetchTeamData = async (): Promise<TeamStatsData> => {
+export const fetchTeamData = async (): Promise<TeamStatsData | null> => {
   if (appConfig.useMockData) {
     return mockData.teamData as unknown as TeamStatsData;
   }
 
-  const res = await api.get<TeamStatsData>('/team');
+  const res = await api.get<any>('/team');
   if (res.success && res.data) {
-    return res.data;
+    const raw = res.data;
+    const members = (raw.members || []).map((m: any, idx: number) => ({
+      id: String(m.id || m.user_id || idx + 1),
+      name: m.name || m.first_name || m.username || 'Member',
+      joinedDate: m.joinedDate || m.joined_date || m.created_at || 'Recently',
+      joinedChannel: m.joinedChannel ?? m.joined_channel ?? true
+    }));
+
+    return {
+      totalCount: raw.totalCount ?? raw.total_count ?? raw.totalFriends ?? members.length,
+      activeCount: raw.activeCount ?? raw.active_count ?? members.filter((m: any) => m.joinedChannel).length,
+      inviteUrl: raw.inviteUrl || raw.invite_url || '',
+      shareText: raw.shareText || raw.share_text || 'Join me on EarnCraft and spin the wheel for massive cash rewards! 🎰💰',
+      currentTier: raw.currentTier || raw.current_tier || 'Bronze',
+      tierRewards: raw.tierRewards || raw.tier_rewards || ['Bronze: 1 Spin/friend', 'Silver: 2 Spins + 5%', 'Gold: 3 Spins + 10%'],
+      members
+    };
   }
 
-  return mockData.teamData as unknown as TeamStatsData;
+  return null;
 };
 
 // 6. Contests / Tournaments (GET /contests/spins & GET /contests/referrals)
-export const fetchContestData = async (type: 'spins' | 'referrals' = 'spins'): Promise<ContestLeaderboardData> => {
+export const fetchContestData = async (type: 'spins' | 'referrals' = 'spins'): Promise<ContestLeaderboardData | null> => {
   if (appConfig.useMockData) {
     return mockData.contests as unknown as ContestLeaderboardData;
   }
@@ -255,11 +341,11 @@ export const fetchContestData = async (type: 'spins' | 'referrals' = 'spins'): P
     return res.data;
   }
 
-  return mockData.contests as unknown as ContestLeaderboardData;
+  return null;
 };
 
 // 7. Tasks (GET /tasks & POST /tasks/:id/claim)
-export const fetchTasksPageData = async (): Promise<TasksPageData> => {
+export const fetchTasksPageData = async (): Promise<TasksPageData | null> => {
   if (appConfig.useMockData) {
     return mockData.tasksPage as unknown as TasksPageData;
   }
@@ -269,7 +355,7 @@ export const fetchTasksPageData = async (): Promise<TasksPageData> => {
     return res.data;
   }
 
-  return mockData.tasksPage as unknown as TasksPageData;
+  return null;
 };
 
 export const claimTaskReward = async (
@@ -292,7 +378,7 @@ export const claimTaskReward = async (
 };
 
 // 8. Wallet & Withdrawals (GET /wallet, POST /wallet/bind, POST /wallet/withdraw)
-export const fetchWalletData = async (): Promise<WalletInfoData> => {
+export const fetchWalletData = async (): Promise<WalletInfoData | null> => {
   if (appConfig.useMockData) {
     return mockData.walletPage as unknown as WalletInfoData;
   }
@@ -302,7 +388,7 @@ export const fetchWalletData = async (): Promise<WalletInfoData> => {
     return res.data;
   }
 
-  return mockData.walletPage as unknown as WalletInfoData;
+  return null;
 };
 
 export const bindWallet = async (
@@ -358,7 +444,7 @@ export const fetchWalletRecords = async (
   type: string = 'all',
   page: number = 1,
   limit: number = 20
-): Promise<TransactionRecordData[]> => {
+): Promise<TransactionRecordData[] | null> => {
   if (appConfig.useMockData) {
     return mockData.walletPage.recentTransactions as unknown as TransactionRecordData[];
   }
@@ -368,7 +454,7 @@ export const fetchWalletRecords = async (
     return res.data;
   }
 
-  return mockData.walletPage.recentTransactions as unknown as TransactionRecordData[];
+  return null;
 };
 
 // 10. Gift Code Redemption (POST /gift-codes/redeem)
@@ -387,7 +473,7 @@ export const redeemGiftCode = async (
   return {
     success: res.success,
     message: res.message || (res.success ? 'Gift code redeemed successfully! 🎉' : res.error),
-    rewardGems: res.data?.rewardGems || 500
+    rewardGems: res.data?.rewardGems
   };
 };
 
@@ -412,7 +498,7 @@ export const fetchRafflesData = async (): Promise<{
   ongoing: RaffleCardData[];
   ended: RaffleCardData[];
   prizeTiers: any[];
-}> => {
+} | null> => {
   if (appConfig.useMockData) {
     return mockData.rafflesPage as unknown as {
       ongoing: RaffleCardData[];
@@ -428,15 +514,11 @@ export const fetchRafflesData = async (): Promise<{
     return {
       ongoing,
       ended,
-      prizeTiers: mockData.rafflesPage.prizeTiers
+      prizeTiers: []
     };
   }
 
-  return mockData.rafflesPage as unknown as {
-    ongoing: RaffleCardData[];
-    ended: RaffleCardData[];
-    prizeTiers: any[];
-  };
+  return null;
 };
 
 export const fetchRaffleDetails = async (raffleId: string): Promise<RaffleDetailsData | null> => {
@@ -456,14 +538,7 @@ export const fetchRaffleDetails = async (raffleId: string): Promise<RaffleDetail
     return res.data;
   }
 
-  return {
-    raffle: (mockData.rafflesPage.ongoing[0] as unknown as RaffleCardData) || null,
-    userTickets: 2,
-    ticketPriceGems: 100,
-    endsTimestamp: Date.now() + 86400000 * 2,
-    secondsLeft: 45,
-    prizeTiers: mockData.rafflesPage.prizeTiers
-  };
+  return null;
 };
 
 export const claimRaffleTicket = async (

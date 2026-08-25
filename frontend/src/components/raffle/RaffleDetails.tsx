@@ -12,7 +12,7 @@ export interface RaffleDetailsProps {
 import { getInitialRafflesData, fetchRaffleDetails } from '../../services/dataService';
 
 export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
-  const [prizeTiers, setPrizeTiers] = useState<any[]>(() => getInitialRafflesData().prizeTiers || []);
+  const [prizeTiers, setPrizeTiers] = useState<any[]>(() => getInitialRafflesData()?.prizeTiers || []);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showClaimSheet, setShowClaimSheet] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(33);

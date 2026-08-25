@@ -14,7 +14,16 @@ export interface WalletPageProps {
 }
 
 export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
-  const [walletData, setWalletData] = useState(() => getInitialWalletData());
+  const initialData = getInitialWalletData();
+  const [walletData, setWalletData] = useState<any>(initialData || {
+    balanceUsd: 0.76,
+    connected: false,
+    tonWalletAddress: '',
+    phone: '',
+    minWithdrawalUsd: 1.0,
+    presetAmounts: [1.0, 5.0, 10.0, 20.0, 50.0, 100.0],
+    recentTransactions: []
+  });
   const [walletConnected, setWalletConnected] = useState(walletData.connected || false);
   const [walletAddress, setWalletAddress] = useState<string | null>(walletData.tonWalletAddress || null);
   const [walletPhone, setWalletPhone] = useState<string | null>(walletData.phone || null);
@@ -24,7 +33,7 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState<number>(walletData.presetAmounts?.[0] || 1.0);
   const [isBtnPressed, setIsBtnPressed] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => initialData === null);
 
   useEffect(() => {
     fetchWalletData().then((data) => {
@@ -33,13 +42,14 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
         if (data.connected !== undefined) setWalletConnected(data.connected);
         if (data.tonWalletAddress) setWalletAddress(data.tonWalletAddress);
         if (data.phone) setWalletPhone(data.phone);
+        if (data.presetAmounts && data.presetAmounts.length > 0) {
+          setWithdrawAmount(data.presetAmounts[0]);
+        }
       }
-    });
-
-    const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
+    }).catch(() => {
+      setIsLoading(false);
+    });
   }, []);
 
   const handleConnectWallet = () => {

@@ -1,5 +1,6 @@
 import appConfig from '../config.json';
 import type { ApiResponse } from '../types/api';
+import { notifyToast } from '../utils/debugToast';
 
 export interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: any;
@@ -7,7 +8,7 @@ export interface RequestOptions extends Omit<RequestInit, 'body'> {
 }
 
 class ApiClient {
-  private getBaseUrl(): string {
+  public getBaseUrl(): string {
     return (
       (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) ||
       appConfig.apiBaseUrl ||
@@ -33,22 +34,29 @@ class ApiClient {
   }
 
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
+    const method = options.method || 'GET';
     let url = `${this.getBaseUrl()}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
+    const searchParams = new URLSearchParams();
+    
+    // Automatically inject bypass query param for localtunnel compatibility
+    searchParams.append('bypass-tunnel-reminder', 'true');
+
     if (options.params) {
-      const searchParams = new URLSearchParams();
       Object.entries(options.params).forEach(([key, val]) => {
         if (val !== undefined && val !== null) {
           searchParams.append(key, String(val));
         }
       });
-      const queryString = searchParams.toString();
-      if (queryString) {
-        url += (url.includes('?') ? '&' : '?') + queryString;
-      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      url += (url.includes('?') ? '&' : '?') + queryString;
     }
 
     const headers: Record<string, string> = {
+      'Accept': 'application/json',
       'Bypass-Tunnel-Reminder': 'true',
       'bypass-tunnel-reminder': 'true'
     };
@@ -64,7 +72,9 @@ class ApiClient {
     }
 
     const config: RequestInit = {
-      method: options.method || 'GET',
+      method,
+      mode: 'cors',
+      credentials: 'omit',
       headers: {
         ...headers,
         ...(options.headers as Record<string, string>)
@@ -88,16 +98,26 @@ class ApiClient {
         error: `Server responded with status ${response.status}`
       }));
 
+      if (response.ok && json.success !== false) {
+        notifyToast(`[API OK] ${method} ${endpoint} (${response.status})`, 'success', 3000);
+      } else {
+        const errMsg = json.error || json.message || `HTTP ${response.status}`;
+        notifyToast(`[API ERR] ${method} ${endpoint}: ${errMsg}`, 'error', 4000);
+      }
+
       if (response.status === 401) {
-        console.warn('Session expired or unauthorized.');
+        console.warn('[ApiClient] Session expired or unauthorized.');
       }
 
       return json;
     } catch (err: any) {
       clearTimeout(timeoutId);
+      const isAbort = err?.name === 'AbortError';
+      const errMsg = isAbort ? 'Request Timeout' : (err?.message || 'Network / CORS Error');
+      notifyToast(`[API ERR] ${method} ${endpoint}: ${errMsg}`, 'error', 4000);
       return {
         success: false,
-        error: err?.name === 'AbortError' ? 'Request timed out' : (err?.message || 'Network request failed')
+        error: errMsg
       };
     }
   }

@@ -11,21 +11,20 @@ export interface RafflePageProps {
 import { getInitialRafflesData, fetchRafflesData } from '../../services/dataService';
 
 export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
-  const [rafflesData, setRafflesData] = useState(() => getInitialRafflesData());
-  const ONGOING_RAFFLES = rafflesData.ongoing || [];
-  const ENDED_RAFFLES = rafflesData.ended || [];
+  const initialData = getInitialRafflesData();
+  const [rafflesData, setRafflesData] = useState<any>(initialData || { ongoing: [], ended: [], prizeTiers: [] });
+  const ONGOING_RAFFLES = rafflesData?.ongoing || [];
+  const ENDED_RAFFLES = rafflesData?.ended || [];
   const [selectedRaffle, setSelectedRaffle] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => initialData === null);
 
   useEffect(() => {
     fetchRafflesData().then((data) => {
       if (data) setRafflesData(data);
-    });
-
-    const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
+    }).catch(() => {
+      setIsLoading(false);
+    });
   }, []);
 
   if (selectedRaffle) {

@@ -1,6 +1,6 @@
 {
   "useMockData": false,
-  "apiBaseUrl": "https://brave-kids-wait.loca.lt/api/v1",
+  "apiBaseUrl": "https://fifty-feet-beam.loca.lt/api/v1",
   "apiTimeoutMs": 10000,
   "simulatedDelayMs": 800,
   "enableTelegramVerification": true
