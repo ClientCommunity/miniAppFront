@@ -16,14 +16,25 @@ export interface ServerSpinResponse {
   txId: string;
   timestamp: number;
   isDouble?: boolean;
+  userBalance?: {
+    spins: number;
+    diamonds: number;
+    balance_usd: number;
+    energy: number;
+    goal_usd: number;
+    goal_left: number;
+  };
 }
 
 /**
  * Server-Authoritative Spin Service
- * Calls POST /api/v1/spin (or data.json fallback when mock enabled)
+ * Calls POST /api/v1/spin
  */
-export async function requestServerSpin(segments: SpinSegment[]): Promise<ServerSpinResponse> {
-  const result = await performServerSpin();
+export async function requestServerSpin(
+  segments: SpinSegment[],
+  method?: 'spins' | 'diamonds' | 'auto'
+): Promise<ServerSpinResponse> {
+  const result = await performServerSpin(method);
 
   const segmentIndex =
     result.targetIndex >= 0 && result.targetIndex < segments.length
@@ -38,12 +49,13 @@ export async function requestServerSpin(segments: SpinSegment[]): Promise<Server
       id: result.reward?.id || `rew-${Date.now()}`,
       label: result.reward?.label || matchedSegment?.label || 'Diamond',
       value: result.reward?.value || matchedSegment?.value || 'gem',
-      amount: result.reward?.amount || '+80 💎',
-      image: result.reward?.image || matchedSegment?.image,
+      amount: result.reward?.amount || (result.reward?.value === 'coins' ? '+$0.20 USDT' : result.reward?.value === 'jackpot' ? '$10.00 Jackpot' : result.reward?.value === 'tickets' ? '+1 Free Spin' : '+80 💎'),
+      image: result.reward?.image || matchedSegment?.image || './assets/diamond_animated.gif',
       isDouble: result.isDouble
     },
     txId: result.txId || `TX-${Math.floor(10000 + Math.random() * 90000)}`,
     timestamp: result.timestamp || Date.now(),
-    isDouble: result.isDouble
+    isDouble: result.isDouble,
+    userBalance: result.userBalance
   };
 }

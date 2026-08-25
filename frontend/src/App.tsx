@@ -9,6 +9,7 @@ import { DailyRewardsModal } from './components/DailyRewardsModal';
 import { GiftCodeModal } from './components/GiftCodeModal';
 import { TeamModal } from './components/TeamModal';
 import { ContestLeaderboardModal } from './components/ContestLeaderboardModal';
+import { OutOfSpinsModal } from './components/OutOfSpinsModal';
 import { RafflePage } from './components/raffle/RafflePage';
 import { TasksPage } from './components/tasks/TasksPage';
 import { WalletPage } from './components/wallet/WalletPage';
@@ -55,7 +56,15 @@ function App() {
   const [showGiftModal, setShowGiftModal] = useState(false);
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [showContestModal, setShowContestModal] = useState(false);
+  const [showOutOfSpinsModal, setShowOutOfSpinsModal] = useState(false);
   const [rewardText, setRewardText] = useState('');
+  const [lastServerSpin, setLastServerSpin] = useState<any>(null);
+  const [winningReward, setWinningReward] = useState<{
+    name: string;
+    amount: string;
+    image: string;
+    value: string;
+  } | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile>(() => getInitialUserProfile());
 
   const navigateTo = (page: 'main' | 'raffle' | 'tasks' | 'wallet') => {
@@ -142,7 +151,27 @@ function App() {
   }, []);
 
     const handleSpinEnd = (winner: SpinSegment) => {
-      setRewardText(winner.label);
+      // Prioritize live reward data returned by server API
+      const serverReward = lastServerSpin?.reward;
+      const rewardName = serverReward?.label || winner.label || 'Reward';
+      const rewardImage = serverReward?.image || winner.image || './assets/diamond_animated.gif';
+      
+      let rewardAmount = serverReward?.amount;
+      if (!rewardAmount) {
+        if (winner.value === 'coins') rewardAmount = '+$0.20 USDT';
+        else if (winner.value === 'jackpot') rewardAmount = '$10.00 Jackpot';
+        else if (winner.value === 'tickets' || winner.value === 'spins') rewardAmount = '+1 Free Spin';
+        else rewardAmount = '+80 💎';
+      }
+
+      setRewardText(rewardName);
+      setWinningReward({
+        name: rewardName,
+        amount: rewardAmount,
+        image: rewardImage,
+        value: serverReward?.value || winner.value
+      });
+
       setShowRewardModal(true);
       haptics.notification('success');
       haptics.playWinSound();
@@ -151,20 +180,33 @@ function App() {
         throwConfetti();
       }
 
-      // Refresh or update balance locally after spin
-      setUserProfile((prev) => {
-        const isCoin = winner.value === 'coins';
-        const isGem = winner.value === 'gem';
-        const isJackpot = winner.value === 'jackpot';
-        const newBal = isCoin ? prev.balance_usd + 0.2 : isJackpot ? 1.0 : prev.balance_usd;
-        return {
+      // Update user balances from server balance or optimistic calculation
+      if (lastServerSpin?.userBalance) {
+        const ub = lastServerSpin.userBalance;
+        setUserProfile((prev) => ({
           ...prev,
-          spins: Math.max(0, prev.spins - 1),
-          diamonds: isGem ? prev.diamonds + 80 : prev.diamonds,
-          balance_usd: newBal,
-          goal_left: Math.max(0, (prev.goal_usd || 1.0) - newBal)
-        };
-      });
+          spins: ub.spins ?? prev.spins,
+          diamonds: ub.diamonds ?? prev.diamonds,
+          balance_usd: ub.balance_usd ?? prev.balance_usd,
+          energy: ub.energy ?? prev.energy,
+          goal_left: ub.goal_left ?? Math.max(0, (prev.goal_usd || 1.0) - (ub.balance_usd ?? prev.balance_usd))
+        }));
+      } else {
+        setUserProfile((prev) => {
+          const isCoin = winner.value === 'coins';
+          const isGem = winner.value === 'gem';
+          const isJackpot = winner.value === 'jackpot';
+          const isTicket = winner.value === 'tickets' || winner.value === 'spins';
+          const newBal = isCoin ? prev.balance_usd + 0.2 : isJackpot ? 1.0 : prev.balance_usd;
+          return {
+            ...prev,
+            spins: Math.max(0, prev.spins - (isTicket ? 0 : 1)),
+            diamonds: isGem ? prev.diamonds + 80 : prev.diamonds,
+            balance_usd: newBal,
+            goal_left: Math.max(0, (prev.goal_usd || 1.0) - newBal)
+          };
+        });
+      }
     };
 
     const handleCollect = () => {
@@ -466,8 +508,23 @@ function App() {
 
           <SpinWheel
             segments={WHEEL_SEGMENTS}
+            spins={userProfile.spins}
+            diamonds={userProfile.diamonds}
+            onOutOfSpins={() => setShowOutOfSpinsModal(true)}
             onSpinRequest={async () => {
-              const serverResult = await requestServerSpin(WHEEL_SEGMENTS);
+              if (userProfile.spins <= 0 && userProfile.diamonds < 1000) {
+                setShowOutOfSpinsModal(true);
+                haptics.notification('warning');
+                throw new Error('Insufficient spins and diamonds');
+              }
+
+              const method = userProfile.spins > 0 ? 'spins' : 'diamonds';
+              if (method === 'diamonds') {
+                notifyToast('💎 Used 1,000 Diamonds for 1 Spin!', 'info', 3000);
+              }
+
+              const serverResult = await requestServerSpin(WHEEL_SEGMENTS, method);
+              setLastServerSpin(serverResult);
               return serverResult.targetIndex;
             }}
             onSpinEnd={handleSpinEnd}
@@ -612,7 +669,9 @@ function App() {
           padding: '1rem'
         }}>
           <RewardCard
-            rewardText={rewardText}
+            rewardName={winningReward?.name || 'Congratulations!'}
+            rewardAmount={winningReward?.amount || rewardText || '+80 💎'}
+            rewardImage={winningReward?.image || './assets/diamond_animated.gif'}
             onCollect={handleCollect}
           />
         </div>
@@ -644,6 +703,22 @@ function App() {
       {/* Contest Leaderboard Modal */}
       {showContestModal && (
         <ContestLeaderboardModal onClose={() => setShowContestModal(false)} />
+      )}
+
+      {/* Out of Spins Modal */}
+      {showOutOfSpinsModal && (
+        <OutOfSpinsModal
+          diamonds={userProfile.diamonds}
+          onClose={() => setShowOutOfSpinsModal(false)}
+          onInvite={() => {
+            setShowOutOfSpinsModal(false);
+            setShowTeamModal(true);
+          }}
+          onTasks={() => {
+            setShowOutOfSpinsModal(false);
+            navigateTo('tasks');
+          }}
+        />
       )}
 
       {/* Raffle Page Overlay */}

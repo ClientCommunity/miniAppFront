@@ -12,7 +12,10 @@ interface SpinWheelProps {
   segments: SpinSegment[];
   size?: number;
   theme?: 'emerald' | 'colorful' | 'gold';
+  spins?: number;
+  diamonds?: number;
   onSpinRequest?: () => Promise<number | { targetIndex: number }>;
+  onOutOfSpins?: () => void;
   onSpinEnd?: (winner: SpinSegment) => void;
   spinDuration?: number;
 }
@@ -97,7 +100,10 @@ const LUXURY_GEMSTONES: GemstoneTheme[] = [
 export const SpinWheel: FC<SpinWheelProps> = ({
   segments,
   size = 260,
+  spins = 1,
+  diamonds = 0,
   onSpinRequest,
+  onOutOfSpins,
   onSpinEnd,
   spinDuration = 5200
 }) => {
@@ -825,51 +831,109 @@ export const SpinWheel: FC<SpinWheelProps> = ({
           }}
         />
 
-        {/* 3D Tactile Emerald Green SPIN Button */}
-        <button
-          onClick={spin}
-          disabled={isSpinning}
-          onMouseDown={() => !isSpinning && setIsButtonPressed(true)}
-          onMouseUp={() => setIsButtonPressed(false)}
-          onMouseLeave={() => setIsButtonPressed(false)}
-          onTouchStart={() => !isSpinning && setIsButtonPressed(true)}
-          onTouchEnd={() => setIsButtonPressed(false)}
-          style={{
-            position: 'relative',
-            width: '100%',
-            height: '100%',
-            borderRadius: '50%',
-            background: isSpinning
-              ? 'linear-gradient(180deg, #475569 0%, #1e293b 100%)'
-              : `
-                radial-gradient(circle at 35% 30%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 45%),
-                linear-gradient(180deg, #22c55e 0%, #059669 55%, #047857 100%)
-              `,
-            color: '#ffffff',
-            border: '2.5px solid #fbbf24',
-            boxShadow: isButtonPressed
-              ? '0 1px 0 #022c22, inset 0 5px 12px rgba(0,0,0,0.8)'
-              : isSpinning
-              ? '0 2px 0 #0f172a, inset 0 2px 4px rgba(0,0,0,0.4)'
-              : '0 6px 0 #064e3b, 0 12px 18px rgba(0,0,0,0.75), inset 0 2px 4px rgba(255,255,255,0.6)',
-            fontSize: coreSize > 200 ? '0.94rem' : '0.80rem',
-            fontWeight: 900,
-            fontFamily: 'Georgia, serif',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            cursor: isSpinning ? 'not-allowed' : 'pointer',
-            transition: 'all 0.08s ease',
-            transform: isButtonPressed ? 'translateY(4px)' : 'translateY(0)',
-            textShadow: '0 2px 4px rgba(0,0,0,0.7), 0 0 8px rgba(251, 191, 36, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0,
-            overflow: 'hidden'
-          }}
-        >
-          {isSpinning ? '...' : 'SPIN'}
-        </button>
+        {/* 3D Tactile Dynamic SPIN Button */}
+        {(() => {
+          const hasFreeSpins = (spins ?? 0) > 0;
+          const hasDiamonds = !hasFreeSpins && (diamonds ?? 0) >= 1000;
+          const isOutOfSpins = !hasFreeSpins && !hasDiamonds;
+
+          const handleButtonClick = () => {
+            if (isSpinning) return;
+            if (isOutOfSpins) {
+              haptics.notification('warning');
+              onOutOfSpins?.();
+              return;
+            }
+            spin();
+          };
+
+          return (
+            <button
+              onClick={handleButtonClick}
+              disabled={isSpinning}
+              onMouseDown={() => !isSpinning && setIsButtonPressed(true)}
+              onMouseUp={() => setIsButtonPressed(false)}
+              onMouseLeave={() => setIsButtonPressed(false)}
+              onTouchStart={() => !isSpinning && setIsButtonPressed(true)}
+              onTouchEnd={() => setIsButtonPressed(false)}
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                background: isSpinning
+                  ? 'linear-gradient(180deg, #475569 0%, #1e293b 100%)'
+                  : hasFreeSpins
+                  ? `
+                    radial-gradient(circle at 35% 30%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 45%),
+                    linear-gradient(180deg, #22c55e 0%, #059669 55%, #047857 100%)
+                  `
+                  : hasDiamonds
+                  ? `
+                    radial-gradient(circle at 35% 30%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 45%),
+                    linear-gradient(180deg, #a855f7 0%, #7e22ce 55%, #581c87 100%)
+                  `
+                  : 'linear-gradient(180deg, #334155 0%, #1e293b 100%)',
+                color: '#ffffff',
+                border: isSpinning
+                  ? '2px solid #64748b'
+                  : hasFreeSpins
+                  ? '2.5px solid #fbbf24'
+                  : hasDiamonds
+                  ? '2.5px solid #fde047'
+                  : '2px solid rgba(248, 113, 113, 0.7)',
+                boxShadow: isButtonPressed
+                  ? '0 1px 0 #022c22, inset 0 5px 12px rgba(0,0,0,0.8)'
+                  : isSpinning
+                  ? '0 2px 0 #0f172a, inset 0 2px 4px rgba(0,0,0,0.4)'
+                  : hasFreeSpins
+                  ? '0 6px 0 #064e3b, 0 12px 18px rgba(0,0,0,0.75), inset 0 2px 4px rgba(255,255,255,0.6)'
+                  : hasDiamonds
+                  ? '0 6px 0 #3b0764, 0 12px 18px rgba(126, 34, 206, 0.45), inset 0 2px 4px rgba(255,255,255,0.6)'
+                  : '0 4px 0 #0f172a, 0 8px 12px rgba(0,0,0,0.6)',
+                fontSize: coreSize > 200 ? '0.92rem' : '0.78rem',
+                fontWeight: 900,
+                fontFamily: 'Georgia, serif',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                cursor: isSpinning ? 'not-allowed' : 'pointer',
+                transition: 'all 0.08s ease',
+                transform: isButtonPressed ? 'translateY(4px)' : 'translateY(0)',
+                textShadow: '0 2px 4px rgba(0,0,0,0.7), 0 0 8px rgba(251, 191, 36, 0.4)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+                overflow: 'hidden',
+                lineHeight: 1.1
+              }}
+            >
+              {isSpinning ? (
+                <span>...</span>
+              ) : (
+                <>
+                  <span style={{ fontSize: coreSize > 200 ? '0.86rem' : '0.74rem', fontWeight: 900 }}>SPIN</span>
+                  <span
+                    style={{
+                      fontSize: coreSize > 200 ? '0.55rem' : '0.48rem',
+                      fontWeight: 800,
+                      marginTop: '1px',
+                      color: hasFreeSpins
+                        ? '#fef08a'
+                        : hasDiamonds
+                        ? '#fde68a'
+                        : '#fca5a5',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.8)'
+                    }}
+                  >
+                    {hasFreeSpins ? `${spins} 🎟️` : hasDiamonds ? '1,000 💎' : '1,000 💎'}
+                  </span>
+                </>
+              )}
+            </button>
+          );
+        })()}
       </div>
     </div>
   );

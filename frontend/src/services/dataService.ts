@@ -168,7 +168,7 @@ export const fetchUserProfile = async (): Promise<UserProfile | null> => {
 };
 
 // 3. Server-Authoritative Spin Execution (POST /spin)
-export const performServerSpin = async (): Promise<SpinResultData> => {
+export const performServerSpin = async (method?: 'spins' | 'diamonds' | 'auto'): Promise<SpinResultData> => {
   if (appConfig.useMockData) {
     await new Promise((res) => setTimeout(res, 200));
     const segments = mockData.wheelSegments;
@@ -197,7 +197,9 @@ export const performServerSpin = async (): Promise<SpinResultData> => {
     };
   }
 
-  const res = await api.post<SpinResultData>('/spin');
+  const res = await api.post<SpinResultData>('/spin', {
+    method: method || 'auto'
+  });
   if (res.success && res.data) {
     return res.data;
   }
