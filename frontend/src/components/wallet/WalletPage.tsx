@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FC } from 'react';
 import { ConnectWalletModal } from './ConnectWalletModal';
 import { UserAgreementModal } from './UserAgreementModal';
@@ -21,6 +21,14 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState<number>(1.0);
   const [isBtnPressed, setIsBtnPressed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleConnectWallet = () => {
     haptics.impact('light');
@@ -203,77 +211,101 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {/* 1. Compact Available Balance Banner with Tether (USDT ₮) Icon */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '0.65rem 0.95rem',
-              background: 'linear-gradient(135deg, rgba(5, 115, 72, 0.65) 0%, rgba(2, 55, 36, 0.9) 100%)',
-              borderRadius: '0.9rem',
-              border: '1px solid rgba(0, 230, 118, 0.45)',
-              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.25)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)'
-            }}
-          >
-            {/* Left: Tether (USDT) Coin Badge + Label */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-              {/* Tether USDT ₮ SVG Coin Badge */}
-              <div
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #26a17b 0%, #168462 100%)',
-                  border: '1px solid rgba(255, 255, 255, 0.6)',
-                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.35)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#ffffff',
-                  fontWeight: 900,
-                  fontSize: '0.92rem',
-                  fontFamily: 'sans-serif',
-                  lineHeight: 1,
-                  flexShrink: 0
-                }}
-              >
-                ₮
+          {isLoading ? (
+            <div
+              className="skeleton-glow-box"
+              style={{
+                height: '62px',
+                borderRadius: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0 0.95rem'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <div style={{ width: '100px', height: '12px', borderRadius: '4px', background: 'rgba(255,255,255,0.15)' }} />
+                  <div style={{ width: '70px', height: '9px', borderRadius: '4px', background: 'rgba(52,211,153,0.2)' }} />
+                </div>
               </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span
+              <div style={{ width: '60px', height: '22px', borderRadius: '6px', background: 'rgba(254,240,138,0.25)' }} />
+            </div>
+          ) : (
+            /* 1. Compact Available Balance Banner with Tether (USDT ₮) Icon */
+            <div
+              className="page-reveal-fade"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.65rem 0.95rem',
+                background: 'linear-gradient(135deg, rgba(5, 115, 72, 0.65) 0%, rgba(2, 55, 36, 0.9) 100%)',
+                borderRadius: '0.9rem',
+                border: '1px solid rgba(0, 230, 118, 0.45)',
+                boxShadow: '0 4px 14px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.25)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)'
+              }}
+            >
+              {/* Left: Tether (USDT) Coin Badge + Label */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                {/* Tether USDT ₮ SVG Coin Badge */}
+                <div
                   style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #26a17b 0%, #168462 100%)',
+                    border: '1px solid rgba(255, 255, 255, 0.6)',
+                    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     color: '#ffffff',
-                    fontSize: '0.84rem',
-                    fontWeight: 800,
-                    lineHeight: 1.2
+                    fontWeight: 900,
+                    fontSize: '0.92rem',
+                    fontFamily: 'sans-serif',
+                    lineHeight: 1,
+                    flexShrink: 0
                   }}
                 >
-                  Available Balance
-                </span>
-                <span style={{ color: '#86efac', fontSize: '0.68rem', fontWeight: 600 }}>
-                  USDT Tether (BEP-20)
+                  ₮
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span
+                    style={{
+                      color: '#ffffff',
+                      fontSize: '0.84rem',
+                      fontWeight: 800,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    Available Balance
+                  </span>
+                  <span style={{ color: '#86efac', fontSize: '0.68rem', fontWeight: 600 }}>
+                    USDT Tether (BEP-20)
+                  </span>
+                </div>
+              </div>
+
+              {/* Right: Balance Amount */}
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.2rem' }}>
+                <span
+                  style={{
+                    color: '#facc15',
+                    fontSize: '1.35rem',
+                    fontWeight: 900,
+                    textShadow: '0 1px 4px rgba(0,0,0,0.5)'
+                  }}
+                >
+                  $ 0.56
                 </span>
               </div>
             </div>
-
-            {/* Right: Balance Amount */}
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.2rem' }}>
-              <span
-                style={{
-                  color: '#facc15',
-                  fontSize: '1.35rem',
-                  fontWeight: 900,
-                  textShadow: '0 1px 4px rgba(0,0,0,0.5)'
-                }}
-              >
-                $ 0.56
-              </span>
-            </div>
-          </div>
+          )}
 
           {/* 2. Connected Wallet Container */}
           <div>

@@ -12,6 +12,7 @@ import { ContestLeaderboardModal } from './components/ContestLeaderboardModal';
 import { RafflePage } from './components/raffle/RafflePage';
 import { TasksPage } from './components/tasks/TasksPage';
 import { WalletPage } from './components/wallet/WalletPage';
+import { AppLaunchSplash } from './components/skeleton/AppLaunchSplash';
 import { requestServerSpin } from './services/spinService';
 import { throwConfetti } from './utils/confetti';
 import { haptics } from './utils/haptics';
@@ -46,6 +47,7 @@ const RIGHT_CARDS = [
 
 function App() {
   const [currentPage, setCurrentPage] = useState<'main' | 'raffle' | 'tasks' | 'wallet'>('main');
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [showDailyRewards, setShowDailyRewards] = useState(false);
   const [showGiftModal, setShowGiftModal] = useState(false);
@@ -53,6 +55,11 @@ function App() {
   const [showContestModal, setShowContestModal] = useState(false);
   const [rewardText, setRewardText] = useState('');
   const [tgUser, setTgUser] = useState<any>(null);
+
+  const navigateTo = (page: 'main' | 'raffle' | 'tasks' | 'wallet') => {
+    haptics.impact('light');
+    setCurrentPage(page);
+  };
 
   // Responsive Wheel Sizing for Mobile Viewports
   const [wheelSize, setWheelSize] = useState(() => {
@@ -120,7 +127,13 @@ function App() {
   };
 
   return (
-    <div className="layout-container" style={{ height: '100dvh', overflow: 'hidden', padding: '0.25rem 0.5rem 0.5rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0', justifyContent: 'center' }}>
+    <>
+      {/* 1. INITIAL APP LAUNCH SPLASH (1.8s) */}
+      {isInitialLoading && (
+        <AppLaunchSplash onLoaded={() => setIsInitialLoading(false)} duration={1800} />
+      )}
+
+      <div className="layout-container" style={{ height: '100dvh', overflow: 'hidden', padding: '0.25rem 0.5rem 0.5rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0', justifyContent: 'center' }}>
 
       {/* Top Header / Asset Balances */}
       <div style={{
@@ -219,7 +232,7 @@ function App() {
 
           {/* Diamond Balance (+ Deposit Badge) */}
           <div
-            onClick={() => setCurrentPage('tasks')}
+            onClick={() => navigateTo('tasks')}
             style={{
               position: 'relative',
               background: 'rgba(0, 0, 0, 0.42)',
@@ -282,7 +295,7 @@ function App() {
               {...card}
               onClick={
                 card.title === 'Raffle'
-                  ? () => setCurrentPage('raffle')
+                  ? () => navigateTo('raffle')
                   : card.title === 'Contest'
                     ? () => setShowContestModal(true)
                     : card.title === 'Gift'
@@ -417,11 +430,11 @@ function App() {
               {...card}
               onClick={
                 card.title === '+ Spins'
-                  ? () => setCurrentPage('tasks')
+                  ? () => navigateTo('tasks')
                   : card.title === 'Sign In'
                     ? () => setShowDailyRewards(true)
                     : card.title === 'Wallet'
-                      ? () => setCurrentPage('wallet')
+                      ? () => navigateTo('wallet')
                       : undefined
               }
             />
@@ -444,7 +457,7 @@ function App() {
           WebkitOverflowScrolling: 'touch',
         }}>
         {MOCK_TASKS.map((task, i) => (
-          <TaskBanner key={i} {...task} onClick={() => setCurrentPage('tasks')} />
+          <TaskBanner key={i} {...task} onClick={() => navigateTo('tasks')} />
         ))}
       </div>
 
@@ -573,19 +586,20 @@ function App() {
 
       {/* Raffle Page Overlay */}
       {currentPage === 'raffle' && (
-        <RafflePage onBack={() => setCurrentPage('main')} />
+        <RafflePage onBack={() => navigateTo('main')} />
       )}
 
       {/* Tasks Page Overlay */}
       {currentPage === 'tasks' && (
-        <TasksPage onBack={() => setCurrentPage('main')} />
+        <TasksPage onBack={() => navigateTo('main')} />
       )}
 
       {/* Wallet Page Overlay */}
       {currentPage === 'wallet' && (
-        <WalletPage onBack={() => setCurrentPage('main')} />
+        <WalletPage onBack={() => navigateTo('main')} />
       )}
     </div>
+  </>
   );
 }
 

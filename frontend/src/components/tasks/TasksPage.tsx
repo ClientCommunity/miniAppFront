@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FC } from 'react';
 import type { TaskItem, ReadyToClaimItem } from './types';
 import { ReadyToClaimCard } from './ReadyToClaimCard';
@@ -87,6 +87,14 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
   const [activeCategory, setActiveCategory] = useState<TaskCategory>('all');
   const [readyItem, setReadyItem] = useState<ReadyToClaimItem | null>(DEFAULT_READY_CLAIM);
   const [tasks, setTasks] = useState<TaskItem[]>(ALL_TASKS);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleClaimReady = () => {
     haptics.notification('success');
@@ -365,10 +373,64 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
 
           {/* Task List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginTop: '0.45rem' }}>
-            {filteredTasks.length > 0 ? (
-              filteredTasks.map((task) => (
-                <TaskCard key={task.id} task={task} onClaim={() => handleTaskClaim(task.id)} />
+            {isLoading ? (
+              [1, 2, 3, 4].map((idx) => (
+                <div
+                  key={idx}
+                  className="skeleton-glow-box"
+                  style={{
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    minHeight: '62px'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '50%',
+                        background: 'rgba(255, 255, 255, 0.1)'
+                      }}
+                    />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                      <div
+                        style={{
+                          width: '130px',
+                          height: '13px',
+                          borderRadius: '4px',
+                          background: 'rgba(255, 255, 255, 0.15)'
+                        }}
+                      />
+                      <div
+                        style={{
+                          width: '60px',
+                          height: '10px',
+                          borderRadius: '4px',
+                          background: 'rgba(52, 211, 153, 0.25)'
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      width: '64px',
+                      height: '28px',
+                      borderRadius: '8px',
+                      background: 'rgba(255, 255, 255, 0.15)'
+                    }}
+                  />
+                </div>
               ))
+            ) : filteredTasks.length > 0 ? (
+              <div className="page-reveal-fade" style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                {filteredTasks.map((task) => (
+                  <TaskCard key={task.id} task={task} onClaim={() => handleTaskClaim(task.id)} />
+                ))}
+              </div>
             ) : (
               <div
                 style={{

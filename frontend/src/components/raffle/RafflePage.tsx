@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FC } from 'react';
 import { RaffleCard } from './RaffleCard';
 import { RaffleDetails } from './RaffleDetails';
+import { haptics } from '../../utils/haptics';
 
 export interface RafflePageProps {
   onBack: () => void;
@@ -19,6 +20,14 @@ const ENDED_RAFFLES = [
 
 export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
   const [selectedRaffle, setSelectedRaffle] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   if (selectedRaffle) {
     return (
@@ -130,7 +139,10 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
       }}>
         {/* Back Button */}
         <button 
-          onClick={onBack}
+          onClick={() => {
+            haptics.impact('light');
+            onBack();
+          }}
           style={{
             background: 'rgba(6, 78, 59, 0.6)',
             border: '1px solid rgba(255,255,255,0.2)',
@@ -221,37 +233,69 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
 
       {/* Main Content Scrollable Area */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem 1rem 2rem 1rem', position: 'relative', zIndex: 10 }}>
-        
-        {/* ONGOING SECTION */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-          <span style={{ color: '#fbbf24', fontWeight: 800, fontSize: '0.85rem' }}>ONGOING • {ONGOING_RAFFLES.length}</span>
-          <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(251,191,36,0.3) 0%, transparent 100%)' }} />
-        </div>
+        {isLoading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <div style={{ width: '130px', height: '14px', borderRadius: '4px', background: 'rgba(251,191,36,0.25)', marginBottom: '0.2rem' }} />
+            {[1, 2].map((idx) => (
+              <div
+                key={idx}
+                className="skeleton-glow-box"
+                style={{
+                  height: '100px',
+                  borderRadius: '1rem',
+                  padding: '0.85rem 1rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <div style={{ width: '110px', height: '13px', borderRadius: '4px', background: 'rgba(255,255,255,0.15)' }} />
+                      <div style={{ width: '70px', height: '9px', borderRadius: '4px', background: 'rgba(52,211,153,0.2)' }} />
+                    </div>
+                  </div>
+                  <div style={{ width: '54px', height: '26px', borderRadius: '6px', background: 'rgba(255,255,255,0.15)' }} />
+                </div>
+                <div style={{ width: '100%', height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.1)' }} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="page-reveal-fade">
+            {/* ONGOING SECTION */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+              <span style={{ color: '#fbbf24', fontWeight: 800, fontSize: '0.85rem' }}>ONGOING • {ONGOING_RAFFLES.length}</span>
+              <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(251,191,36,0.3) 0%, transparent 100%)' }} />
+            </div>
 
-        {ONGOING_RAFFLES.map(raffle => (
-          <RaffleCard 
-            key={raffle.id}
-            status="ongoing"
-            {...raffle}
-            onClickDetails={() => setSelectedRaffle(raffle)}
-          />
-        ))}
+            {ONGOING_RAFFLES.map(raffle => (
+              <RaffleCard 
+                key={raffle.id}
+                status="ongoing"
+                {...raffle}
+                onClickDetails={() => setSelectedRaffle(raffle)}
+              />
+            ))}
 
-        {/* ENDED SECTION */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', marginTop: '1.5rem' }}>
-          <span style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 800, fontSize: '0.85rem' }}>ENDED • {ENDED_RAFFLES.length}</span>
-          <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 100%)' }} />
-        </div>
+            {/* ENDED SECTION */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', marginTop: '1.5rem' }}>
+              <span style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 800, fontSize: '0.85rem' }}>ENDED • {ENDED_RAFFLES.length}</span>
+              <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 100%)' }} />
+            </div>
 
-        {ENDED_RAFFLES.map(raffle => (
-          <RaffleCard 
-            key={raffle.id}
-            status="ended"
-            {...raffle}
-            onClickDetails={() => setSelectedRaffle(raffle)}
-          />
-        ))}
-        
+            {ENDED_RAFFLES.map(raffle => (
+              <RaffleCard 
+                key={raffle.id}
+                status="ended"
+                {...raffle}
+                onClickDetails={() => setSelectedRaffle(raffle)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
