@@ -1,0 +1,249 @@
+// Standard API Envelope
+export interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data?: T;
+  error?: string;
+}
+
+// User Profile
+export interface UserProfile {
+  id: number;
+  telegram_id: number;
+  first_name: string;
+  username: string;
+  photo_url: string;
+  level: number;
+  energy: number;
+  max_energy: number;
+  spins: number;
+  diamonds: number;
+  balance_usd: number;
+  ton_wallet: string; // Used for BEP-20 address (0x...)
+  phone: string;
+  goal_usd: number;   // Default $1.00
+  goal_left: number;  // Remaining to cashout
+  is_admin: boolean;  // True if user is authorized admin
+}
+
+// Auth Response
+export interface AuthResponseData {
+  token: string;
+  user: UserProfile;
+}
+
+// Spin Wheel Result
+export interface SpinReward {
+  id: string;
+  label: string;
+  value: 'gem' | 'coins' | 'spin_ticket' | 'double_reward' | 'spin_ticket_2' | 'gem_large' | string;
+  amount: string;
+  image: string;
+  is_double?: boolean;
+  multiplier?: number;
+  base_amount?: string;
+  final_amount?: string;
+}
+
+export interface SpinResultData {
+  targetIndex: number; // 0 to 5 matching clockwise wheel segments
+  isDouble: boolean;
+  reward: SpinReward;
+  txId: string;
+  timestamp: number;
+  userBalance: {
+    spins: number;
+    diamonds: number;
+    balance_usd: number;
+    energy: number;
+    goal_usd: number;
+    goal_left: number;
+  };
+}
+
+// Daily Rewards
+export interface DailyStreakDay {
+  day: number;
+  reward: string;
+  icon: string;
+  active: boolean;
+  isMega?: boolean;
+}
+
+export interface DailyRewardsStatusData {
+  currentDay: number;
+  canClaimToday: boolean;
+  streakActive: boolean;
+  streakBonus: string;
+  days: DailyStreakDay[];
+}
+
+export interface ClaimDailyRewardData {
+  claimedDay: number;
+  rewardGems: number;
+  txId: string;
+  userBalance: {
+    diamonds: number;
+  };
+}
+
+// Referral Team
+export interface TeamMember {
+  id: string;
+  name: string;
+  joinedDate: string;
+  joinedChannel: boolean;
+}
+
+export interface TeamStatsData {
+  totalCount: number;
+  activeCount: number;
+  inviteUrl: string;
+  shareText: string;
+  currentTier: 'Bronze' | 'Silver' | 'Gold';
+  tierRewards: string[];
+  members: TeamMember[];
+}
+
+// Contest Leaderboard
+export interface ContestLeaderboardUser {
+  rank: number;
+  name: string;
+  avatar: string;
+  spins: number;
+  prize: string;
+}
+
+export interface ContestLeaderboardData {
+  title: string;
+  prizePool: string;
+  endsIn: string;
+  endsTimestamp: number;
+  topWinners: ContestLeaderboardUser[];
+  otherRankings: ContestLeaderboardUser[];
+  userStatus: {
+    rank: number;
+    spins: number;
+    projectedPrize: string;
+  };
+}
+
+export interface ActiveContestItem {
+  id: string;
+  title: string;
+  prizePool: string;
+  category: 'spins' | 'referrals';
+  endsIn: string;
+}
+
+// Raffles
+export interface RaffleCardData {
+  id: string;
+  cashReward: number;
+  coinRewardStr: string;
+  participants: number;
+  tickets: number;
+  status: 'ongoing' | 'ended';
+}
+
+export interface PrizeTier {
+  medal: string;
+  rank: string;
+  amount: string;
+  icon?: string;
+  multiplier: string;
+  highlight: boolean;
+}
+
+export interface RaffleDetailsData {
+  raffle: RaffleCardData;
+  userTickets: number;
+  ticketPriceGems: number;
+  endsTimestamp: number;
+  secondsLeft: number;
+  prizeTiers: PrizeTier[];
+}
+
+// Tasks
+export interface TaskItemData {
+  id: string;
+  category: 'special' | 'daily' | 'socials';
+  title: string;
+  icon: string;
+  isIconImage?: boolean;
+  rewardGems: number;
+  secondaryRewardGems?: number;
+  status: 'pending' | 'completed' | 'claimed';
+  actionUrl?: string;
+  progress?: {
+    current: number;
+    total: number;
+  };
+}
+
+export interface ReadyToClaimItemData {
+  id: string;
+  title: string;
+  icon: string;
+  rewardGems: number;
+}
+
+export interface TasksPageData {
+  readyToClaim?: ReadyToClaimItemData;
+  tasks: TaskItemData[];
+}
+
+// Wallet & Records
+export interface TransactionRecordData {
+  id: string;
+  title: string;
+  category: 'withdrawals' | 'spins' | 'daily' | 'team' | 'tasks' | 'gift' | 'deposit' | 'all';
+  date: string;
+  txId: string;
+  icon: string;
+  isImageIcon?: boolean;
+  amount: string;
+  isDiamond?: boolean;
+  status: 'completed' | 'processing' | 'rejected' | 'failed';
+  hash?: string;
+}
+
+export interface WalletInfoData {
+  availableBalanceUsd: number;
+  connected: boolean;
+  tonWalletAddress: string; // BEP-20 address
+  phone: string;
+  presetAmounts: number[];
+  gasFeePercent: number;
+  recentTransactions: TransactionRecordData[];
+}
+
+export interface WithdrawResultData {
+  withdrawalId: string;
+  amountUsd: number;
+  feeUsd: number;
+  netPayoutUsd: number;
+  tonAddress: string;
+  status: string;
+  txId: string;
+  userBalance: UserProfile;
+}
+
+// Invoices & Stars
+export interface CryptoInvoiceData {
+  invoice_id: string;
+  deposit_address: string;
+  amount_usd: number;
+  amount_usdt: string;
+  purpose: string;
+  status: 'pending' | 'paid' | 'expired';
+  network: string;
+  expires_at: number;
+  qr_code_data: string;
+}
+
+export interface StarsInvoiceData {
+  invoice_link: string;
+  payload: string;
+  stars: number;
+}

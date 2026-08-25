@@ -7,23 +7,35 @@ import { FeedbackModal } from './FeedbackModal';
 import { haptics } from '../../utils/haptics';
 import { throwConfetti } from '../../utils/confetti';
 
+import { getInitialWalletData, fetchWalletData, bindWallet, submitWithdrawal } from '../../services/dataService';
+
 export interface WalletPageProps {
   onBack: () => void;
 }
 
 export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
-  const [walletConnected, setWalletConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [walletPhone, setWalletPhone] = useState<string | null>(null);
+  const [walletData, setWalletData] = useState(() => getInitialWalletData());
+  const [walletConnected, setWalletConnected] = useState(walletData.connected || false);
+  const [walletAddress, setWalletAddress] = useState<string | null>(walletData.tonWalletAddress || null);
+  const [walletPhone, setWalletPhone] = useState<string | null>(walletData.phone || null);
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [showAgreementModal, setShowAgreementModal] = useState(false);
   const [showRecordsPage, setShowRecordsPage] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState<number>(1.0);
+  const [withdrawAmount, setWithdrawAmount] = useState<number>(walletData.presetAmounts?.[0] || 1.0);
   const [isBtnPressed, setIsBtnPressed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    fetchWalletData().then((data) => {
+      if (data) {
+        setWalletData(data);
+        if (data.connected !== undefined) setWalletConnected(data.connected);
+        if (data.tonWalletAddress) setWalletAddress(data.tonWalletAddress);
+        if (data.phone) setWalletPhone(data.phone);
+      }
+    });
+
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1200);
@@ -35,14 +47,15 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
     setShowConnectModal(true);
   };
 
-  const handleSaveWallet = (data: { address: string; phone?: string }) => {
+  const handleSaveWallet = async (data: { address: string; phone?: string }) => {
     haptics.notification('success');
     setWalletConnected(true);
     setWalletAddress(data.address);
     if (data.phone) setWalletPhone(data.phone);
+    await bindWallet(data.address, data.phone);
   };
 
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
     if (!walletConnected) {
       haptics.impact('medium');
       setShowConnectModal(true);
@@ -52,7 +65,7 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
     haptics.notification('success');
     haptics.playWinSound();
     throwConfetti();
-    alert(`Withdrawal request of $${withdrawAmount.toFixed(2)} USDT (BEP20) submitted to ${walletAddress}!`);
+    await submitWithdrawal(withdrawAmount);
   };
 
   const fee = withdrawAmount * 0.05;
@@ -301,7 +314,7 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
                     textShadow: '0 1px 4px rgba(0,0,0,0.5)'
                   }}
                 >
-                  $ 0.56
+                  $ {walletData.availableBalanceUsd.toFixed(2)}
                 </span>
               </div>
             </div>

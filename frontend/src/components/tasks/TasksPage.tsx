@@ -12,84 +12,29 @@ export interface TasksPageProps {
 
 type TaskCategory = 'all' | 'special' | 'daily' | 'socials';
 
-const DEFAULT_READY_CLAIM: ReadyToClaimItem = {
-  id: 'ready-1',
-  title: 'Extra for 1 invitation',
-  icon: './assets/inviteFeatureCardIcon.png',
-  rewardGems: 300
-};
-
-const ALL_TASKS: TaskItem[] = [
-  {
-    id: 'special-1',
-    category: 'special',
-    title: 'Reach lvl 3 FOR THE FIRST TIME!',
-    icon: './assets/coin_3d.png',
-    rewardGems: 1600,
-    progress: { current: 1, total: 3 },
-    status: 'pending'
-  },
-  {
-    id: 'special-2',
-    category: 'special',
-    title: 'Invite 3 active spinners',
-    icon: './assets/inviteFeatureCardIcon.png',
-    rewardGems: 3000,
-    progress: { current: 2, total: 3 },
-    status: 'pending'
-  },
-  {
-    id: 'special-3',
-    category: 'special',
-    title: 'Join EarnCraft VIP Get More Rewards',
-    icon: './assets/ticket_animated.gif',
-    rewardGems: 3200,
-    secondaryRewardGems: 1,
-    status: 'pending'
-  },
-  {
-    id: 'daily-1',
-    category: 'daily',
-    title: 'Spin the Lucky Wheel 5 times',
-    icon: './assets/ticket_animated.gif',
-    rewardGems: 160,
-    progress: { current: 3, total: 5 },
-    status: 'pending'
-  },
-  {
-    id: 'daily-2',
-    category: 'daily',
-    title: 'Complete 10 tasks today',
-    icon: './assets/giftIconInDailySignIn.png',
-    rewardGems: 800,
-    progress: { current: 4, total: 10 },
-    status: 'pending'
-  },
-  {
-    id: 'social-1',
-    category: 'socials',
-    title: 'Subscribe to Telegram Channel',
-    icon: '📣',
-    rewardGems: 500,
-    status: 'pending'
-  },
-  {
-    id: 'social-2',
-    category: 'socials',
-    title: 'Follow EarnCraft on X (Twitter)',
-    icon: '🐦',
-    rewardGems: 400,
-    status: 'pending'
-  }
-];
+import { getInitialTasksPageData, fetchTasksPageData, claimTaskReward } from '../../services/dataService';
 
 export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
+  const initialData = getInitialTasksPageData();
   const [activeCategory, setActiveCategory] = useState<TaskCategory>('all');
-  const [readyItem, setReadyItem] = useState<ReadyToClaimItem | null>(DEFAULT_READY_CLAIM);
-  const [tasks, setTasks] = useState<TaskItem[]>(ALL_TASKS);
+  const [readyItem, setReadyItem] = useState<ReadyToClaimItem | null>(
+    (initialData.readyToClaim as ReadyToClaimItem) || null
+  );
+  const [tasks, setTasks] = useState<TaskItem[]>((initialData.tasks || []) as unknown as TaskItem[]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    fetchTasksPageData().then((data) => {
+      if (data) {
+        if (data.readyToClaim !== undefined) {
+          setReadyItem((data.readyToClaim as unknown as ReadyToClaimItem) || null);
+        }
+        if (data.tasks) {
+          setTasks(data.tasks as unknown as TaskItem[]);
+        }
+      }
+    });
+
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1200);
@@ -103,11 +48,12 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
     setReadyItem(null);
   };
 
-  const handleTaskClaim = (taskId: string) => {
+  const handleTaskClaim = async (taskId: string) => {
     haptics.notification('success');
     haptics.playWinSound();
     throwConfetti();
     setTasks(prev => prev.filter(t => t.id !== taskId));
+    await claimTaskReward(taskId);
   };
 
   const filteredTasks = tasks.filter(t => {

@@ -22,65 +22,24 @@ interface TransactionRecord {
   hash?: string;
 }
 
-const MOCK_RECORDS: TransactionRecord[] = [
-  {
-    id: 'tx-1',
-    title: 'Spin Wheel Reward',
-    category: 'spins',
-    date: 'Today, 14:32',
-    txId: 'TX-84921',
-    icon: './assets/ticket_animated.gif',
-    isImageIcon: true,
-    amount: '+$0.20',
-    status: 'completed',
-    hash: '0x8f2a1...4921b'
-  },
-  {
-    id: 'tx-2',
-    title: 'Daily Check-in Bonus',
-    category: 'spins',
-    date: 'Today, 10:15',
-    txId: 'TX-84918',
-    icon: './assets/giftIconInDailySignIn.png',
-    isImageIcon: true,
-    amount: '+80',
-    isDiamond: true,
-    status: 'completed',
-    hash: '0x7e1c4...9183a'
-  },
-  {
-    id: 'tx-3',
-    title: 'Friend Invite Bonus',
-    category: 'tasks',
-    date: 'Yesterday, 19:40',
-    txId: 'TX-83904',
-    icon: './assets/inviteFeatureCardIcon.png',
-    isImageIcon: true,
-    amount: '+300',
-    isDiamond: true,
-    status: 'completed',
-    hash: '0x3a9d2...3904f'
-  },
-  {
-    id: 'tx-4',
-    title: 'USDT (BEP20) Withdrawal',
-    category: 'withdrawals',
-    date: 'Aug 12, 2026',
-    txId: 'TX-78210',
-    icon: '🏧',
-    isImageIcon: false,
-    amount: '-$1.00',
-    status: 'processing',
-    hash: '0x1b8c0...8210e'
-  }
-];
+import { getInitialWalletData, fetchWalletRecords } from '../../services/dataService';
+import { useEffect } from 'react';
 
 export const WalletRecordsPage: FC<WalletRecordsPageProps> = ({ onBack }) => {
+  const [records, setRecords] = useState<TransactionRecord[]>(
+    () => (getInitialWalletData().recentTransactions || []) as unknown as TransactionRecord[]
+  );
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [selectedRecord, setSelectedRecord] = useState<TransactionRecord | null>(null);
   const [copiedHash, setCopiedHash] = useState(false);
 
-  const filteredRecords = MOCK_RECORDS.filter(
+  useEffect(() => {
+    fetchWalletRecords(activeTab).then((data) => {
+      if (data) setRecords(data as unknown as TransactionRecord[]);
+    });
+  }, [activeTab]);
+
+  const filteredRecords = records.filter(
     (rec) => activeTab === 'all' || rec.category === activeTab
   );
 

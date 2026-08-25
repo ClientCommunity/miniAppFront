@@ -6,22 +6,20 @@ export interface TeamModalProps {
   onClose: () => void;
 }
 
-interface TeamMember {
-  id: string;
-  name: string;
-  joinedDate: string;
-  joinedChannel: boolean;
-}
-
-const MOCK_TEAM_MEMBERS: TeamMember[] = [
-  { id: '1', name: 'Mahoraga', joinedDate: 'Today, 14:10', joinedChannel: true },
-  { id: '2', name: 'Tiku', joinedDate: 'Yesterday, 18:22', joinedChannel: true },
-  { id: '3', name: 'Gojo_Satoru', joinedDate: 'Aug 14, 09:15', joinedChannel: false }
-];
+import { getInitialTeamData, fetchTeamData } from '../services/dataService';
 
 export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [teamData, setTeamData] = useState(() => getInitialTeamData());
+
+  const teamMembers = (teamData.members || []) as any[];
+
+  useEffect(() => {
+    fetchTeamData().then((data) => {
+      if (data) setTeamData(data);
+    });
+  }, []);
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -39,8 +37,8 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
     haptics.impact('medium');
     haptics.playClickSound();
 
-    const inviteUrl = `https://t.me/EarnCraftBot?start=ref_user`;
-    const shareText = `Join me on EarnCraft and spin the wheel for massive cash rewards! 🎰💰\n${inviteUrl}`;
+    const inviteUrl = teamData.inviteUrl;
+    const shareText = `${teamData.shareText}\n${inviteUrl}`;
 
     try {
       // @ts-ignore
@@ -65,8 +63,8 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
     }
   };
 
-  const totalCount = MOCK_TEAM_MEMBERS.length;
-  const activeCount = MOCK_TEAM_MEMBERS.filter((m) => m.joinedChannel).length;
+  const totalCount = teamMembers.length;
+  const activeCount = teamMembers.filter((m) => m.joinedChannel).length;
 
   return (
     <div
@@ -358,6 +356,7 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
           </div>
 
           <div
+            className="hide-scrollbar"
             style={{
               flex: 1,
               overflowY: 'auto',
@@ -366,7 +365,7 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
               gap: '0.45rem'
             }}
           >
-            {MOCK_TEAM_MEMBERS.map((member) => (
+            {teamMembers.map((member: any) => (
               <div
                 key={member.id}
                 style={{

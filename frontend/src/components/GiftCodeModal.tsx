@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { FC } from 'react';
 import { haptics } from '../utils/haptics';
 import { throwConfetti } from '../utils/confetti';
+import { redeemGiftCode } from '../services/dataService';
 
 export interface GiftCodeModalProps {
   onClose: () => void;
@@ -37,21 +38,26 @@ export const GiftCodeModal: FC<GiftCodeModalProps> = ({ onClose }) => {
     }
   };
 
-  const handleClaim = () => {
+  const handleClaim = async () => {
     if (!giftCode.trim()) {
       haptics.notification('error');
       setStatusMessage('Please enter a valid gift code');
       return;
     }
 
-    haptics.notification('success');
-    haptics.playWinSound();
-    throwConfetti();
-    setStatusMessage('Gift code redeemed successfully! 🎉');
-
-    setTimeout(() => {
-      handleClose();
-    }, 1200);
+    const res = await redeemGiftCode(giftCode);
+    if (res.success) {
+      haptics.notification('success');
+      haptics.playWinSound();
+      throwConfetti();
+      setStatusMessage(res.message || 'Gift code redeemed successfully! 🎉');
+      setTimeout(() => {
+        handleClose();
+      }, 1200);
+    } else {
+      haptics.notification('error');
+      setStatusMessage(res.message || 'Invalid or expired gift code.');
+    }
   };
 
   return (

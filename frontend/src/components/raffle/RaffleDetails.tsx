@@ -9,18 +9,26 @@ export interface RaffleDetailsProps {
   onBack: () => void;
 }
 
-const PRIZE_TIERS = [
-  { medal: '🥇', rank: '1st Prize', amount: '$8.00', multiplier: 'x 1 Winner', highlight: true },
-  { medal: '🥈', rank: '2nd Prize', amount: '$3.00', multiplier: 'x 2 Winners', highlight: false },
-  { medal: '🥉', rank: '3rd Prize', amount: '$1.00', multiplier: 'x 6 Winners', highlight: false },
-  { medal: '💎', rank: '4th Prize', amount: '5,000', icon: './assets/diamond_animated.gif', multiplier: 'x 20 Winners', highlight: false },
-  { medal: '💎', rank: '5th Prize', amount: '800', icon: './assets/diamond_animated.gif', multiplier: 'x 1,125 Winners', highlight: false },
-];
+import { getInitialRafflesData, fetchRaffleDetails } from '../../services/dataService';
 
 export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
+  const [prizeTiers, setPrizeTiers] = useState<any[]>(() => getInitialRafflesData().prizeTiers || []);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showClaimSheet, setShowClaimSheet] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(33);
+
+  useEffect(() => {
+    if (raffle?.id) {
+      fetchRaffleDetails(raffle.id).then((details) => {
+        if (details?.prizeTiers) {
+          setPrizeTiers(details.prizeTiers);
+        }
+        if (details?.secondsLeft !== undefined) {
+          setSecondsLeft(details.secondsLeft);
+        }
+      });
+    }
+  }, [raffle?.id]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -282,7 +290,7 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
             Prize Distribution
           </div>
 
-          {PRIZE_TIERS.map((prize, idx) => (
+          {prizeTiers.map((prize: any, idx: number) => (
             <div
               key={idx}
               style={{

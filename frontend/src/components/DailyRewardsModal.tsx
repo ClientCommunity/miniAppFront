@@ -7,9 +7,18 @@ export interface DailyRewardsModalProps {
   onClose: () => void;
 }
 
+import { getInitialDailyRewards, fetchDailyRewardsData, claimDailyReward } from '../services/dataService';
+
 export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [claimed, setClaimed] = useState(false);
+  const [dailyData, setDailyData] = useState(() => getInitialDailyRewards());
+
+  useEffect(() => {
+    fetchDailyRewardsData().then((data) => {
+      if (data) setDailyData(data);
+    });
+  }, []);
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -22,25 +31,18 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose }) => {
     setTimeout(onClose, 300);
   };
 
-  const handleClaim = (_amount?: number) => {
+  const handleClaim = async (_amount?: number) => {
     haptics.notification('success');
     haptics.playWinSound();
     throwConfetti();
     setClaimed(true);
+    await claimDailyReward();
     setTimeout(() => {
       handleClose();
     }, 1200);
   };
 
-  const days = [
-    { day: 1, reward: '+80', icon: './assets/diamond_animated.gif', active: true },
-    { day: 2, reward: '+80', icon: './assets/diamond_animated.gif' },
-    { day: 3, reward: '+200', icon: './assets/giftIconInDailySignIn.png' },
-    { day: 4, reward: '+90', icon: './assets/diamond_animated.gif' },
-    { day: 5, reward: '+90', icon: './assets/diamond_animated.gif' },
-    { day: 6, reward: '+90', icon: './assets/diamond_animated.gif' },
-    { day: 7, reward: 'MEGA 6K', icon: './assets/giftIconInDailySignIn.png', isMega: true }
-  ];
+  const days = dailyData.days || [];
 
   return (
     <div

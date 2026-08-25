@@ -8,21 +8,20 @@ export interface RafflePageProps {
   onBack: () => void;
 }
 
-const ONGOING_RAFFLES = [
-  { id: '#VIP260803', cashReward: 20, coinRewardStr: '1M', participants: 58, tickets: 200 },
-  { id: '#LUCK260802', cashReward: 135, coinRewardStr: '2M', participants: 4120, tickets: 8265 }
-];
-
-const ENDED_RAFFLES = [
-  { id: '#VIP260801', cashReward: 20, coinRewardStr: '1M', participants: 127, tickets: 428 },
-  { id: '#VIP260706', cashReward: 16, coinRewardStr: '475K', participants: 85, tickets: 310 }
-];
+import { getInitialRafflesData, fetchRafflesData } from '../../services/dataService';
 
 export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
+  const [rafflesData, setRafflesData] = useState(() => getInitialRafflesData());
+  const ONGOING_RAFFLES = rafflesData.ongoing || [];
+  const ENDED_RAFFLES = rafflesData.ended || [];
   const [selectedRaffle, setSelectedRaffle] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    fetchRafflesData().then((data) => {
+      if (data) setRafflesData(data);
+    });
+
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1200);
@@ -271,11 +270,11 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
               <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(251,191,36,0.3) 0%, transparent 100%)' }} />
             </div>
 
-            {ONGOING_RAFFLES.map(raffle => (
+            {ONGOING_RAFFLES.map((raffle: any) => (
               <RaffleCard 
                 key={raffle.id}
-                status="ongoing"
                 {...raffle}
+                status="ongoing"
                 onClickDetails={() => setSelectedRaffle(raffle)}
               />
             ))}
@@ -286,11 +285,11 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
               <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 100%)' }} />
             </div>
 
-            {ENDED_RAFFLES.map(raffle => (
+            {ENDED_RAFFLES.map((raffle: any) => (
               <RaffleCard 
                 key={raffle.id}
-                status="ended"
                 {...raffle}
+                status="ended"
                 onClickDetails={() => setSelectedRaffle(raffle)}
               />
             ))}

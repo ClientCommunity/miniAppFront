@@ -14,25 +14,21 @@ interface LeaderboardUser {
   prize: string;
 }
 
-const TOP_WINNERS: LeaderboardUser[] = [
-  { rank: 1, name: 'CryptoKing', avatar: '👑', spins: 284, prize: '$250.00' },
-  { rank: 2, name: 'Elena_TON', avatar: '💎', spins: 219, prize: '$125.00' },
-  { rank: 3, name: 'ViperX', avatar: '⚡', spins: 178, prize: '$75.00' }
-];
-
-const OTHER_RANKINGS: LeaderboardUser[] = [
-  { rank: 4, name: 'Satoshi99', avatar: '🚀', spins: 142, prize: '$20.00' },
-  { rank: 5, name: 'LuckyStrike', avatar: '🍀', spins: 118, prize: '$10.00' },
-  { rank: 6, name: 'ApexSpinner', avatar: '🔥', spins: 96, prize: '$8.00' },
-  { rank: 7, name: 'Dmitri_K', avatar: '🎯', spins: 84, prize: '$5.00' },
-  { rank: 8, name: 'AirdropHunter', avatar: '🪂', spins: 63, prize: '$3.00' },
-  { rank: 9, name: 'ZenMaster', avatar: '🧘', spins: 51, prize: '$2.00' },
-  { rank: 10, name: 'MoonWalker', avatar: '🌕', spins: 45, prize: '$2.00' }
-];
+import { getInitialContestData, fetchContestData } from '../services/dataService';
 
 export const ContestLeaderboardModal: FC<ContestLeaderboardModalProps> = ({ onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [timeLeft, setTimeLeft] = useState('2d 14h 32m 45s');
+  const [contestData, setContestData] = useState(() => getInitialContestData());
+  const [timeLeft, setTimeLeft] = useState((contestData as any).timeLeft || contestData.endsIn || '2d 14h 32m 45s');
+
+  const TOP_WINNERS = (contestData.topWinners || []) as LeaderboardUser[];
+  const OTHER_RANKINGS = (contestData.otherRankings || []) as LeaderboardUser[];
+
+  useEffect(() => {
+    fetchContestData('spins').then((data) => {
+      if (data) setContestData(data);
+    });
+  }, []);
 
   useEffect(() => {
     requestAnimationFrame(() => {

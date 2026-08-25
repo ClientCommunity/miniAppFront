@@ -1,0 +1,7 @@
+{
+  "useMockData": false,
+  "apiBaseUrl": "https://brave-kids-wait.loca.lt/api/v1",
+  "apiTimeoutMs": 10000,
+  "simulatedDelayMs": 800,
+  "enableTelegramVerification": true
+}

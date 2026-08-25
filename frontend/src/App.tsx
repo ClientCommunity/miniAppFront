@@ -16,34 +16,32 @@ import { AppLaunchSplash } from './components/skeleton/AppLaunchSplash';
 import { requestServerSpin } from './services/spinService';
 import { throwConfetti } from './utils/confetti';
 import { haptics } from './utils/haptics';
+import {
+  getInitialWheelSegments,
+  getInitialMockTasksBanner,
+  getInitialFeatureCards,
+  getInitialUserProfile,
+  authenticateTelegram
+} from './services/dataService';
+import type { UserProfile } from './types/api';
 
-const WHEEL_SEGMENTS: SpinSegment[] = [
-  { label: 'Diamond', value: 'gem', image: './assets/diamond_animated.gif' },
-  { label: 'Coins', value: 'coins', image: './assets/SingleCoin_animated.gif' },
-  { label: 'Diamond', value: 'gem', image: './assets/diamond_animated.gif' },
-  { label: 'Jackpot', value: 'jackpot', image: './assets/coinSack_animated.gif' },
-  { label: 'Tickets', value: 'tickets', image: './assets/ticket_animated.gif' },
-  { label: 'Diamond', value: 'gem', image: './assets/diamond_animated.gif' }
-];
-
-const MOCK_TASKS = [
-  { title: 'Active Tasks Available!', subtitle: 'Earn more coins now', icon: '🎯', rewardAmount: 60 },
-  { title: 'Join Telegram Channel', subtitle: 'Stay updated', icon: '📣', rewardAmount: 500 },
-  { title: 'Daily Check-in', subtitle: 'Come back tomorrow', icon: '📅', rewardAmount: 100 }
-];
-
-const LEFT_CARDS = [
-  { title: 'Raffle', icon: './assets/raffleFeatureCardIcon.png', variant: 'emerald' as const, badge: 'HOT', badgeColor: 'gold' as const },
-  { title: 'Contest', icon: './assets/contestTrophy_animated.gif', variant: 'colorful' as const },
-  { title: 'Gift', icon: './assets/GiftBox_animated.gif', variant: 'gold' as const, badge: 'FREE', badgeColor: 'red' as const },
-  { title: 'Team', icon: './assets/inviteFeatureCardIcon.png', variant: 'emerald' as const }
-];
-
-const RIGHT_CARDS = [
-  { title: '+ Spins', icon: './assets/SpinWheel_animated.gif', variant: 'colorful' as const, badge: 'NEW', badgeColor: 'emerald' as const },
-  { title: 'Sign In', icon: './assets/signin-iconFetareCardIcon.png', variant: 'emerald' as const, badge: '1', badgeColor: 'red' as const },
-  { title: 'Wallet', icon: './assets/SingleCoin_animated.gif', variant: 'gold' as const }
-];
+const WHEEL_SEGMENTS = getInitialWheelSegments();
+const MOCK_TASKS = getInitialMockTasksBanner();
+const FEATURE_CARDS = getInitialFeatureCards();
+const LEFT_CARDS = FEATURE_CARDS.left as Array<{
+  title: string;
+  icon: string;
+  variant: 'emerald' | 'colorful' | 'gold';
+  badge?: string;
+  badgeColor?: 'gold' | 'red' | 'emerald';
+}>;
+const RIGHT_CARDS = FEATURE_CARDS.right as Array<{
+  title: string;
+  icon: string;
+  variant: 'emerald' | 'colorful' | 'gold';
+  badge?: string;
+  badgeColor?: 'gold' | 'red' | 'emerald';
+}>;
 
 function App() {
   const [currentPage, setCurrentPage] = useState<'main' | 'raffle' | 'tasks' | 'wallet'>('main');
@@ -54,7 +52,7 @@ function App() {
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [showContestModal, setShowContestModal] = useState(false);
   const [rewardText, setRewardText] = useState('');
-  const [tgUser, setTgUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile>(() => getInitialUserProfile());
 
   const navigateTo = (page: 'main' | 'raffle' | 'tasks' | 'wallet') => {
     haptics.impact('light');
@@ -96,19 +94,19 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Telegram Authentication & Live Profile Sync
   useEffect(() => {
     // @ts-ignore
     const tg = window.Telegram?.WebApp;
-    if (tg?.initDataUnsafe?.user) {
-      setTgUser(tg.initDataUnsafe.user);
-    }
-  }, []);
+    const initData = tg?.initData || '';
+    const startParam = tg?.initDataUnsafe?.start_param || '';
 
-  const userToDisplay = tgUser || {
-    first_name: 'Player',
-    id: '123456789',
-    photo_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=player_one'
-  };
+    authenticateTelegram(initData, startParam).then((res) => {
+      if (res.user) {
+        setUserProfile(res.user);
+      }
+    });
+  }, []);
 
   const handleSpinEnd = (winner: SpinSegment) => {
     setRewardText(winner.label);
@@ -119,12 +117,32 @@ function App() {
     if (winner.value !== '0' && winner.label !== 'Empty') {
       throwConfetti();
     }
+
+    // Refresh or update balance locally after spin
+    setUserProfile((prev) => {
+      const isCoin = winner.value === 'coins';
+      const isGem = winner.value === 'gem';
+      const isJackpot = winner.value === 'jackpot';
+      const newBal = isCoin ? prev.balance_usd + 0.2 : isJackpot ? 1.0 : prev.balance_usd;
+      return {
+        ...prev,
+        spins: Math.max(0, prev.spins - 1),
+        diamonds: isGem ? prev.diamonds + 80 : prev.diamonds,
+        balance_usd: newBal,
+        goal_left: Math.max(0, (prev.goal_usd || 1.0) - newBal)
+      };
+    });
   };
 
   const handleCollect = () => {
     haptics.impact('medium');
     setShowRewardModal(false);
   };
+
+  const progressPercent = Math.min(
+    100,
+    Math.max(0, Math.round((userProfile.balance_usd / (userProfile.goal_usd || 1.0)) * 100))
+  );
 
   return (
     <>
@@ -148,7 +166,7 @@ function App() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <div style={{ position: 'relative' }}>
             <img
-              src={userToDisplay.photo_url}
+              src={userProfile.photo_url}
               alt="Profile"
               style={{
                 width: '38px',
@@ -173,14 +191,14 @@ function App() {
                 border: '1px solid #ffffff'
               }}
             >
-              LV1
+              LV{userProfile.level || 1}
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ color: 'white', fontWeight: 800, fontSize: '0.88rem', lineHeight: 1.1 }}>
-              {userToDisplay.first_name}
+              {userProfile.first_name || 'Player'}
             </span>
-            <span style={{ color: '#a7f3d0', fontSize: '0.68rem', fontWeight: 600 }}>ID: {userToDisplay.id}</span>
+            <span style={{ color: '#a7f3d0', fontSize: '0.68rem', fontWeight: 600 }}>ID: {userProfile.id}</span>
           </div>
         </div>
 
@@ -205,7 +223,7 @@ function App() {
             }}
           >
             <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '17px', height: '17px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>50</span>
+            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>{userProfile.energy}</span>
           </div>
 
           {/* Spin Balance */}
@@ -227,7 +245,7 @@ function App() {
             }}
           >
             <img src="./assets/ticket_animated.gif" alt="Spins" style={{ width: '26px', height: '26px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>12</span>
+            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>{userProfile.spins}</span>
           </div>
 
           {/* Diamond Balance (+ Deposit Badge) */}
@@ -256,7 +274,7 @@ function App() {
             onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
             <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '23px', height: '23px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>124</span>
+            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>{userProfile.diamonds}</span>
 
             {/* Glowing plus badge */}
             <div
@@ -309,7 +327,7 @@ function App() {
         </div>
 
         {/* Center Wheel & Progress Section */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: '1 1 auto', minWidth: 0, padding: '0 0.25rem', marginTop: '-60px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: '1 1 auto', minWidth: 0, padding: '0 0.25rem', marginTop: '-32px' }}>
           {/* Balance Display with Sparkle Glow */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
             <img
@@ -332,7 +350,7 @@ function App() {
                 textShadow: '0 2px 6px rgba(0,0,0,0.6), 0 0 10px rgba(254, 240, 138, 0.4)'
               }}
             >
-              $0.56
+              ${userProfile.balance_usd.toFixed(2)}
             </span>
           </div>
 
@@ -354,7 +372,7 @@ function App() {
             <div
               className="liquid-gold-shimmer"
               style={{
-                width: '56%',
+                width: `${progressPercent}%`,
                 height: '100%',
                 borderRadius: '8px',
                 position: 'relative',
@@ -407,7 +425,7 @@ function App() {
               textShadow: '0 1px 3px rgba(0,0,0,0.7)'
             }}
           >
-            Only <span style={{ color: '#fbbf24', fontWeight: 800 }}>$0.44</span> to cash out $1 instant USDT (BEP20)!
+            Only <span style={{ color: '#fbbf24', fontWeight: 800 }}>${Math.max(0, (userProfile.goal_usd || 1.0) - userProfile.balance_usd).toFixed(2)}</span> to cash out $1 instant USDT (BEP20)!
           </div>
 
           <SpinWheel
@@ -456,7 +474,7 @@ function App() {
           flexShrink: 0,
           WebkitOverflowScrolling: 'touch',
         }}>
-        {MOCK_TASKS.map((task, i) => (
+        {MOCK_TASKS.map((task: any, i: number) => (
           <TaskBanner key={i} {...task} onClick={() => navigateTo('tasks')} />
         ))}
       </div>
