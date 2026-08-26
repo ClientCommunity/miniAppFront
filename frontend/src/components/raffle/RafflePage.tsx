@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
+import type { UserProfile } from '../../types/api';
 import { RaffleCard } from './RaffleCard';
 import { RaffleDetails } from './RaffleDetails';
 import { haptics } from '../../utils/haptics';
+import { formatAssetNumber } from '../../utils/format';
+import { getInitialRafflesData, fetchRafflesData } from '../../services/dataService';
 
 export interface RafflePageProps {
   onBack: () => void;
+  userProfile?: UserProfile;
 }
 
-import { getInitialRafflesData, fetchRafflesData } from '../../services/dataService';
-
-export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
+export const RafflePage: FC<RafflePageProps> = ({ onBack, userProfile }) => {
   const initialData = getInitialRafflesData();
   const [rafflesData, setRafflesData] = useState<any>(initialData || { ongoing: [], ended: [], prizeTiers: [] });
   const ONGOING_RAFFLES = rafflesData?.ongoing || [];
@@ -122,46 +124,52 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
         <svg width="24" height="24" viewBox="0 0 24 24" fill="rgba(52, 211, 153, 0.2)" style={{ position: 'absolute', top: '12%', left: '8%', transform: 'rotate(15deg)' }}><polygon points="12,2 22,22 2,22"/></svg>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(251, 191, 36, 0.25)" style={{ position: 'absolute', top: '22%', right: '12%', transform: 'rotate(-30deg)' }}><polygon points="12,2 22,22 2,22"/></svg>
         <svg width="30" height="30" viewBox="0 0 24 24" fill="rgba(255, 255, 255, 0.08)" style={{ position: 'absolute', top: '48%', left: '5%', transform: 'rotate(45deg)' }}><polygon points="12,2 22,22 2,22"/></svg>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="rgba(52, 211, 153, 0.18)" style={{ position: 'absolute', top: '65%', right: '8%', transform: 'rotate(-15deg)' }}><polygon points="12,2 22,22 2,22"/></svg>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="rgba(251, 191, 36, 0.2)" style={{ position: 'absolute', top: '82%', left: '15%', transform: 'rotate(60deg)' }}><polygon points="12,2 22,22 2,22"/></svg>
       </div>
 
-      {/* Top Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        padding: '1rem',
-        position: 'relative',
-        zIndex: 10
-      }}>
+      {/* Top Header Bar */}
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '0.65rem 0.9rem 0.4rem 0.9rem',
+          boxSizing: 'border-box',
+          position: 'relative',
+          zIndex: 20
+        }}
+      >
         {/* Back Button */}
-        <button 
+        <button
           onClick={() => {
             haptics.impact('light');
             onBack();
           }}
           style={{
-            background: 'rgba(6, 78, 59, 0.6)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            borderRadius: '0.8rem',
-            padding: '0.4rem 0.8rem',
-            color: 'white',
+            background: 'rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '50%',
+            width: '34px',
+            height: '34px',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.3rem',
-            fontWeight: 700,
+            justifyContent: 'center',
             cursor: 'pointer',
-            fontSize: '0.9rem',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+            padding: 0,
+            flexShrink: 0
           }}
         >
-          <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>‹</span> Back
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
         </button>
 
-        {/* Asset Balances (Unified Classic Frosted Glass) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          {/* Energy Balance */}
+        {/* Asset Badges */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
+          {/* Energy */}
           <div
             style={{
               background: 'rgba(0, 0, 0, 0.42)',
@@ -169,21 +177,21 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255, 255, 255, 0.16)',
               color: '#ffffff',
-              padding: '0.18rem 0.55rem',
+              padding: '0.15rem 0.45rem',
               borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.25rem',
+              gap: '0.2rem',
               boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
-              height: '28px',
+              height: '26px',
               boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '17px', height: '17px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>0</span>
+            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>{formatAssetNumber(userProfile?.energy ?? 50)}</span>
           </div>
 
-          {/* Spin Balance */}
+          {/* Spins */}
           <div
             style={{
               background: 'rgba(0, 0, 0, 0.42)',
@@ -191,21 +199,21 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255, 255, 255, 0.16)',
               color: '#ffffff',
-              padding: '0.18rem 0.55rem',
+              padding: '0.15rem 0.45rem',
               borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.25rem',
+              gap: '0.2rem',
               boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
-              height: '28px',
+              height: '26px',
               boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/ticket_animated.gif" alt="Spin" style={{ width: '26px', height: '26px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>1</span>
+            <img src="./assets/ticket_animated.gif" alt="Spins" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>{formatAssetNumber(userProfile?.spins ?? 0)}</span>
           </div>
 
-          {/* Diamond Balance */}
+          {/* Diamonds */}
           <div
             style={{
               background: 'rgba(0, 0, 0, 0.42)',
@@ -213,18 +221,18 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack }) => {
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255, 255, 255, 0.16)',
               color: '#ffffff',
-              padding: '0.18rem 0.55rem',
+              padding: '0.15rem 0.5rem',
               borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.25rem',
+              gap: '0.2rem',
               boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
-              height: '28px',
+              height: '26px',
               boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '23px', height: '23px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>680</span>
+            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>{formatAssetNumber(userProfile?.diamonds ?? 0)}</span>
           </div>
         </div>
       </div>

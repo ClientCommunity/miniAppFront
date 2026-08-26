@@ -394,22 +394,36 @@ export const fetchTasksPageData = async (): Promise<TasksPageData | null> => {
   return null;
 };
 
+export interface ClaimTaskResult {
+  success: boolean;
+  message?: string;
+  user?: UserProfile;
+  reward_diamonds?: number;
+  reward_spins?: number;
+  reward_usd?: number;
+}
+
 export const claimTaskReward = async (
   taskId: string
-): Promise<{ success: boolean; message?: string; user?: UserProfile }> => {
+): Promise<ClaimTaskResult> => {
   if (appConfig.useMockData) {
     await new Promise((res) => setTimeout(res, 350));
     return {
       success: true,
-      message: 'Task reward claimed successfully! 💎'
+      message: 'Task reward claimed successfully! 💎',
+      reward_diamonds: 100
     };
   }
 
-  const res = await api.post<UserProfile>(`/tasks/${taskId}/claim`);
+  const res = await api.post<any>(`/tasks/${taskId}/claim`);
+  const raw = res.data || {};
   return {
     success: res.success,
     message: res.message || (res.success ? 'Task reward claimed!' : res.error),
-    user: res.data
+    user: raw.user || (raw.id ? raw : undefined),
+    reward_diamonds: raw.reward_diamonds ?? raw.diamonds ?? (raw.reward_type === 'diamonds' ? raw.reward_amount : undefined),
+    reward_spins: raw.reward_spins ?? raw.spins ?? (raw.reward_type === 'spins' ? raw.reward_amount : undefined),
+    reward_usd: raw.reward_usd ?? raw.usd ?? (raw.reward_type === 'usd' ? raw.reward_amount : undefined)
   };
 };
 
@@ -494,22 +508,48 @@ export const fetchWalletRecords = async (
 };
 
 // 10. Gift Code Redemption (POST /gift-codes/redeem)
+export interface GiftCodeRedeemResult {
+  success: boolean;
+  message?: string;
+  diamonds?: number;
+  spins?: number;
+  balance_usd?: number;
+  rewardGems?: number;
+  user?: UserProfile;
+}
+
 export const redeemGiftCode = async (
   code: string
-): Promise<{ success: boolean; message?: string; rewardGems?: number }> => {
+): Promise<GiftCodeRedeemResult> => {
   if (appConfig.useMockData) {
     await new Promise((res) => setTimeout(res, 400));
     if (code.trim().toUpperCase() === 'WELCOME2026' || code.trim().length > 3) {
-      return { success: true, message: 'Gift code redeemed successfully! 🎉', rewardGems: 500 };
+      return {
+        success: true,
+        message: 'Gift code redeemed successfully! 🎉',
+        diamonds: 500,
+        spins: 10,
+        balance_usd: 0.50,
+        rewardGems: 500
+      };
     }
     return { success: false, message: 'Invalid or expired gift code.' };
   }
 
-  const res = await api.post<{ rewardGems?: number }>('/gift-codes/redeem', { code });
+  const res = await api.post<any>('/gift-codes/redeem', { code });
+  const raw = res.data || {};
+  const diamonds = raw.diamonds ?? raw.reward_diamonds ?? raw.rewardGems ?? (raw.reward_type === 'diamonds' ? raw.reward_amount : 0) ?? 0;
+  const spins = raw.spins ?? raw.reward_spins ?? (raw.reward_type === 'spins' ? raw.reward_amount : 0) ?? 0;
+  const balance_usd = raw.balance_usd ?? raw.reward_usd ?? raw.usd ?? (raw.reward_type === 'usd' ? raw.reward_amount : 0) ?? 0;
+
   return {
     success: res.success,
     message: res.message || (res.success ? 'Gift code redeemed successfully! 🎉' : res.error),
-    rewardGems: res.data?.rewardGems
+    diamonds,
+    spins,
+    balance_usd,
+    rewardGems: diamonds,
+    user: raw.user
   };
 };
 

@@ -6,9 +6,10 @@ import { redeemGiftCode } from '../services/dataService';
 
 export interface GiftCodeModalProps {
   onClose: () => void;
+  onClaimSuccess?: (reward: { diamonds?: number; spins?: number; balance_usd?: number }) => void;
 }
 
-export const GiftCodeModal: FC<GiftCodeModalProps> = ({ onClose }) => {
+export const GiftCodeModal: FC<GiftCodeModalProps> = ({ onClose, onClaimSuccess }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [giftCode, setGiftCode] = useState('');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -50,6 +51,11 @@ export const GiftCodeModal: FC<GiftCodeModalProps> = ({ onClose }) => {
       haptics.notification('success');
       haptics.playWinSound();
       throwConfetti();
+      onClaimSuccess?.({
+        diamonds: res.diamonds || res.rewardGems || 0,
+        spins: res.spins || 0,
+        balance_usd: res.balance_usd || 0
+      });
       setStatusMessage(res.message || 'Gift code redeemed successfully! 🎉');
       setTimeout(() => {
         handleClose();

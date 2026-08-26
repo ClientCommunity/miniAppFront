@@ -13,9 +13,19 @@ export const SupportModule: React.FC = () => {
     setLoading(true);
     try {
       const res = await adminService.getSupportFeedback();
-      if (res.data) setFeedbackList(res.data);
+      const raw = res?.data;
+      let list: AdminSupportFeedback[] = [];
+      if (Array.isArray(raw)) {
+        list = raw;
+      } else if (raw && typeof raw === 'object') {
+        const potential = (raw as any).feedback || (raw as any).items || (raw as any).data || (raw as any).messages;
+        if (Array.isArray(potential)) list = potential;
+      }
+      setFeedbackList(list);
     } catch (err: any) {
-      notifyToast(`Failed to load feedback: ${err.message}`, 'error', 3000);
+      console.warn('Failed to load feedback:', err);
+      notifyToast(`Failed to load feedback: ${err?.message || 'Error'}`, 'error', 3000);
+      setFeedbackList([]);
     } finally {
       setLoading(false);
     }

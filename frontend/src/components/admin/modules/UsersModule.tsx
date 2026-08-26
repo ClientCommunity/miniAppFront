@@ -3,8 +3,8 @@ import { adminService } from '../../../services/adminService';
 import type { AdminUserListItem } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
-import { copyTextSafe } from '../../../utils/clipboard';
 import { downloadCsvAuthenticated } from '../../../utils/csvDownloader';
+import { openDownloadInBrowser } from '../../../utils/browserOpener';
 
 export const UsersModule: React.FC = () => {
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
@@ -96,8 +96,7 @@ export const UsersModule: React.FC = () => {
 
   const handleShareTempLink = async () => {
     const tempUrl = await adminService.getTempExportDownloadLink('users');
-    await copyTextSafe(tempUrl, 'Temporary CSV Download Link');
-    notifyToast('🔗 Temporary browser download link copied! Open in any browser to download.', 'success', 4000);
+    await openDownloadInBrowser(tempUrl, 'Users CSV');
   };
 
   return (
@@ -134,6 +133,7 @@ export const UsersModule: React.FC = () => {
 
           <button
             onClick={handleShareTempLink}
+            title="Open download link in external browser"
             style={{
               background: 'rgba(255, 255, 255, 0.08)',
               border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -148,8 +148,8 @@ export const UsersModule: React.FC = () => {
               gap: '0.35rem'
             }}
           >
-            <span>🔗</span>
-            <span>Link</span>
+            <span>🌐</span>
+            <span>Open in Browser</span>
           </button>
 
           <div style={{ position: 'relative', width: '220px' }}>

@@ -9,7 +9,9 @@ export interface TaskItem {
   rewardGems?: number;
   secondaryRewardGems?: number;
   progress?: { current: number; total: number };
-  status?: 'pending' | 'checking' | 'completed';
+  status?: 'pending' | 'checking' | 'completed' | 'claimed';
+  actionUrl?: string;
+  action_url?: string;
   isPlaceholder?: boolean;
   onAction?: () => void;
   hideButton?: boolean;

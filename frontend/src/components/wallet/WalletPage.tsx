@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
+import type { UserProfile } from '../../types/api';
 import { ConnectWalletModal } from './ConnectWalletModal';
 import { UserAgreementModal } from './UserAgreementModal';
 import { WalletRecordsPage } from './WalletRecordsPage';
@@ -7,17 +8,18 @@ import { FeedbackModal } from './FeedbackModal';
 import { haptics } from '../../utils/haptics';
 import { throwConfetti } from '../../utils/confetti';
 import { notifyToast } from '../../utils/debugToast';
-
+import { formatAssetNumber } from '../../utils/format';
 import { getInitialWalletData, fetchWalletData, bindWallet, submitWithdrawal } from '../../services/dataService';
 
 export interface WalletPageProps {
   onBack: () => void;
+  userProfile?: UserProfile;
 }
 
-export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
+export const WalletPage: FC<WalletPageProps> = ({ onBack, userProfile }) => {
   const initialData = getInitialWalletData();
   const [walletData, setWalletData] = useState<any>(initialData || {
-    availableBalanceUsd: 0.76,
+    availableBalanceUsd: userProfile?.balance_usd ?? 0.76,
     connected: false,
     tonWalletAddress: '',
     minWithdrawalUsd: 1.0,
@@ -40,12 +42,7 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
         setWalletData(data);
         if (data.connected !== undefined) setWalletConnected(data.connected);
         if (data.tonWalletAddress) setWalletAddress(data.tonWalletAddress);
-        if (data.presetAmounts && data.presetAmounts.length > 0) {
-          setCustomAmountStr(data.presetAmounts[0].toFixed(2));
-        }
       }
-      setIsLoading(false);
-    }).catch(() => {
       setIsLoading(false);
     });
   }, []);
@@ -55,11 +52,17 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
     setShowConnectModal(true);
   };
 
-  const handleSaveWallet = async (data: { address: string; phone?: string }) => {
-    haptics.notification('success');
-    setWalletConnected(true);
+  const handleSaveWallet = async (data: { address: string }) => {
     setWalletAddress(data.address);
-    notifyToast('✓ BEP-20 Wallet address connected!', 'success', 3000);
+    setWalletConnected(true);
+    setWalletData((prev: any) => ({
+      ...prev,
+      connected: true,
+      tonWalletAddress: data.address
+    }));
+    notifyToast('🎉 BEP-20 Wallet Linked Successfully!', 'success', 3500);
+    haptics.notification('success');
+    throwConfetti();
     await bindWallet(data.address);
   };
 
@@ -68,29 +71,44 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
   const netAmount = Math.max(0, withdrawAmount - fee);
 
   const handleWithdraw = async () => {
-    if (!walletConnected) {
-      haptics.impact('medium');
+    if (!walletConnected || !walletAddress) {
       setShowConnectModal(true);
       return;
     }
 
+    const availableBal = userProfile?.balance_usd ?? walletData.availableBalanceUsd ?? 0;
     const minAmt = walletData.minWithdrawalUsd || 1.0;
     if (withdrawAmount < minAmt) {
-      notifyToast(`Minimum withdrawal is $${minAmt.toFixed(2)} USDT`, 'error', 3000);
+      notifyToast(`⚠️ Minimum withdrawal is $${minAmt.toFixed(2)} USDT`, 'error', 3000);
+      haptics.notification('error');
       return;
     }
 
-    const maxAmt = walletData.availableBalanceUsd || 0;
-    if (withdrawAmount > maxAmt) {
-      notifyToast(`Amount exceeds available balance ($${maxAmt.toFixed(2)})`, 'error', 3000);
+    if (availableBal < withdrawAmount) {
+      notifyToast(`⚠️ Insufficient balance ($${availableBal.toFixed(2)} available)`, 'error', 3000);
+      haptics.notification('error');
       return;
     }
 
-    haptics.notification('success');
-    haptics.playWinSound();
-    throwConfetti();
-    notifyToast(`🚀 Withdrawal request for $${withdrawAmount.toFixed(2)} USDT submitted!`, 'success', 3500);
-    await submitWithdrawal(withdrawAmount);
+    try {
+      const res = await submitWithdrawal(withdrawAmount);
+      if (res.success) {
+        haptics.notification('success');
+        haptics.playWinSound();
+        throwConfetti();
+        notifyToast(`🚀 Payout Request Submitted: $${withdrawAmount.toFixed(2)} USDT!`, 'success', 4000);
+        setWalletData((prev: any) => ({
+          ...prev,
+          availableBalanceUsd: Math.max(0, (prev.availableBalanceUsd || 0) - withdrawAmount)
+        }));
+      } else {
+        notifyToast(`❌ Cashout Failed: ${res.message || 'Server error'}`, 'error', 3500);
+        haptics.notification('error');
+      }
+    } catch (err: any) {
+      notifyToast(`❌ Error: ${err.message}`, 'error', 3500);
+      haptics.notification('error');
+    }
   };
 
   return (
@@ -111,31 +129,33 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
         fontFamily: 'Outfit, sans-serif'
       }}
     >
-      {/* Background Ambient Glows */}
+      {/* Background ambient lighting */}
       <div
         style={{
           position: 'absolute',
-          top: '8%',
+          top: '-15%',
           left: '50%',
           transform: 'translateX(-50%)',
-          width: '320px',
-          height: '240px',
-          background: 'radial-gradient(circle, rgba(0, 230, 118, 0.28) 0%, rgba(5, 122, 68, 0.12) 50%, rgba(0,0,0,0) 75%)',
-          borderRadius: '50%',
+          width: '120%',
+          height: '45%',
+          background: 'radial-gradient(circle at center, rgba(0, 230, 118, 0.22) 0%, rgba(5, 122, 68, 0.08) 60%, transparent 100%)',
+          filter: 'blur(50px)',
           pointerEvents: 'none',
           zIndex: 1
         }}
       />
 
-      {/* Top Header & Navigation */}
+      {/* Top Header Bar */}
       <div
         style={{
+          width: '100%',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '1rem 1rem 0.5rem 1rem',
+          padding: '0.65rem 0.9rem 0.4rem 0.9rem',
+          boxSizing: 'border-box',
           position: 'relative',
-          zIndex: 10
+          zIndex: 20
         }}
       >
         {/* Back Button */}
@@ -145,26 +165,30 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
             onBack();
           }}
           style={{
+            background: 'rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '50%',
+            width: '34px',
+            height: '34px',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.35rem',
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.25)',
-            borderRadius: '16px',
-            padding: '0.3rem 0.75rem',
-            color: '#ffffff',
-            fontWeight: 800,
-            fontSize: '0.82rem',
+            justifyContent: 'center',
             cursor: 'pointer',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+            padding: 0,
+            flexShrink: 0
           }}
         >
-          ‹ Back
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
         </button>
 
-        {/* Resource Badges */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          {/* Energy Balance */}
+        {/* Asset Balances */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
+          {/* Energy */}
           <div
             style={{
               background: 'rgba(0, 0, 0, 0.42)',
@@ -172,21 +196,21 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255, 255, 255, 0.16)',
               color: '#ffffff',
-              padding: '0.18rem 0.55rem',
+              padding: '0.15rem 0.45rem',
               borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.25rem',
+              gap: '0.2rem',
               boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
-              height: '28px',
+              height: '26px',
               boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '17px', height: '17px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>50</span>
+            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>{formatAssetNumber(userProfile?.energy ?? 50)}</span>
           </div>
 
-          {/* Spin Balance */}
+          {/* Spins */}
           <div
             style={{
               background: 'rgba(0, 0, 0, 0.42)',
@@ -194,21 +218,21 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255, 255, 255, 0.16)',
               color: '#ffffff',
-              padding: '0.18rem 0.55rem',
+              padding: '0.15rem 0.45rem',
               borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.25rem',
+              gap: '0.2rem',
               boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
-              height: '28px',
+              height: '26px',
               boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/ticket_animated.gif" alt="Spins" style={{ width: '26px', height: '26px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>12</span>
+            <img src="./assets/ticket_animated.gif" alt="Spins" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>{formatAssetNumber(userProfile?.spins ?? 0)}</span>
           </div>
 
-          {/* Diamond Balance */}
+          {/* Diamonds */}
           <div
             style={{
               background: 'rgba(0, 0, 0, 0.42)',
@@ -216,18 +240,18 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255, 255, 255, 0.16)',
               color: '#ffffff',
-              padding: '0.18rem 0.55rem',
+              padding: '0.15rem 0.5rem',
               borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.25rem',
+              gap: '0.2rem',
               boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
-              height: '28px',
+              height: '26px',
               boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '23px', height: '23px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>760</span>
+            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>{formatAssetNumber(userProfile?.diamonds ?? 0)}</span>
           </div>
         </div>
       </div>

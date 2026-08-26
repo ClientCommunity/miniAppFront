@@ -1,20 +1,24 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
 import type { TaskItem, ReadyToClaimItem } from './types';
+import type { UserProfile } from '../../types/api';
 import { ReadyToClaimCard } from './ReadyToClaimCard';
 import { TaskCard } from './TaskCard';
 import { haptics } from '../../utils/haptics';
 import { throwConfetti } from '../../utils/confetti';
+import { formatAssetNumber } from '../../utils/format';
+import { notifyToast } from '../../utils/debugToast';
+import { getInitialTasksPageData, fetchTasksPageData, claimTaskReward } from '../../services/dataService';
 
 export interface TasksPageProps {
   onBack: () => void;
+  userProfile?: UserProfile;
+  onUpdateProfile?: (profile: Partial<UserProfile>) => void;
 }
 
 type TaskCategory = 'all' | 'special' | 'daily' | 'socials';
 
-import { getInitialTasksPageData, fetchTasksPageData, claimTaskReward } from '../../services/dataService';
-
-export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
+export const TasksPage: FC<TasksPageProps> = ({ onBack, userProfile, onUpdateProfile }) => {
   const initialData = getInitialTasksPageData();
   const [activeCategory, setActiveCategory] = useState<TaskCategory>('all');
   const [readyItem, setReadyItem] = useState<ReadyToClaimItem | null>(
@@ -23,6 +27,8 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
   const [tasks, setTasks] = useState<TaskItem[]>((initialData?.tasks || []) as unknown as TaskItem[]);
   const [isLoading, setIsLoading] = useState(() => initialData === null);
   const [error, setError] = useState<string | null>(null);
+  const [verifyingTaskId, setVerifyingTaskId] = useState<string | null>(null);
+  const [isClaimingReady, setIsClaimingReady] = useState(false);
 
   const loadTasks = () => {
     setIsLoading(true);
@@ -52,19 +58,61 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
     loadTasks();
   }, []);
 
-  const handleClaimReady = () => {
-    haptics.notification('success');
-    haptics.playWinSound();
-    throwConfetti();
-    setReadyItem(null);
+  const handleClaimReady = async () => {
+    if (!readyItem || isClaimingReady) return;
+    setIsClaimingReady(true);
+    try {
+      const diamondsReward = readyItem.rewardGems || 80;
+      haptics.notification('success');
+      haptics.playWinSound();
+      throwConfetti();
+      notifyToast(`🎁 Claimed Day Reward (+${diamondsReward} 💎)!`, 'success', 3000);
+      onUpdateProfile?.({
+        diamonds: (userProfile?.diamonds ?? 0) + diamondsReward
+      });
+      setReadyItem(null);
+    } finally {
+      setIsClaimingReady(false);
+    }
   };
 
   const handleTaskClaim = async (taskId: string) => {
-    haptics.notification('success');
-    haptics.playWinSound();
-    throwConfetti();
-    setTasks(prev => prev.filter(t => t.id !== taskId));
-    await claimTaskReward(taskId);
+    if (verifyingTaskId) return;
+    setVerifyingTaskId(taskId);
+
+    try {
+      const res = await claimTaskReward(taskId);
+      if (res.success) {
+        haptics.notification('success');
+        haptics.playWinSound();
+        throwConfetti();
+
+        const task = tasks.find(t => t.id === taskId);
+        const rewardGems = res.reward_diamonds ?? task?.rewardGems ?? 50;
+        notifyToast(`🎉 Verified & Claimed +${rewardGems} 💎!`, 'success', 3500);
+
+        // Remove claimed task from list
+        setTasks(prev => prev.filter(t => t.id !== taskId));
+
+        // Update profile with server response
+        if (res.user) {
+          onUpdateProfile?.(res.user);
+        } else {
+          onUpdateProfile?.({
+            diamonds: (userProfile?.diamonds ?? 0) + rewardGems,
+            spins: (userProfile?.spins ?? 0) + (res.reward_spins || 0)
+          });
+        }
+      } else {
+        haptics.notification('warning');
+        notifyToast(res.message || '⚠️ Please complete the task requirement before claiming.', 'error', 4000);
+      }
+    } catch (err: any) {
+      haptics.notification('error');
+      notifyToast(`⚠️ Verification failed: ${err?.message || 'Server error'}`, 'error', 3500);
+    } finally {
+      setVerifyingTaskId(null);
+    }
   };
 
   const filteredTasks = tasks.filter(t => {
@@ -106,15 +154,17 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
         }}
       />
 
-      {/* Top Header & Stats Bar */}
+      {/* Top Header Bar */}
       <div
         style={{
+          width: '100%',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '1rem 1rem 0.65rem 1rem',
+          padding: '0.65rem 0.9rem 0.4rem 0.9rem',
+          boxSizing: 'border-box',
           position: 'relative',
-          zIndex: 10
+          zIndex: 20
         }}
       >
         {/* Back Button */}
@@ -124,26 +174,29 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
             onBack();
           }}
           style={{
+            background: 'rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '50%',
+            width: '34px',
+            height: '34px',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.35rem',
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.25)',
-            borderRadius: '16px',
-            padding: '0.3rem 0.75rem',
-            color: '#ffffff',
-            fontWeight: 800,
-            fontSize: '0.82rem',
+            justifyContent: 'center',
             cursor: 'pointer',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+            padding: 0,
+            flexShrink: 0
           }}
         >
-          ‹ Back
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
         </button>
-
-        {/* Resource Badges */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          {/* Energy Balance */}
+        {/* Asset Badges */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
+          {/* Energy */}
           <div
             style={{
               background: 'rgba(0, 0, 0, 0.42)',
@@ -151,21 +204,21 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255, 255, 255, 0.16)',
               color: '#ffffff',
-              padding: '0.18rem 0.55rem',
+              padding: '0.15rem 0.45rem',
               borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.25rem',
+              gap: '0.2rem',
               boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
-              height: '28px',
+              height: '26px',
               boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '17px', height: '17px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>50</span>
+            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>{formatAssetNumber(userProfile?.energy ?? 50)}</span>
           </div>
 
-          {/* Spin Balance */}
+          {/* Spins */}
           <div
             style={{
               background: 'rgba(0, 0, 0, 0.42)',
@@ -173,21 +226,21 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255, 255, 255, 0.16)',
               color: '#ffffff',
-              padding: '0.18rem 0.55rem',
+              padding: '0.15rem 0.45rem',
               borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.25rem',
+              gap: '0.2rem',
               boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
-              height: '28px',
+              height: '26px',
               boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/ticket_animated.gif" alt="Spins" style={{ width: '26px', height: '26px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>12</span>
+            <img src="./assets/ticket_animated.gif" alt="Spins" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>{formatAssetNumber(userProfile?.spins ?? 0)}</span>
           </div>
 
-          {/* Diamond Balance */}
+          {/* Diamonds */}
           <div
             style={{
               background: 'rgba(0, 0, 0, 0.42)',
@@ -195,18 +248,18 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255, 255, 255, 0.16)',
               color: '#ffffff',
-              padding: '0.18rem 0.55rem',
+              padding: '0.15rem 0.5rem',
               borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.25rem',
+              gap: '0.2rem',
               boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
-              height: '28px',
+              height: '26px',
               boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '23px', height: '23px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>760</span>
+            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>{formatAssetNumber(userProfile?.diamonds ?? 0)}</span>
           </div>
         </div>
       </div>
@@ -417,7 +470,12 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack }) => {
             ) : filteredTasks.length > 0 ? (
               <div className="page-reveal-fade" style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                 {filteredTasks.map((task) => (
-                  <TaskCard key={task.id} task={task} onClaim={() => handleTaskClaim(task.id)} />
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    isVerifying={verifyingTaskId === task.id}
+                    onClaim={() => handleTaskClaim(task.id)}
+                  />
                 ))}
               </div>
             ) : (

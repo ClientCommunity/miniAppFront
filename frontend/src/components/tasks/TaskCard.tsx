@@ -2,36 +2,63 @@ import { useState } from 'react';
 import type { FC } from 'react';
 import type { TaskItem } from './types';
 import { haptics } from '../../utils/haptics';
+import { notifyToast } from '../../utils/debugToast';
 
 export interface TaskCardProps {
   task: TaskItem;
+  isVerifying?: boolean;
   onClaim?: () => void;
 }
 
-export const TaskCard: FC<TaskCardProps> = ({ task, onClaim }) => {
+export const TaskCard: FC<TaskCardProps> = ({ task, isVerifying = false, onClaim }) => {
   const [isBtnPressed, setIsBtnPressed] = useState(false);
-  const [isChecking, setIsChecking] = useState(false);
+  const [hasOpenedLink, setHasOpenedLink] = useState(false);
+
+  const targetUrl = task.actionUrl || task.action_url;
+  const isSocialTask = task.category === 'socials' || !!targetUrl;
 
   const handleAction = () => {
+    if (isVerifying || task.status === 'completed') return;
+
     haptics.impact('medium');
     haptics.playClickSound();
 
     if (task.onAction) {
       task.onAction();
-    } else {
-      setIsChecking(true);
-      setTimeout(() => {
-        setIsChecking(false);
-        if (onClaim) onClaim();
-      }, 1000);
+      return;
+    }
+
+    // If it's a link/social task and user hasn't opened it yet
+    if (isSocialTask && targetUrl && !hasOpenedLink) {
+      setHasOpenedLink(true);
+      const tg = (window as any)?.Telegram?.WebApp;
+      if (targetUrl.startsWith('https://t.me/') && tg && typeof tg.openTelegramLink === 'function') {
+        tg.openTelegramLink(targetUrl);
+      } else if (tg && typeof tg.openLink === 'function') {
+        tg.openLink(targetUrl);
+      } else {
+        window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      }
+      notifyToast('Task opened! Return and tap Check to verify.', 'info', 3000);
+      return;
+    }
+
+    // Trigger verification and claim check
+    if (onClaim) {
+      onClaim();
     }
   };
 
   const getButtonText = () => {
-    if (isChecking) return '...';
-    if (task.status === 'completed') return 'Claim';
-    return task.buttonText || (task.category === 'socials' ? 'Start' : 'Go');
+    if (isVerifying) return 'Verifying...';
+    if (task.status === 'completed') return 'Done ✓';
+    if (isSocialTask && !hasOpenedLink) {
+      return task.buttonText || (task.category === 'socials' ? 'Start' : 'Go');
+    }
+    return 'Check';
   };
+
+  const isCompleted = task.status === 'completed';
 
   return (
     <div
@@ -40,16 +67,21 @@ export const TaskCard: FC<TaskCardProps> = ({ task, onClaim }) => {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0.55rem 0.85rem',
-        background: 'linear-gradient(135deg, rgba(5, 105, 65, 0.55) 0%, rgba(2, 52, 34, 0.85) 100%)',
+        background: isCompleted
+          ? 'linear-gradient(135deg, rgba(5, 75, 45, 0.4) 0%, rgba(2, 40, 25, 0.6) 100%)'
+          : 'linear-gradient(135deg, rgba(5, 105, 65, 0.55) 0%, rgba(2, 52, 34, 0.85) 100%)',
         borderRadius: '0.9rem',
-        border: '1px solid rgba(0, 230, 118, 0.4)',
+        border: isCompleted
+          ? '1px solid rgba(0, 230, 118, 0.2)'
+          : '1px solid rgba(0, 230, 118, 0.4)',
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
         color: 'white',
         gap: '0.75rem',
         fontFamily: 'Outfit, sans-serif',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
-        transition: 'transform 0.12s ease, border-color 0.12s ease'
+        opacity: isCompleted ? 0.75 : 1,
+        transition: 'transform 0.12s ease, border-color 0.12s ease, opacity 0.2s ease'
       }}
     >
       {/* Left Icon Thumbnail */}
@@ -163,34 +195,40 @@ export const TaskCard: FC<TaskCardProps> = ({ task, onClaim }) => {
       {!task.hideButton && (
         <button
           onClick={handleAction}
-          onMouseDown={() => setIsBtnPressed(true)}
+          onMouseDown={() => !isVerifying && setIsBtnPressed(true)}
           onMouseUp={() => setIsBtnPressed(false)}
           onMouseLeave={() => setIsBtnPressed(false)}
-          onTouchStart={() => setIsBtnPressed(true)}
+          onTouchStart={() => !isVerifying && setIsBtnPressed(true)}
           onTouchEnd={() => setIsBtnPressed(false)}
-          disabled={isChecking}
+          disabled={isVerifying || isCompleted}
           style={{
-            background: isChecking
-              ? 'rgba(255,255,255,0.2)'
-              : task.status === 'completed'
-              ? 'linear-gradient(180deg, #00e676 0%, #00a854 100%)'
+            background: isVerifying
+              ? 'rgba(255, 255, 255, 0.18)'
+              : isCompleted
+              ? 'rgba(16, 185, 129, 0.3)'
+              : hasOpenedLink
+              ? 'linear-gradient(180deg, #10b981 0%, #059669 100%)'
               : 'linear-gradient(180deg, #facc15 0%, #eab308 60%, #ca8a04 100%)',
-            color: task.status === 'completed' ? '#ffffff' : '#1e293b',
-            border: task.status === 'completed'
+            color: isCompleted ? '#6ee7b7' : hasOpenedLink || isVerifying ? '#ffffff' : '#1e293b',
+            border: isCompleted
+              ? '1px solid rgba(52, 211, 153, 0.4)'
+              : hasOpenedLink
               ? '1px solid rgba(167, 243, 208, 0.8)'
               : '1px solid rgba(254, 240, 138, 0.8)',
             borderRadius: '0.65rem',
             padding: '0.35rem 0.85rem',
             fontSize: '0.78rem',
             fontWeight: 800,
-            cursor: isChecking ? 'default' : 'pointer',
+            cursor: isVerifying || isCompleted ? 'default' : 'pointer',
             boxShadow: isBtnPressed
               ? '0 1px 0 #854d0e, inset 0 1px 2px rgba(0,0,0,0.3)'
+              : hasOpenedLink
+              ? '0 2px 0 #064e3b, 0 3px 6px rgba(0,0,0,0.25)'
               : '0 2.5px 0 #854d0e, 0 3px 6px rgba(0,0,0,0.25)',
             transform: isBtnPressed ? 'translateY(2px)' : 'translateY(0)',
-            transition: 'transform 0.08s ease, box-shadow 0.08s ease',
+            transition: 'transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease',
             flexShrink: 0,
-            minWidth: '58px',
+            minWidth: '68px',
             textAlign: 'center'
           }}
         >

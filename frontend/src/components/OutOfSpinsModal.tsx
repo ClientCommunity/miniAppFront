@@ -243,7 +243,7 @@ export const OutOfSpinsModal: FC<OutOfSpinsModalProps> = ({
               marginBottom: '0.65rem'
             }}
           >
-            <span>📋</span>
+            <span>💎</span>
             <span>Complete Tasks (Earn 💎)</span>
           </button>
 

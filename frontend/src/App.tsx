@@ -19,6 +19,7 @@ import {
 import type { UserProfile } from './types/api';
 import { DebugToastContainer } from './components/debug/DebugToastContainer';
 import { notifyToast } from './utils/debugToast';
+import { formatAssetNumber } from './utils/format';
 import appConfig from './config.json';
 import api from './api/client';
 
@@ -261,28 +262,32 @@ function App() {
         )}
 
         <div className="layout-container" style={{ height: '100dvh', overflow: 'hidden', padding: '0.25rem 0.5rem 0.5rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0', justifyContent: 'center' }}>
-
-      {/* Top Header / Asset Balances */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '0.5rem',
-        marginTop: '0.25rem',
-        padding: '0 0.25rem'
-      }}>
-        {/* User Profile (Left) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{ position: 'relative' }}>
+      {/* Top Navigation / Resource Bar */}
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '0.65rem 0.85rem 0.35rem 0.85rem',
+          boxSizing: 'border-box',
+          position: 'relative',
+          zIndex: 20
+        }}
+      >
+        {/* User Info (Left) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0, flexShrink: 1 }}>
+          <div style={{ position: 'relative', width: '34px', height: '34px', flexShrink: 0 }}>
             <img
-              src={userProfile.photo_url}
-              alt="Profile"
+              src={userProfile.photo_url || './assets/avatar.png'}
+              alt="Avatar"
               style={{
-                width: '38px',
-                height: '38px',
+                width: '100%',
+                height: '100%',
                 borderRadius: '50%',
-                border: '2px solid #00e676',
-                boxShadow: '0 0 10px rgba(0, 230, 118, 0.5)'
+                border: '1.5px solid #00e676',
+                boxShadow: '0 2px 8px rgba(0, 230, 118, 0.4)',
+                objectFit: 'cover'
               }}
             />
             {/* Level badge */}
@@ -293,21 +298,21 @@ function App() {
                 right: '-2px',
                 background: '#f59e0b',
                 color: '#1e293b',
-                fontSize: '9px',
+                fontSize: '8px',
                 fontWeight: 900,
-                padding: '1px 4px',
-                borderRadius: '6px',
+                padding: '0.5px 3px',
+                borderRadius: '5px',
                 border: '1px solid #ffffff'
               }}
             >
               LV{userProfile.level || 1}
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: 'white', fontWeight: 800, fontSize: '0.88rem', lineHeight: 1.1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, maxWidth: '75px' }}>
+            <span style={{ color: 'white', fontWeight: 800, fontSize: '0.8rem', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {userProfile.first_name || 'Player'}
             </span>
-            <span style={{ color: '#a7f3d0', fontSize: '0.68rem', fontWeight: 600 }}>ID: {userProfile.id}</span>
+            <span style={{ color: '#a7f3d0', fontSize: '0.65rem', fontWeight: 600 }}>ID: {userProfile.id}</span>
           </div>
 
           {/* Admin Mode Switcher Button (Strictly only visible when is_admin === true) */}
@@ -321,35 +326,36 @@ function App() {
                   setShowAdminAuthModal(true);
                 }
               }}
+              title="Admin Panel"
               style={{
                 background: 'rgba(255, 255, 255, 0.12)',
                 backdropFilter: 'blur(12px)',
                 WebkitBackdropFilter: 'blur(12px)',
                 border: '1px solid rgba(255, 255, 255, 0.38)',
                 color: '#ffffff',
-                borderRadius: '14px',
-                padding: '0.15rem 0.6rem',
-                fontSize: '0.72rem',
+                borderRadius: '12px',
+                padding: '0.15rem 0.45rem',
+                fontSize: '0.68rem',
                 fontWeight: 700,
-                letterSpacing: '0.3px',
+                letterSpacing: '0.2px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.3rem',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.45)',
-                height: '26px',
+                gap: '0.2rem',
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.35)',
+                height: '24px',
                 boxSizing: 'border-box',
-                transition: 'all 0.15s ease'
+                flexShrink: 0
               }}
             >
-              <span style={{ fontSize: '0.75rem', opacity: 0.9 }}>⚙️</span>
-              <span>Admin</span>
+              <span style={{ fontSize: '0.72rem' }}>⚙️</span>
+              <span style={{ fontSize: '0.65rem' }}>Admin</span>
             </button>
           )}
         </div>
 
         {/* Asset Balances (Right) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexShrink: 0 }}>
           {/* Energy Balance */}
           <div
             style={{
@@ -358,18 +364,19 @@ function App() {
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255, 255, 255, 0.16)',
               color: '#ffffff',
-              padding: '0.18rem 0.55rem',
-              borderRadius: '16px',
+              padding: '0.14rem 0.42rem',
+              borderRadius: '14px',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.25rem',
-              boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
-              height: '28px',
-              boxSizing: 'border-box'
+              gap: '0.2rem',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
+              height: '26px',
+              boxSizing: 'border-box',
+              flexShrink: 0
             }}
           >
-            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '17px', height: '17px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>{userProfile.energy}</span>
+            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '15px', height: '15px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.74rem' }}>{formatAssetNumber(userProfile.energy)}</span>
           </div>
 
           {/* Spin Balance */}
@@ -380,18 +387,19 @@ function App() {
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255, 255, 255, 0.16)',
               color: '#ffffff',
-              padding: '0.18rem 0.55rem',
-              borderRadius: '16px',
+              padding: '0.14rem 0.42rem',
+              borderRadius: '14px',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.25rem',
-              boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
-              height: '28px',
-              boxSizing: 'border-box'
+              gap: '0.2rem',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
+              height: '26px',
+              boxSizing: 'border-box',
+              flexShrink: 0
             }}
           >
-            <img src="./assets/ticket_animated.gif" alt="Spins" style={{ width: '26px', height: '26px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>{userProfile.spins}</span>
+            <img src="./assets/ticket_animated.gif" alt="Spins" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.74rem' }}>{formatAssetNumber(userProfile.spins)}</span>
           </div>
 
           {/* Diamond Balance (+ Deposit Badge) */}
@@ -404,23 +412,24 @@ function App() {
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255, 255, 255, 0.16)',
               color: '#ffffff',
-              padding: '0.18rem 0.65rem 0.18rem 0.45rem',
-              borderRadius: '16px',
+              padding: '0.14rem 0.55rem 0.14rem 0.38rem',
+              borderRadius: '14px',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.25rem',
+              gap: '0.2rem',
               cursor: 'pointer',
-              boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
-              height: '28px',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
+              height: '26px',
               boxSizing: 'border-box',
+              flexShrink: 0,
               transition: 'transform 0.1s ease'
             }}
             onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
             onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
             onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
-            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '23px', height: '23px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>{userProfile.diamonds}</span>
+            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '19px', height: '19px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.74rem' }}>{formatAssetNumber(userProfile.diamonds)}</span>
 
             {/* Glowing plus badge */}
             <div
@@ -428,17 +437,17 @@ function App() {
                 position: 'absolute',
                 top: '-3px',
                 right: '-3px',
-                width: '13px',
-                height: '13px',
+                width: '12px',
+                height: '12px',
                 borderRadius: '50%',
                 background: 'linear-gradient(180deg, #00e676 0%, #00a854 100%)',
                 color: 'white',
-                fontSize: '10px',
+                fontSize: '9px',
                 fontWeight: 900,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 0 6px rgba(0, 230, 118, 0.9), inset 0 1px 1px rgba(255,255,255,0.6)',
+                boxShadow: '0 0 6px rgba(0, 230, 118, 0.9)',
                 border: '1px solid #ffffff'
               }}
             >
@@ -589,6 +598,10 @@ function App() {
               const method = userProfile.spins > 0 ? 'spins' : 'diamonds';
               if (method === 'diamonds') {
                 notifyToast('💎 Used 1,000 Diamonds for 1 Spin!', 'info', 3000);
+                setUserProfile((prev) => ({
+                  ...prev,
+                  diamonds: Math.max(0, prev.diamonds - 1000)
+                }));
               }
 
               const serverResult = await requestServerSpin(WHEEL_SEGMENTS, method);
@@ -761,7 +774,17 @@ function App() {
 
         {/* Gift Code Modal */}
         {showGiftModal && (
-          <GiftCodeModal onClose={() => setShowGiftModal(false)} />
+          <GiftCodeModal
+            onClose={() => setShowGiftModal(false)}
+            onClaimSuccess={(reward) => {
+              setUserProfile((prev) => ({
+                ...prev,
+                diamonds: prev.diamonds + (reward.diamonds || 0),
+                spins: prev.spins + (reward.spins || 0),
+                balance_usd: prev.balance_usd + (reward.balance_usd || 0)
+              }));
+            }}
+          />
         )}
 
         {/* Team Modal */}
@@ -798,17 +821,23 @@ function App() {
 
         {/* Raffle Page Overlay */}
         {currentPage === 'raffle' && (
-          <RafflePage onBack={() => navigateTo('main')} />
+          <RafflePage userProfile={userProfile} onBack={() => navigateTo('main')} />
         )}
 
         {/* Tasks Page Overlay */}
         {currentPage === 'tasks' && (
-          <TasksPage onBack={() => navigateTo('main')} />
+          <TasksPage
+            userProfile={userProfile}
+            onBack={() => navigateTo('main')}
+            onUpdateProfile={(updated) => {
+              setUserProfile((prev) => ({ ...prev, ...updated }));
+            }}
+          />
         )}
 
         {/* Wallet Page Overlay */}
         {currentPage === 'wallet' && (
-          <WalletPage onBack={() => navigateTo('main')} />
+          <WalletPage userProfile={userProfile} onBack={() => navigateTo('main')} />
         )}
 
         {/* Admin Secret Passphrase Gate Modal */}
