@@ -1,18 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import './App.css';
 import { SpinWheel } from './components/SpinWheel';
 import type { SpinSegment } from './components/SpinWheel';
 import { RewardCard } from './components/RewardCard';
 import { FeatureCard } from './components/FeatureCard';
 import { TaskBanner } from './components/TaskBanner';
-import { DailyRewardsModal } from './components/DailyRewardsModal';
-import { GiftCodeModal } from './components/GiftCodeModal';
-import { TeamModal } from './components/TeamModal';
-import { ContestLeaderboardModal } from './components/ContestLeaderboardModal';
-import { OutOfSpinsModal } from './components/OutOfSpinsModal';
-import { RafflePage } from './components/raffle/RafflePage';
-import { TasksPage } from './components/tasks/TasksPage';
-import { WalletPage } from './components/wallet/WalletPage';
 import { AppLaunchSplash } from './components/skeleton/AppLaunchSplash';
 import { requestServerSpin } from './services/spinService';
 import { throwConfetti } from './utils/confetti';
@@ -29,6 +21,19 @@ import { DebugToastContainer } from './components/debug/DebugToastContainer';
 import { notifyToast } from './utils/debugToast';
 import appConfig from './config.json';
 import api from './api/client';
+
+// Lazy-loaded modals & secondary pages for ultra-fast initial boot
+const DailyRewardsModal = lazy(() => import('./components/DailyRewardsModal').then(m => ({ default: m.DailyRewardsModal })));
+const GiftCodeModal = lazy(() => import('./components/GiftCodeModal').then(m => ({ default: m.GiftCodeModal })));
+const TeamModal = lazy(() => import('./components/TeamModal').then(m => ({ default: m.TeamModal })));
+const ContestLeaderboardModal = lazy(() => import('./components/ContestLeaderboardModal').then(m => ({ default: m.ContestLeaderboardModal })));
+const OutOfSpinsModal = lazy(() => import('./components/OutOfSpinsModal').then(m => ({ default: m.OutOfSpinsModal })));
+const RafflePage = lazy(() => import('./components/raffle/RafflePage').then(m => ({ default: m.RafflePage })));
+const TasksPage = lazy(() => import('./components/tasks/TasksPage').then(m => ({ default: m.TasksPage })));
+const WalletPage = lazy(() => import('./components/wallet/WalletPage').then(m => ({ default: m.WalletPage })));
+const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const AdminAuthModal = lazy(() => import('./components/admin/AdminAuthModal').then(m => ({ default: m.AdminAuthModal })));
+import adminService from './services/adminService';
 
 const WHEEL_SEGMENTS = getInitialWheelSegments();
 const MOCK_TASKS = getInitialMockTasksBanner();
@@ -49,6 +54,8 @@ const RIGHT_CARDS = FEATURE_CARDS.right as Array<{
 }>;
 
 function App() {
+  const [viewMode, setViewMode] = useState<'app' | 'admin'>('app');
+  const [showAdminAuthModal, setShowAdminAuthModal] = useState(false);
   const [currentPage, setCurrentPage] = useState<'main' | 'raffle' | 'tasks' | 'wallet'>('main');
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [showRewardModal, setShowRewardModal] = useState(false);
@@ -86,16 +93,23 @@ function App() {
   });
 
   useEffect(() => {
+    let resizeTimer: any;
     const handleResize = () => {
-      const w = window.innerWidth;
-      if (w < 360) setWheelSize(220);
-      else if (w < 390) setWheelSize(235);
-      else if (w < 430) setWheelSize(245);
-      else if (w < 600) setWheelSize(260);
-      else setWheelSize(280);
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const w = window.innerWidth;
+        if (w < 360) setWheelSize(220);
+        else if (w < 390) setWheelSize(235);
+        else if (w < 430) setWheelSize(245);
+        else if (w < 600) setWheelSize(260);
+        else setWheelSize(280);
+      }, 150);
     };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      clearTimeout(resizeTimer);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   useEffect(() => {
@@ -150,9 +164,10 @@ function App() {
     });
   }, []);
 
-    const handleSpinEnd = (winner: SpinSegment) => {
+    const handleSpinEnd = (winner: SpinSegment, serverResult?: any) => {
       // Prioritize live reward data returned by server API
-      const serverReward = lastServerSpin?.reward;
+      const spinRes = serverResult || lastServerSpin;
+      const serverReward = spinRes?.reward;
       const rewardName = serverReward?.label || winner.label || 'Reward';
       const rewardImage = serverReward?.image || winner.image || './assets/diamond_animated.gif';
       
@@ -181,8 +196,8 @@ function App() {
       }
 
       // Update user balances from server balance or optimistic calculation
-      if (lastServerSpin?.userBalance) {
-        const ub = lastServerSpin.userBalance;
+      if (spinRes?.userBalance) {
+        const ub = spinRes.userBalance;
         setUserProfile((prev) => ({
           ...prev,
           spins: ub.spins ?? prev.spins,
@@ -218,6 +233,22 @@ function App() {
       100,
       Math.max(0, Math.round((userProfile.balance_usd / (userProfile.goal_usd || 1.0)) * 100))
     );
+
+    if (viewMode === 'admin') {
+      return (
+        <Suspense fallback={<div style={{ minHeight: '100dvh', background: '#090d16', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>Loading Admin Console...</div>}>
+          <AdminDashboard
+            onBackToApp={() => {
+              haptics.impact('light');
+              setViewMode('app');
+            }}
+            onLogout={() => {
+              setViewMode('app');
+            }}
+          />
+        </Suspense>
+      );
+    }
 
     return (
       <>
@@ -278,6 +309,43 @@ function App() {
             </span>
             <span style={{ color: '#a7f3d0', fontSize: '0.68rem', fontWeight: 600 }}>ID: {userProfile.id}</span>
           </div>
+
+          {/* Admin Mode Switcher Button (Strictly only visible when is_admin === true) */}
+          {userProfile.is_admin && (
+            <button
+              onClick={() => {
+                haptics.impact('medium');
+                if (adminService.isAuthenticated()) {
+                  setViewMode('admin');
+                } else {
+                  setShowAdminAuthModal(true);
+                }
+              }}
+              style={{
+                background: 'rgba(255, 255, 255, 0.12)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.38)',
+                color: '#ffffff',
+                borderRadius: '14px',
+                padding: '0.15rem 0.6rem',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                letterSpacing: '0.3px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.45)',
+                height: '26px',
+                boxSizing: 'border-box',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <span style={{ fontSize: '0.75rem', opacity: 0.9 }}>⚙️</span>
+              <span>Admin</span>
+            </button>
+          )}
         </div>
 
         {/* Asset Balances (Right) */}
@@ -525,7 +593,7 @@ function App() {
 
               const serverResult = await requestServerSpin(WHEEL_SEGMENTS, method);
               setLastServerSpin(serverResult);
-              return serverResult.targetIndex;
+              return serverResult;
             }}
             onSpinEnd={handleSpinEnd}
             theme="emerald"
@@ -677,64 +745,84 @@ function App() {
         </div>
       )}
 
-      {/* Daily Rewards Modal (10s Pop-up) */}
-      {showDailyRewards && (
-        <DailyRewardsModal
-          onClose={() => setShowDailyRewards(false)}
-          onClaimSuccess={(gems) => {
-            setUserProfile((prev) => ({
-              ...prev,
-              diamonds: prev.diamonds + (gems || 80)
-            }));
-          }}
-        />
-      )}
+      <Suspense fallback={null}>
+        {/* Daily Rewards Modal (10s Pop-up) */}
+        {showDailyRewards && (
+          <DailyRewardsModal
+            onClose={() => setShowDailyRewards(false)}
+            onClaimSuccess={(gems) => {
+              setUserProfile((prev) => ({
+                ...prev,
+                diamonds: prev.diamonds + (gems || 80)
+              }));
+            }}
+          />
+        )}
 
-      {/* Gift Code Modal */}
-      {showGiftModal && (
-        <GiftCodeModal onClose={() => setShowGiftModal(false)} />
-      )}
+        {/* Gift Code Modal */}
+        {showGiftModal && (
+          <GiftCodeModal onClose={() => setShowGiftModal(false)} />
+        )}
 
-      {/* Team Modal */}
-      {showTeamModal && (
-        <TeamModal onClose={() => setShowTeamModal(false)} />
-      )}
+        {/* Team Modal */}
+        {showTeamModal && (
+          <TeamModal onClose={() => setShowTeamModal(false)} />
+        )}
 
-      {/* Contest Leaderboard Modal */}
-      {showContestModal && (
-        <ContestLeaderboardModal onClose={() => setShowContestModal(false)} />
-      )}
+        {/* Contest Leaderboard Modal */}
+        {showContestModal && (
+          <ContestLeaderboardModal
+            onClose={() => setShowContestModal(false)}
+            onInvite={() => {
+              setShowContestModal(false);
+              setShowTeamModal(true);
+            }}
+          />
+        )}
 
-      {/* Out of Spins Modal */}
-      {showOutOfSpinsModal && (
-        <OutOfSpinsModal
-          diamonds={userProfile.diamonds}
-          onClose={() => setShowOutOfSpinsModal(false)}
-          onInvite={() => {
-            setShowOutOfSpinsModal(false);
-            setShowTeamModal(true);
-          }}
-          onTasks={() => {
-            setShowOutOfSpinsModal(false);
-            navigateTo('tasks');
-          }}
-        />
-      )}
+        {/* Out of Spins Modal */}
+        {showOutOfSpinsModal && (
+          <OutOfSpinsModal
+            diamonds={userProfile.diamonds}
+            onClose={() => setShowOutOfSpinsModal(false)}
+            onInvite={() => {
+              setShowOutOfSpinsModal(false);
+              setShowTeamModal(true);
+            }}
+            onTasks={() => {
+              setShowOutOfSpinsModal(false);
+              navigateTo('tasks');
+            }}
+          />
+        )}
 
-      {/* Raffle Page Overlay */}
-      {currentPage === 'raffle' && (
-        <RafflePage onBack={() => navigateTo('main')} />
-      )}
+        {/* Raffle Page Overlay */}
+        {currentPage === 'raffle' && (
+          <RafflePage onBack={() => navigateTo('main')} />
+        )}
 
-      {/* Tasks Page Overlay */}
-      {currentPage === 'tasks' && (
-        <TasksPage onBack={() => navigateTo('main')} />
-      )}
+        {/* Tasks Page Overlay */}
+        {currentPage === 'tasks' && (
+          <TasksPage onBack={() => navigateTo('main')} />
+        )}
 
-      {/* Wallet Page Overlay */}
-      {currentPage === 'wallet' && (
-        <WalletPage onBack={() => navigateTo('main')} />
-      )}
+        {/* Wallet Page Overlay */}
+        {currentPage === 'wallet' && (
+          <WalletPage onBack={() => navigateTo('main')} />
+        )}
+
+        {/* Admin Secret Passphrase Gate Modal */}
+        {showAdminAuthModal && (
+          <AdminAuthModal
+            isOpen={showAdminAuthModal}
+            onClose={() => setShowAdminAuthModal(false)}
+            onSuccess={() => {
+              setShowAdminAuthModal(false);
+              setViewMode('admin');
+            }}
+          />
+        )}
+      </Suspense>
     </div>
   </>
   );

@@ -33,6 +33,25 @@ class ApiClient {
     }
   }
 
+  public getAdminToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return sessionStorage.getItem('admin_token') || localStorage.getItem('admin_token');
+  }
+
+  public setAdminToken(token: string) {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('admin_token', token);
+      localStorage.setItem('admin_token', token);
+    }
+  }
+
+  public clearAdminToken() {
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_token');
+    }
+  }
+
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
     const method = options.method || 'GET';
     let url = `${this.getBaseUrl()}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
@@ -66,9 +85,14 @@ class ApiClient {
       headers['Content-Type'] = 'application/json';
     }
 
-    const token = this.getToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    const isAdminEndpoint = endpoint.startsWith('/admin') || endpoint.includes('/admin/');
+    const adminToken = this.getAdminToken();
+    const userToken = this.getToken();
+
+    if (isAdminEndpoint && adminToken) {
+      headers['Authorization'] = `Bearer ${adminToken}`;
+    } else if (userToken) {
+      headers['Authorization'] = `Bearer ${userToken}`;
     }
 
     const config: RequestInit = {

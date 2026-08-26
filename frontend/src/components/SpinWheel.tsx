@@ -8,15 +8,15 @@ export interface SpinSegment {
   image?: string;
 }
 
-interface SpinWheelProps {
+export interface SpinWheelProps {
   segments: SpinSegment[];
   size?: number;
   theme?: 'emerald' | 'colorful' | 'gold';
   spins?: number;
   diamonds?: number;
-  onSpinRequest?: () => Promise<number | { targetIndex: number }>;
+  onSpinRequest?: () => Promise<number | { targetIndex: number; [key: string]: any }>;
   onOutOfSpins?: () => void;
-  onSpinEnd?: (winner: SpinSegment) => void;
+  onSpinEnd?: (winner: SpinSegment, serverResult?: any) => void;
   spinDuration?: number;
 }
 
@@ -105,13 +105,12 @@ export const SpinWheel: FC<SpinWheelProps> = ({
   onSpinRequest,
   onOutOfSpins,
   onSpinEnd,
-  spinDuration = 5200
+  spinDuration = 3200
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const coreWrapperRef = useRef<HTMLDivElement>(null);
 
   const [isSpinning, setIsSpinning] = useState(false);
-  const [currentRotation, setCurrentRotation] = useState(0);
   const [loadedCount, setLoadedCount] = useState(0);
   const [isButtonPressed, setIsButtonPressed] = useState(false);
   const [bulbPhase, setBulbPhase] = useState(0);
@@ -441,56 +440,90 @@ export const SpinWheel: FC<SpinWheelProps> = ({
   }, [drawWheel]);
 
   // ═══════════════════════════════════════════════════════════════════
-  // PREDETERMINED ENGINE (Pure Frontend now, Drop-in Backend Ready)
+  // INSTANT-START CASINO SPIN ENGINE (0ms UI Latency + Exact Alignment)
   // ═══════════════════════════════════════════════════════════════════
+  const cumulativeRotationRef = useRef(0);
+
   const spin = async () => {
     if (isSpinning || segments.length === 0) return;
+
+    // Check balance if 0 spins & < 1,000 diamonds
+    if (spins <= 0 && diamonds < 1000) {
+      if (onOutOfSpins) onOutOfSpins();
+      return;
+    }
+
+    // 1. INSTANT 0ms ACCELERATION START (No network wait!)
     setIsSpinning(true);
     haptics.impact('heavy');
     haptics.playClickSound();
 
+    // Start fast spinning immediately so UI feels instant
+    const initialSpinSpeed = 1080; // 3 full turns
+    const fastStartRotation = cumulativeRotationRef.current + initialSpinSpeed;
+    if (coreWrapperRef.current) {
+      coreWrapperRef.current.style.transition = 'transform 1000ms cubic-bezier(0.35, 0.0, 0.75, 0.25)';
+      coreWrapperRef.current.style.transform = `rotate(${fastStartRotation}deg)`;
+    }
+
     try {
+      // 2. PARALLEL BACKEND RESOLUTION
       let targetIndex = 0;
+      let serverResultData: any = null;
 
       if (onSpinRequest) {
         const response = await onSpinRequest();
-        targetIndex = typeof response === 'number' ? response : response.targetIndex;
+        if (typeof response === 'number') {
+          targetIndex = response;
+        } else if (response && typeof response.targetIndex === 'number') {
+          targetIndex = response.targetIndex;
+          serverResultData = response;
+        }
       } else {
         targetIndex = Math.floor(Math.random() * segments.length);
       }
 
       targetIndex = ((targetIndex % segments.length) + segments.length) % segments.length;
 
+      // 3. EXACT SEGMENT LANDING CALCULATION
       const numSegments = segments.length;
       const degreesPerSegment = 360 / numSegments;
 
+      // Center of this segment in canvas coordinate system (0° = 3 o'clock)
       const segmentCenterAngle = targetIndex * degreesPerSegment + degreesPerSegment / 2;
-      const jitter = (Math.random() - 0.5) * (degreesPerSegment * 0.55);
+      // Controlled safe jitter inside segment (±10° in 60° slice - never touches borders)
+      const jitter = (Math.random() - 0.5) * (degreesPerSegment * 0.35);
 
-      const targetStopMod = (270 - segmentCenterAngle - jitter + 3600) % 360;
-      const currentMod = currentRotation % 360;
-      const delta = (targetStopMod - currentMod + 360) % 360;
+      // Top flapper pointer is at 12 o'clock (270°)
+      const targetStopMod = (270 - (segmentCenterAngle + jitter) + 3600) % 360;
+      const currentMod = cumulativeRotationRef.current % 360;
+      const forwardDelta = (targetStopMod - currentMod + 360) % 360;
 
-      const minFullSpins = 7;
-      const targetRotation = currentRotation + minFullSpins * 360 + delta;
+      // Add minimum 5 extra full rotations (1800°) for dramatic smooth deceleration
+      const extraFullSpins = 5;
+      const finalTargetRotation = cumulativeRotationRef.current + extraFullSpins * 360 + forwardDelta;
+      cumulativeRotationRef.current = finalTargetRotation;
 
+      // 4. SEAMLESS DECELERATION CURVE (3.2s)
+      const decelDuration = spinDuration || 3200;
       if (coreWrapperRef.current) {
-        coreWrapperRef.current.style.transition = `transform ${spinDuration}ms cubic-bezier(0.12, 0.92, 0.18, 1.02)`;
-        coreWrapperRef.current.style.transform = `rotate(${targetRotation}deg)`;
+        coreWrapperRef.current.style.transition = `transform ${decelDuration}ms cubic-bezier(0.15, 0.95, 0.22, 1.0)`;
+        coreWrapperRef.current.style.transform = `rotate(${finalTargetRotation}deg)`;
       }
 
+      // 5. LANDING RESOLUTION
       setTimeout(() => {
         setIsSpinning(false);
-        const normalizedCurrentRotation = targetRotation % 360;
-        setCurrentRotation(normalizedCurrentRotation);
-
         const winner = segments[targetIndex];
         if (onSpinEnd) {
-          onSpinEnd(winner);
+          onSpinEnd(winner, serverResultData);
         }
-      }, spinDuration);
+      }, decelDuration);
     } catch (err) {
-      console.error('Spin error:', err);
+      console.error('Spin request error:', err);
+      if (coreWrapperRef.current) {
+        coreWrapperRef.current.style.transition = 'transform 1000ms cubic-bezier(0.2, 0.8, 0.3, 1)';
+      }
       setIsSpinning(false);
     }
   };
@@ -586,7 +619,7 @@ export const SpinWheel: FC<SpinWheelProps> = ({
             width: '100%',
             height: '100%',
             position: 'relative',
-            transform: `rotate(${currentRotation}deg)`
+            transform: 'rotate(0deg)'
           }}
         >
           <canvas

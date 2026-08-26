@@ -109,21 +109,27 @@ export interface TeamStatsData {
 export interface ContestLeaderboardUser {
   rank: number;
   name: string;
-  avatar: string;
-  spins: number;
+  avatar?: string;
+  spins?: number;
+  referrals?: number;
+  score?: number;
   prize: string;
 }
 
 export interface ContestLeaderboardData {
+  id?: string;
   title: string;
+  category?: 'spins' | 'referrals';
   prizePool: string;
   endsIn: string;
-  endsTimestamp: number;
+  endsTimestamp?: number;
   topWinners: ContestLeaderboardUser[];
   otherRankings: ContestLeaderboardUser[];
-  userStatus: {
+  userStatus?: {
     rank: number;
-    spins: number;
+    spins?: number;
+    referrals?: number;
+    score?: number;
     projectedPrize: string;
   };
 }

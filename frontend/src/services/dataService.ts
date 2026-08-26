@@ -335,10 +335,44 @@ export const fetchTeamData = async (): Promise<TeamStatsData | null> => {
 // 6. Contests / Tournaments (GET /contests/spins & GET /contests/referrals)
 export const fetchContestData = async (type: 'spins' | 'referrals' = 'spins'): Promise<ContestLeaderboardData | null> => {
   if (appConfig.useMockData) {
+    if (type === 'referrals') {
+      return {
+        title: 'Referral Champions Tournament',
+        category: 'referrals',
+        prizePool: '$750.00 USDT',
+        endsIn: '3d 08h 12m 30s',
+        endsTimestamp: Date.now() + 86400000 * 3,
+        topWinners: [
+          { rank: 1, name: 'Elena_Vip', avatar: '👑', referrals: 48, prize: '$300 USDT' },
+          { rank: 2, name: 'CryptoKing', avatar: '🥈', referrals: 35, prize: '$175 USDT' },
+          { rank: 3, name: 'TonMiner', avatar: '🥉', referrals: 22, prize: '$100 USDT' }
+        ],
+        otherRankings: [
+          { rank: 4, name: 'ReferralPro', avatar: '⚡', referrals: 19, prize: '$50 USDT' },
+          { rank: 5, name: 'EarnMaster', avatar: '🌟', referrals: 14, prize: '$35 USDT' }
+        ],
+        userStatus: {
+          rank: 12,
+          referrals: 5,
+          score: 5,
+          projectedPrize: '$10.00'
+        }
+      } as unknown as ContestLeaderboardData;
+    }
     return mockData.contests as unknown as ContestLeaderboardData;
   }
 
-  const res = await api.get<ContestLeaderboardData>(`/contests/${type}`);
+  // 1. Try standard /contests/:type
+  let res = await api.get<ContestLeaderboardData>(`/contests/${type}`);
+  if (!res.success) {
+    // 2. Try singular /contest/:type
+    res = await api.get<ContestLeaderboardData>(`/contest/${type}`);
+  }
+  if (!res.success) {
+    // 3. Try query param /contests?type=:type
+    res = await api.get<ContestLeaderboardData>(`/contests?type=${type}`);
+  }
+
   if (res.success && res.data) {
     return res.data;
   }

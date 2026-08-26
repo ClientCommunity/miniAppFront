@@ -64,30 +64,15 @@ export const FeatureCard: FC<FeatureCardProps> = ({
       onTouchStart={() => setIsPressed(true)}
       onTouchEnd={() => setIsPressed(false)}
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0.35rem 0 0 0',
         position: 'relative',
         cursor: 'pointer',
-        textAlign: 'center',
         width: 'clamp(52px, 15.5vw, 68px)',
         aspectRatio: '64 / 76',
-        borderRadius: '1rem',
-        overflow: 'visible',
-        background: styling.bg,
-        border: `1px solid ${styling.border}`,
-        boxShadow: isPressed
-          ? '0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.2)'
-          : '0 8px 16px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.35)',
         transform: isPressed ? 'scale(0.92) translateY(2px)' : 'scale(1)',
         transition: 'transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease',
         userSelect: 'none',
         WebkitTapHighlightColor: 'transparent',
-        boxSizing: 'border-box',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)'
+        boxSizing: 'border-box'
       }}
     >
       {/* Optional Notification Badge */}
@@ -119,78 +104,102 @@ export const FeatureCard: FC<FeatureCardProps> = ({
         </div>
       )}
 
-      {/* 3D Floating Icon Area */}
+      {/* Main Card Body (Clipped to perfect 1rem rounded rect with exact borders) */}
       <div
         style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
           width: '100%',
-          padding: '0.1rem',
-          boxSizing: 'border-box'
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0.35rem 0 0 0',
+          borderRadius: '1rem',
+          overflow: 'hidden',
+          background: styling.bg,
+          border: `1px solid ${styling.border}`,
+          boxShadow: isPressed
+            ? '0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.2)'
+            : '0 8px 16px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.35)',
+          boxSizing: 'border-box',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)'
         }}
       >
+        {/* 3D Floating Icon Area */}
         <div
           style={{
-            width: '38px',
-            height: '38px',
+            flex: 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            position: 'relative'
+            width: '100%',
+            padding: '0.1rem',
+            boxSizing: 'border-box'
           }}
         >
-          {(icon.endsWith('.png') || icon.endsWith('.jpg') || icon.endsWith('.svg') || icon.endsWith('.gif') || icon.endsWith('.webp') || icon.includes('/')) ? (
-            <img
-              src={icon}
-              alt={title}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.45))',
-                transform: isPressed
-                  ? (icon.endsWith('.gif') ? 'scale(1.05)' : 'scale(0.92)')
-                  : (icon.endsWith('.gif') ? 'scale(1.15)' : 'scale(1)'),
-                transition: 'transform 0.15s ease'
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                fontSize: '1.75rem',
-                lineHeight: 1,
-                filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.4))'
-              }}
-            >
-              {icon}
-            </div>
-          )}
+          <div
+            style={{
+              width: '38px',
+              height: '38px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative'
+            }}
+          >
+            {(icon.endsWith('.png') || icon.endsWith('.jpg') || icon.endsWith('.svg') || icon.endsWith('.gif') || icon.endsWith('.webp') || icon.includes('/')) ? (
+              <img
+                src={icon}
+                alt={title}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.45))',
+                  transform: isPressed
+                    ? (icon.endsWith('.gif') ? 'scale(1.05)' : 'scale(0.92)')
+                    : (icon.endsWith('.gif') ? 'scale(1.15)' : 'scale(1)'),
+                  transition: 'transform 0.15s ease'
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  fontSize: '1.75rem',
+                  lineHeight: 1,
+                  filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.4))'
+                }}
+              >
+                {icon}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* 3D Beveled Title Label */}
-      <div
-        style={{
-          width: '100%',
-          background: styling.btnBg,
-          color: '#ffffff',
-          margin: 0,
-          padding: '0.22rem 0',
-          fontSize: '0.68rem',
-          fontWeight: 900,
-          fontFamily: 'Georgia, serif',
-          textTransform: 'uppercase',
-          letterSpacing: '0.02em',
-          borderBottomLeftRadius: '0.9rem',
-          borderBottomRightRadius: '0.9rem',
-          borderTop: `1px solid ${styling.btnBorder}`,
-          textShadow: '0 1px 3px rgba(0, 0, 0, 0.7)',
-          boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.4)'
-        }}
-      >
-        {title}
+        {/* 3D Beveled Title Label Pellet (Seamlessly fits bottom curve) */}
+        <div
+          style={{
+            width: '100%',
+            background: styling.btnBg,
+            color: '#ffffff',
+            margin: 0,
+            padding: '0.22rem 0',
+            fontSize: '0.68rem',
+            fontWeight: 900,
+            fontFamily: 'Georgia, serif',
+            textTransform: 'uppercase',
+            letterSpacing: '0.02em',
+            textAlign: 'center',
+            borderTop: `1px solid ${styling.btnBorder}`,
+            textShadow: '0 1px 3px rgba(0, 0, 0, 0.7)',
+            boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.4)',
+            boxSizing: 'border-box',
+            flexShrink: 0
+          }}
+        >
+          {title}
+        </div>
       </div>
     </div>
   );
