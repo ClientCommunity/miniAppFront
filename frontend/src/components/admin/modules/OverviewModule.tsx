@@ -131,23 +131,44 @@ export const OverviewModule: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
-            <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.75rem', borderRadius: '10px' }}>
-              <span style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '0.2rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
+            <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.75rem', borderRadius: '10px', minWidth: 0 }}>
+              <span style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '0.25rem' }}>
                 Master Address
               </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span style={{ color: '#f1f5f9', fontFamily: 'monospace', fontSize: '0.85rem', fontWeight: 700 }}>
-                  {vault.master_address}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
+                <span
+                  title={vault.master_address}
+                  style={{
+                    color: '#f1f5f9',
+                    fontFamily: 'monospace',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    maxWidth: 'calc(100% - 30px)'
+                  }}
+                >
+                  {vault.master_address
+                    ? `${vault.master_address.substring(0, 6)}...${vault.master_address.substring(vault.master_address.length - 4)}`
+                    : 'N/A'}
                 </span>
                 <button
                   onClick={() => copyAddress(vault.master_address)}
+                  title="Copy full address"
                   style={{
-                    background: 'none',
-                    border: 'none',
+                    background: 'rgba(56, 189, 248, 0.15)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    color: '#38bdf8',
+                    borderRadius: '6px',
                     cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    padding: 0
+                    fontSize: '0.75rem',
+                    padding: '0.2rem 0.45rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
                   }}
                 >
                   📋
@@ -155,20 +176,20 @@ export const OverviewModule: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.75rem', borderRadius: '10px' }}>
-              <span style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '0.2rem' }}>
+            <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.75rem', borderRadius: '10px', minWidth: 0 }}>
+              <span style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '0.25rem' }}>
                 BNB Gas Reserve
               </span>
-              <span style={{ color: '#fef08a', fontSize: '1.05rem', fontWeight: 800 }}>
+              <span style={{ color: '#fef08a', fontSize: '1rem', fontWeight: 800 }}>
                 {vault.bnb_gas_balance} BNB
               </span>
             </div>
 
-            <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.75rem', borderRadius: '10px' }}>
-              <span style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '0.2rem' }}>
+            <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.75rem', borderRadius: '10px', minWidth: 0 }}>
+              <span style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '0.25rem' }}>
                 USDT Liquidity Reserve
               </span>
-              <span style={{ color: '#34d399', fontSize: '1.05rem', fontWeight: 800 }}>
+              <span style={{ color: '#34d399', fontSize: '1rem', fontWeight: 800 }}>
                 ${vault.usdt_reserve_balance?.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT
               </span>
             </div>

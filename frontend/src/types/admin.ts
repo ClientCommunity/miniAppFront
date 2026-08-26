@@ -267,3 +267,59 @@ export interface AdminSupportFeedback {
   resolved_at?: string;
   admin_notes?: string;
 }
+
+// 10. Master Wallet Status
+export interface AdminWalletStatus {
+  isInitialized?: boolean;
+  is_initialized?: boolean;
+  masterAddress?: string;
+  master_address?: string;
+  bnbBalance?: number;
+  bnb_balance?: number;
+  usdtBalance?: number;
+  usdt_balance?: number;
+  network?: string;
+  lowBnbGasWarning?: boolean;
+  low_bnb_gas_warning?: boolean;
+  isPayoutReady?: boolean;
+  is_payout_ready?: boolean;
+}
+
+// 11. Wheel of Fortune Probability Control
+export interface AdminWheelItem {
+  index: number;
+  value: string;
+  label: string;
+  weight: number;
+  percent?: number;
+  rewardAmount?: string;
+  reward_amount?: string;
+}
+
+export interface AdminWheelSettingsData {
+  items: AdminWheelItem[];
+  totalWeight?: number;
+  total_weight?: number;
+  diamondReward?: number;
+  diamond_reward?: number;
+  megaDiamondReward?: number;
+  mega_diamond_reward?: number;
+  minCashReward?: number;
+  min_cash_reward?: number;
+  maxCashReward?: number;
+  max_cash_reward?: number;
+}
+
+export interface UpdateWheelSettingsPayload {
+  weight_diamonds: number;
+  weight_cash: number;
+  weight_spin_ticket: number;
+  weight_double_reward: number;
+  weight_spin_ticket_2: number;
+  weight_gem_large: number;
+  diamond_reward: number;
+  mega_diamond_reward: number;
+  min_cash_reward: number;
+  max_cash_reward: number;
+}
+
