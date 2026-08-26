@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "dist": "npm run build && gh-pages -d dist"
+    "dist": "npm run build && gh-pages -d dist --dotfiles"
   },
   "dependencies": {
     "react": "^19.2.8",
