@@ -3,6 +3,8 @@ import { adminService } from '../../../services/adminService';
 import type { AdminUserListItem } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
+import { copyTextSafe } from '../../../utils/clipboard';
+import { downloadCsvAuthenticated } from '../../../utils/csvDownloader';
 
 export const UsersModule: React.FC = () => {
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
@@ -21,10 +23,16 @@ export const UsersModule: React.FC = () => {
     try {
       if (searchQuery.trim()) {
         const res = await adminService.lookupUser(searchQuery.trim());
-        if (res.data) setUsers(res.data);
+        if (res.data) {
+          const list = Array.isArray(res.data) ? res.data : ((res.data as any)?.users || (res.data as any)?.items || []);
+          setUsers(list);
+        }
       } else {
         const res = await adminService.getUsers();
-        if (res.data?.users) setUsers(res.data.users);
+        if (res.data) {
+          const list = Array.isArray(res.data) ? res.data : ((res.data as any)?.users || (res.data as any)?.items || []);
+          setUsers(list);
+        }
       }
     } catch (err: any) {
       notifyToast(`Failed to load users: ${err.message}`, 'error', 3000);
@@ -81,6 +89,17 @@ export const UsersModule: React.FC = () => {
     }
   };
 
+  const handleExportCsv = async () => {
+    const url = adminService.getUsersCsvUrl();
+    await downloadCsvAuthenticated(url, 'users.csv');
+  };
+
+  const handleShareTempLink = async () => {
+    const tempUrl = await adminService.getTempExportDownloadLink('users');
+    await copyTextSafe(tempUrl, 'Temporary CSV Download Link');
+    notifyToast('🔗 Temporary browser download link copied! Open in any browser to download.', 'success', 4000);
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       {/* Header & Search */}
@@ -92,23 +111,65 @@ export const UsersModule: React.FC = () => {
           <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Inspect player accounts, adjust balances, and toggle bans</span>
         </div>
 
-        <div style={{ position: 'relative', width: '100%', maxWidth: '280px' }}>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="🔍 Search username / Telegram ID..."
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={handleExportCsv}
             style={{
-              width: '100%',
-              padding: '0.55rem 0.85rem',
-              background: 'rgba(0, 0, 0, 0.4)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              borderRadius: '10px',
-              color: '#ffffff',
-              fontSize: '0.85rem',
-              boxSizing: 'border-box'
+              background: 'rgba(52, 211, 153, 0.15)',
+              border: '1px solid rgba(52, 211, 153, 0.35)',
+              color: '#34d399',
+              borderRadius: '8px',
+              padding: '0.45rem 0.8rem',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem'
             }}
-          />
+          >
+            <span>📥</span>
+            <span>Export CSV</span>
+          </button>
+
+          <button
+            onClick={handleShareTempLink}
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: '#cbd5e1',
+              borderRadius: '8px',
+              padding: '0.45rem 0.75rem',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem'
+            }}
+          >
+            <span>🔗</span>
+            <span>Link</span>
+          </button>
+
+          <div style={{ position: 'relative', width: '220px' }}>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="🔍 Search username..."
+              style={{
+                width: '100%',
+                padding: '0.5rem 0.75rem',
+                background: 'rgba(0, 0, 0, 0.4)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '8px',
+                color: '#ffffff',
+                fontSize: '0.82rem',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
         </div>
       </div>
 

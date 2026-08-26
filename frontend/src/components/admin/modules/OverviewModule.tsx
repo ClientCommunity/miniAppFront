@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { adminService } from '../../../services/adminService';
 import type { AdminOverviewMetrics, MasterVaultStatus } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
-import { haptics } from '../../../utils/haptics';
+import { copyTextSafe } from '../../../utils/clipboard';
 
 export const OverviewModule: React.FC = () => {
   const [metrics, setMetrics] = useState<AdminOverviewMetrics | null>(null);
@@ -20,7 +20,7 @@ export const OverviewModule: React.FC = () => {
       if (mRes.data) setMetrics(mRes.data);
       if (vRes.data) setVault(vRes.data);
     } catch (err: any) {
-      notifyToast(`Failed to load stats: ${err.message}`, 'error', 3000);
+      notifyToast(`Failed to refresh metrics: ${err.message}`, 'error', 3000);
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -31,10 +31,8 @@ export const OverviewModule: React.FC = () => {
     loadData();
   }, []);
 
-  const copyAddress = (addr: string) => {
-    navigator.clipboard.writeText(addr);
-    haptics.notification('success');
-    notifyToast('📋 Master Vault Address copied!', 'info', 2500);
+  const copyAddress = async (addr: string) => {
+    await copyTextSafe(addr, 'Master Vault Address');
   };
 
   if (loading) {

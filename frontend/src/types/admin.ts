@@ -153,25 +153,64 @@ export interface AdminWithdrawalItem {
   notes?: string;
 }
 
-// 7. Promo Gift Codes
+// 7. Promo Gift Codes & Vouchers
 export interface AdminGiftCode {
   id: number;
   code: string;
-  reward_type: 'diamonds' | 'spins' | 'usd';
-  reward_amount: number;
-  max_uses: number;
-  used_count: number;
+  batch_id?: string;
+  batch_name?: string;
+  reward_diamonds: number;
+  reward_spins: number;
+  reward_usd: number;
+  max_claims: number;
+  claims_count: number;
   expires_at?: string;
   is_active: boolean;
   created_at: string;
 }
 
-export interface BulkGenerateGiftCodesPayload {
+export interface AdminGiftCodeClaimer {
+  id: number;
+  user_id: number;
+  telegram_id: number;
+  username: string;
+  first_name?: string;
+  claimed_at: string;
+  diamonds_received: number;
+  spins_received: number;
+  usd_received: number;
+}
+
+export interface AdminGiftCodeBatch {
+  batch_id: string;
+  batch_name: string;
   prefix: string;
-  count: number;
-  reward_type: 'diamonds' | 'spins' | 'usd';
-  reward_amount: number;
-  max_uses_per_code: number;
+  total_codes: number;
+  claimed_codes: number;
+  unclaimed_codes: number;
+  reward_diamonds: number;
+  reward_spins: number;
+  reward_usd: number;
+  expires_at?: string;
+  created_at: string;
+}
+
+export interface CreateCustomGiftCodePayload {
+  code: string;
+  reward_diamonds: number;
+  reward_spins: number;
+  reward_usd: number;
+  max_claims: number;
+  expires_in_days?: number;
+}
+
+export interface BulkGenerateVouchersPayload {
+  batch_name: string;
+  quantity: number;
+  prefix: string;
+  reward_diamonds: number;
+  reward_spins: number;
+  reward_usd: number;
   expires_in_days?: number;
 }
 

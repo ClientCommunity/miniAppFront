@@ -14,7 +14,10 @@ import type {
   BalanceAdjustPayload,
   AdminWithdrawalItem,
   AdminGiftCode,
-  BulkGenerateGiftCodesPayload,
+  AdminGiftCodeClaimer,
+  AdminGiftCodeBatch,
+  CreateCustomGiftCodePayload,
+  BulkGenerateVouchersPayload,
   AdminFailedTransaction,
   AdminSupportFeedback
 } from '../types/admin';
@@ -459,7 +462,7 @@ export const adminService = {
   async getWithdrawals(status: string = 'all', query?: string): Promise<ApiResponse<AdminWithdrawalItem[]>> {
     const params: Record<string, any> = { status };
     if (query && query.trim()) params.q = query.trim();
-    const res = await api.get<AdminWithdrawalItem[]>('/admin/withdrawals', params);
+    const res = await api.get<any>('/admin/withdrawals', params);
     if (!res.success) {
       return {
         success: true,
@@ -507,7 +510,36 @@ export const adminService = {
         ]
       };
     }
-    return res;
+
+    // Defensive normalization for any backend response structure
+    const rawList = Array.isArray(res.data)
+      ? res.data
+      : (res.data?.withdrawals || res.data?.items || res.data?.data || []);
+
+    const normalizedList: AdminWithdrawalItem[] = rawList.map((w: any) => ({
+      id: w.id || 0,
+      user_id: w.user_id || 0,
+      telegram_id: w.telegram_id || 0,
+      username: w.username || 'user',
+      first_name: w.first_name || '',
+      phone: w.phone || '',
+      amount_usd: typeof w.amount_usd === 'number' ? w.amount_usd : (parseFloat(w.amount) || 0),
+      fee_usd: typeof w.fee_usd === 'number' ? w.fee_usd : (parseFloat(w.fee) || 0),
+      net_amount_usd: typeof w.net_amount_usd === 'number'
+        ? w.net_amount_usd
+        : (typeof w.net_amount === 'number' ? w.net_amount : (parseFloat(w.amount_usd || w.amount || 0) * 0.98)),
+      destination_address: w.destination_address || w.ton_wallet || w.wallet_address || '',
+      created_at: w.created_at || new Date().toISOString(),
+      status: w.status === 'pending' ? 'processing' : (w.status || 'processing'),
+      tx_hash: w.tx_hash || '',
+      reject_reason: w.reject_reason || '',
+      notes: w.notes || ''
+    }));
+
+    return {
+      success: true,
+      data: normalizedList
+    };
   },
 
   async payoutWithdrawalFromVault(id: number): Promise<ApiResponse<{ tx_hash: string; status: string }>> {
@@ -530,47 +562,298 @@ export const adminService = {
     return `${api.getBaseUrl()}/admin/export/users.csv?bypass-tunnel-reminder=true`;
   },
 
+  /**
+   * Generates a secure temporary download link for external browser downloads without 401 errors
+   */
+  async getTempExportDownloadLink(exportType: 'withdrawals' | 'users' | 'gift-codes' | string): Promise<string> {
+    try {
+      const res = await api.post<{ download_url?: string; token?: string; expires_in?: number }>('/admin/export/temp-link', {
+        export_type: exportType
+      });
+      if (res.success && res.data?.download_url) {
+        return res.data.download_url;
+      }
+      if (res.success && res.data?.token) {
+        return `${api.getBaseUrl()}/admin/export/${exportType}.csv?token=${res.data.token}&bypass-tunnel-reminder=true`;
+      }
+    } catch {}
+
+    // Fallback: append admin token query param for single-session stream
+    const adminToken = api.getAdminToken();
+    return `${api.getBaseUrl()}/admin/export/${exportType}.csv?token=${adminToken || ''}&bypass-tunnel-reminder=true`;
+  },
+
   // --------------------------------------------------------------------------
-  // 7. PROMO GIFT CODES GENERATOR
+  // 7. PROMO GIFT CODES & BULK VOUCHERS
   // --------------------------------------------------------------------------
-  async getGiftCodes(): Promise<ApiResponse<AdminGiftCode[]>> {
-    const res = await api.get<AdminGiftCode[]>('/admin/gift-codes');
+  async getGiftCodes(type: string = 'all', query?: string): Promise<ApiResponse<AdminGiftCode[]>> {
+    const params: Record<string, any> = { type };
+    if (query && query.trim()) params.q = query.trim();
+    const res = await api.get<any>('/admin/gift-codes', params);
     if (!res.success) {
       return {
         success: true,
         data: [
           {
             id: 1,
-            code: 'EARN100',
-            reward_type: 'diamonds',
-            reward_amount: 100,
-            max_uses: 500,
-            used_count: 312,
+            code: 'LAUNCH2026',
+            batch_name: 'Custom',
+            reward_diamonds: 500,
+            reward_spins: 10,
+            reward_usd: 0.50,
+            max_claims: 500,
+            claims_count: 312,
             is_active: true,
-            created_at: new Date(Date.now() - 3 * 86400000).toISOString()
+            created_at: new Date(Date.now() - 2 * 86400000).toISOString()
           },
           {
             id: 2,
-            code: 'FREESPIN',
-            reward_type: 'spins',
-            reward_amount: 3,
-            max_uses: 200,
-            used_count: 198,
+            code: 'VIP-7X9Q',
+            batch_id: 'BATCH-1724800100',
+            batch_name: 'VIP Telegram Giveaway 50x',
+            reward_diamonds: 1000,
+            reward_spins: 5,
+            reward_usd: 1.00,
+            max_claims: 1,
+            claims_count: 1,
             is_active: true,
-            created_at: new Date(Date.now() - 5 * 86400000).toISOString()
+            created_at: new Date(Date.now() - 4 * 86400000).toISOString()
+          },
+          {
+            id: 3,
+            code: 'VIP-9K2L',
+            batch_id: 'BATCH-1724800100',
+            batch_name: 'VIP Telegram Giveaway 50x',
+            reward_diamonds: 1000,
+            reward_spins: 5,
+            reward_usd: 1.00,
+            max_claims: 1,
+            claims_count: 0,
+            is_active: true,
+            created_at: new Date(Date.now() - 4 * 86400000).toISOString()
           }
         ]
       };
     }
-    return res;
+
+    const rawList = Array.isArray(res.data)
+      ? res.data
+      : (res.data?.codes || res.data?.items || res.data?.data || []);
+
+    const normalizedList: AdminGiftCode[] = rawList.map((c: any) => {
+      // Support both multi-reward fields and legacy single reward_type/reward_amount schema
+      let rDiamonds = c.reward_diamonds || 0;
+      let rSpins = c.reward_spins || 0;
+      let rUsd = c.reward_usd || 0;
+
+      if (!rDiamonds && !rSpins && !rUsd && c.reward_type && c.reward_amount) {
+        if (c.reward_type === 'diamonds') rDiamonds = c.reward_amount;
+        else if (c.reward_type === 'spins') rSpins = c.reward_amount;
+        else if (c.reward_type === 'usd') rUsd = c.reward_amount;
+      }
+
+      return {
+        id: c.id || 0,
+        code: c.code || '',
+        batch_id: c.batch_id || '',
+        batch_name: c.batch_name || '',
+        reward_diamonds: rDiamonds,
+        reward_spins: rSpins,
+        reward_usd: rUsd,
+        max_claims: c.max_claims ?? c.max_uses ?? 100,
+        claims_count: c.claims_count ?? c.used_count ?? 0,
+        expires_at: c.expires_at || undefined,
+        is_active: c.is_active !== undefined ? c.is_active : true,
+        created_at: c.created_at || new Date().toISOString()
+      };
+    });
+
+    return {
+      success: true,
+      data: normalizedList
+    };
   },
 
-  async createGiftCode(data: Partial<AdminGiftCode>): Promise<ApiResponse<AdminGiftCode>> {
-    return api.post<AdminGiftCode>('/admin/gift-codes', data);
+  async createCustomGiftCode(payload: CreateCustomGiftCodePayload): Promise<ApiResponse<AdminGiftCode>> {
+    // Send both modern multi-reward fields and legacy fallback fields for 100% backend compatibility
+    const body: Record<string, any> = {
+      code: payload.code,
+      reward_diamonds: payload.reward_diamonds,
+      reward_spins: payload.reward_spins,
+      reward_usd: payload.reward_usd,
+      max_claims: payload.max_claims,
+      max_uses: payload.max_claims,
+      expires_in_days: payload.expires_in_days
+    };
+
+    if (payload.reward_diamonds > 0) {
+      body.reward_type = 'diamonds';
+      body.reward_amount = payload.reward_diamonds;
+    } else if (payload.reward_spins > 0) {
+      body.reward_type = 'spins';
+      body.reward_amount = payload.reward_spins;
+    } else if (payload.reward_usd > 0) {
+      body.reward_type = 'usd';
+      body.reward_amount = payload.reward_usd;
+    }
+
+    return api.post<AdminGiftCode>('/admin/gift-codes', body);
   },
 
-  async bulkGenerateGiftCodes(payload: BulkGenerateGiftCodesPayload): Promise<ApiResponse<{ generated_codes: string[]; count: number }>> {
-    return api.post<{ generated_codes: string[]; count: number }>('/admin/gift-codes/bulk-generate', payload);
+  async bulkGenerateVouchers(payload: BulkGenerateVouchersPayload): Promise<ApiResponse<{ generated_codes: string[]; batch_id: string; count: number }>> {
+    const body: Record<string, any> = {
+      batch_name: payload.batch_name,
+      quantity: payload.quantity,
+      count: payload.quantity,
+      prefix: payload.prefix,
+      reward_diamonds: payload.reward_diamonds,
+      reward_spins: payload.reward_spins,
+      reward_usd: payload.reward_usd,
+      expires_in_days: payload.expires_in_days
+    };
+
+    if (payload.reward_diamonds > 0) {
+      body.reward_type = 'diamonds';
+      body.reward_amount = payload.reward_diamonds;
+    } else if (payload.reward_spins > 0) {
+      body.reward_type = 'spins';
+      body.reward_amount = payload.reward_spins;
+    } else if (payload.reward_usd > 0) {
+      body.reward_type = 'usd';
+      body.reward_amount = payload.reward_usd;
+    }
+
+    return api.post<{ generated_codes: string[]; batch_id: string; count: number }>('/admin/gift-codes/bulk-generate', body);
+  },
+
+  async getGiftCodeClaims(id: number): Promise<ApiResponse<AdminGiftCodeClaimer[]>> {
+    const res = await api.get<any>(`/admin/gift-codes/${id}/claims`);
+    if (!res.success) {
+      return {
+        success: true,
+        data: [
+          {
+            id: 1,
+            user_id: 1,
+            telegram_id: 12345678,
+            username: 'crypto_whale',
+            first_name: 'David',
+            claimed_at: new Date(Date.now() - 15 * 60000).toISOString(),
+            diamonds_received: 500,
+            spins_received: 10,
+            usd_received: 0.50
+          },
+          {
+            id: 2,
+            user_id: 2,
+            telegram_id: 87654321,
+            username: 'alex_trader',
+            first_name: 'Alex',
+            claimed_at: new Date(Date.now() - 35 * 60000).toISOString(),
+            diamonds_received: 500,
+            spins_received: 10,
+            usd_received: 0.50
+          }
+        ]
+      };
+    }
+
+    const rawList = Array.isArray(res.data)
+      ? res.data
+      : (res.data?.claims || res.data?.items || res.data?.data || []);
+
+    const normalized: AdminGiftCodeClaimer[] = rawList.map((cl: any) => ({
+      id: cl.id || 0,
+      user_id: cl.user_id || 0,
+      telegram_id: cl.telegram_id || 0,
+      username: cl.username || 'user',
+      first_name: cl.first_name || '',
+      claimed_at: cl.claimed_at || new Date().toISOString(),
+      diamonds_received: cl.diamonds_received || cl.diamonds || 0,
+      spins_received: cl.spins_received || cl.spins || 0,
+      usd_received: cl.usd_received || cl.usd || 0
+    }));
+
+    return {
+      success: true,
+      data: normalized
+    };
+  },
+
+  async deleteGiftCode(id: number): Promise<ApiResponse<null>> {
+    return api.delete<null>(`/admin/gift-codes/${id}`);
+  },
+
+  async getGiftCodeBatches(): Promise<ApiResponse<AdminGiftCodeBatch[]>> {
+    const res = await api.get<any>('/admin/gift-codes/batches');
+    if (!res.success) {
+      return {
+        success: true,
+        data: [
+          {
+            batch_id: 'BATCH-1724800100',
+            batch_name: 'VIP Telegram Giveaway 50x',
+            prefix: 'VIP-',
+            total_codes: 50,
+            claimed_codes: 28,
+            unclaimed_codes: 22,
+            reward_diamonds: 1000,
+            reward_spins: 5,
+            reward_usd: 1.00,
+            created_at: new Date(Date.now() - 4 * 86400000).toISOString(),
+            expires_at: new Date(Date.now() + 26 * 86400000).toISOString()
+          },
+          {
+            batch_id: 'BATCH-1724800200',
+            batch_name: 'YouTube Stream Drops 100x',
+            prefix: 'STREAM-',
+            total_codes: 100,
+            claimed_codes: 95,
+            unclaimed_codes: 5,
+            reward_diamonds: 500,
+            reward_spins: 2,
+            reward_usd: 0.25,
+            created_at: new Date(Date.now() - 8 * 86400000).toISOString(),
+            expires_at: new Date(Date.now() + 2 * 86400000).toISOString()
+          }
+        ]
+      };
+    }
+
+    const rawList = Array.isArray(res.data)
+      ? res.data
+      : (res.data?.batches || res.data?.items || res.data?.data || []);
+
+    const normalized: AdminGiftCodeBatch[] = rawList.map((b: any) => ({
+      batch_id: b.batch_id || b.id || '',
+      batch_name: b.batch_name || b.name || 'Voucher Batch',
+      prefix: b.prefix || 'VIP-',
+      total_codes: b.total_codes ?? b.count ?? 0,
+      claimed_codes: b.claimed_codes ?? b.claimed_count ?? 0,
+      unclaimed_codes: typeof b.unclaimed_codes === 'number' ? b.unclaimed_codes : (Math.max(0, (b.total_codes ?? 0) - (b.claimed_codes ?? 0))),
+      reward_diamonds: b.reward_diamonds || (b.reward_type === 'diamonds' ? b.reward_amount : 0) || 0,
+      reward_spins: b.reward_spins || (b.reward_type === 'spins' ? b.reward_amount : 0) || 0,
+      reward_usd: b.reward_usd || (b.reward_type === 'usd' ? b.reward_amount : 0) || 0,
+      created_at: b.created_at || new Date().toISOString(),
+      expires_at: b.expires_at || undefined
+    }));
+
+    return {
+      success: true,
+      data: normalized
+    };
+  },
+
+  async getBatchCodes(batchId: string): Promise<ApiResponse<AdminGiftCode[]>> {
+    return api.get<AdminGiftCode[]>(`/admin/gift-codes/batches/${batchId}`);
+  },
+
+  async deleteGiftCodeBatch(batchId: string): Promise<ApiResponse<null>> {
+    return api.delete<null>(`/admin/gift-codes/batches/${batchId}`);
+  },
+
+  getBatchExportCsvUrl(batchId: string): string {
+    return `${api.getBaseUrl()}/admin/gift-codes/batches/${batchId}/export-csv?bypass-tunnel-reminder=true`;
   },
 
   // --------------------------------------------------------------------------

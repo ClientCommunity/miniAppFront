@@ -3,6 +3,7 @@ import { adminService } from '../../services/adminService';
 import type { VaultGeneratedSecrets } from '../../types/admin';
 import { notifyToast } from '../../utils/debugToast';
 import { haptics } from '../../utils/haptics';
+import { copyTextSafe } from '../../utils/clipboard';
 
 interface VaultSetupWizardModalProps {
   isOpen: boolean;
@@ -97,10 +98,8 @@ export const VaultSetupWizardModal: React.FC<VaultSetupWizardModalProps> = ({
     notifyToast('📥 Vault Secrets (.txt) downloaded safely!', 'success', 3000);
   };
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    haptics.notification('success');
-    notifyToast(`📋 Copied ${label}!`, 'info', 2000);
+  const copyToClipboard = async (text: string, label: string) => {
+    await copyTextSafe(text, label);
   };
 
   const handleConfirmAndUnlock = async () => {

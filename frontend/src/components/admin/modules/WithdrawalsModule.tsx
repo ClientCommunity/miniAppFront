@@ -3,6 +3,8 @@ import { adminService } from '../../../services/adminService';
 import type { AdminWithdrawalItem, PayoutSettings } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
+import { copyTextSafe } from '../../../utils/clipboard';
+import { downloadCsvAuthenticated } from '../../../utils/csvDownloader';
 
 export const WithdrawalsModule: React.FC = () => {
   const [withdrawals, setWithdrawals] = useState<AdminWithdrawalItem[]>([]);
@@ -23,7 +25,7 @@ export const WithdrawalsModule: React.FC = () => {
 
   // Reject Modal
   const [rejectModalItem, setRejectModalItem] = useState<AdminWithdrawalItem | null>(null);
-  const [rejectReason, setRejectReason] = useState('Suspicious activity / Invalid wallet');
+  const [rejectReason, setRejectReason] = useState('Suspicious activity / Invalid wallet address');
   const [submittingReject, setSubmittingReject] = useState(false);
 
   const loadData = async () => {
@@ -33,8 +35,12 @@ export const WithdrawalsModule: React.FC = () => {
         adminService.getWithdrawals(statusFilter, searchQuery),
         adminService.getPayoutSettings()
       ]);
-      if (wRes.data) setWithdrawals(wRes.data);
-      if (pRes.data) setPayoutSettings(pRes.data as any);
+      if (wRes.data && Array.isArray(wRes.data)) {
+        setWithdrawals(wRes.data);
+      }
+      if (pRes.data) {
+        setPayoutSettings(pRes.data as any);
+      }
     } catch (err: any) {
       notifyToast(`Failed to load data: ${err.message}`, 'error', 3000);
     } finally {
@@ -72,7 +78,8 @@ export const WithdrawalsModule: React.FC = () => {
 
   // 1. Pay on-chain from Master HD Vault
   const handlePayFromVault = async (w: AdminWithdrawalItem) => {
-    if (!window.confirm(`⚡ Broadcast on-chain payout of $${w.net_amount_usd.toFixed(2)} USDT from Master HD Vault to:\n\n${w.destination_address}?`)) {
+    const netAmt = (w.net_amount_usd ?? 0).toFixed(2);
+    if (!window.confirm(`⚡ Broadcast on-chain payout of $${netAmt} USDT from Master HD Vault to:\n\n${w.destination_address}?`)) {
       return;
     }
 
@@ -131,7 +138,7 @@ export const WithdrawalsModule: React.FC = () => {
       haptics.impact('medium');
       const res = await adminService.rejectWithdrawal(rejectModalItem.id, rejectReason.trim() || 'Admin rejected');
       if (res.success) {
-        notifyToast(`✕ Cashout rejected and $${rejectModalItem.amount_usd.toFixed(2)} refunded to @${rejectModalItem.username}`, 'info', 4000);
+        notifyToast(`✕ Cashout rejected and refunded to @${rejectModalItem.username}`, 'info', 4000);
         setRejectModalItem(null);
         loadData();
       } else {
@@ -144,21 +151,15 @@ export const WithdrawalsModule: React.FC = () => {
     }
   };
 
-  const copyAddress = (addr: string) => {
-    navigator.clipboard.writeText(addr);
-    haptics.notification('success');
-    notifyToast('📋 Copied BEP-20 address!', 'info', 2000);
+  const handleExportCsv = async () => {
+    const url = adminService.getWithdrawalsCsvUrl();
+    await downloadCsvAuthenticated(url, 'withdrawals.csv');
   };
 
-  const downloadCsv = (url: string, filename: string) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    notifyToast(`📥 Downloading ${filename}...`, 'info', 2500);
+  const handleShareTempLink = async () => {
+    const tempUrl = await adminService.getTempExportDownloadLink('withdrawals');
+    await copyTextSafe(tempUrl, 'Temporary CSV Download Link');
+    notifyToast('🔗 Temporary browser download link copied! Open in any browser to download.', 'success', 4000);
   };
 
   return (
@@ -174,34 +175,44 @@ export const WithdrawalsModule: React.FC = () => {
 
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
-            onClick={() => downloadCsv(adminService.getWithdrawalsCsvUrl(), 'withdrawals.csv')}
+            onClick={handleExportCsv}
             style={{
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: 'rgba(56, 189, 248, 0.15)',
+              border: '1px solid rgba(56, 189, 248, 0.35)',
               color: '#38bdf8',
               borderRadius: '8px',
               padding: '0.45rem 0.8rem',
               fontSize: '0.78rem',
               fontWeight: 700,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem'
             }}
           >
-            📊 Export Cashouts CSV
+            <span>📥</span>
+            <span>Download CSV</span>
           </button>
+
           <button
-            onClick={() => downloadCsv(adminService.getUsersCsvUrl(), 'users.csv')}
+            onClick={handleShareTempLink}
+            title="Generate a temporary link to open and download in external browser"
             style={{
               background: 'rgba(255, 255, 255, 0.08)',
               border: '1px solid rgba(255, 255, 255, 0.15)',
-              color: '#34d399',
+              color: '#cbd5e1',
               borderRadius: '8px',
-              padding: '0.45rem 0.8rem',
+              padding: '0.45rem 0.75rem',
               fontSize: '0.78rem',
               fontWeight: 700,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem'
             }}
           >
-            👥 Export Users CSV
+            <span>🔗</span>
+            <span>Browser Link</span>
           </button>
         </div>
       </div>
@@ -400,6 +411,10 @@ export const WithdrawalsModule: React.FC = () => {
             <tbody>
               {withdrawals.map((w) => {
                 const isPending = w.status === 'processing' || w.status === 'pending';
+                const netAmount = typeof w.net_amount_usd === 'number' ? w.net_amount_usd : (w.amount_usd || 0);
+                const reqAmount = typeof w.amount_usd === 'number' ? w.amount_usd : 0;
+                const feeAmount = typeof w.fee_usd === 'number' ? w.fee_usd : (reqAmount * 0.02);
+
                 return (
                   <tr key={w.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', color: '#f1f5f9' }}>
                     <td style={{ padding: '0.75rem 1rem' }}>
@@ -409,39 +424,41 @@ export const WithdrawalsModule: React.FC = () => {
                         {w.phone ? ` • ${w.phone}` : ''}
                       </div>
                       <div style={{ color: '#475569', fontSize: '0.68rem', marginTop: '0.15rem' }}>
-                        {new Date(w.created_at).toLocaleString()}
+                        {w.created_at ? new Date(w.created_at).toLocaleString() : 'Recent'}
                       </div>
                     </td>
 
                     <td style={{ padding: '0.75rem 1rem' }}>
                       <div style={{ color: '#10b981', fontWeight: 800, fontSize: '0.95rem' }}>
-                        ${w.net_amount_usd?.toFixed(2)} USDT
+                        ${netAmount.toFixed(2)} USDT
                       </div>
                       <div style={{ color: '#64748b', fontSize: '0.72rem' }}>
-                        Req: ${w.amount_usd?.toFixed(2)} | Fee: ${(w.fee_usd || (w.amount_usd * 0.02)).toFixed(2)}
+                        Req: ${reqAmount.toFixed(2)} | Fee: ${feeAmount.toFixed(2)}
                       </div>
                     </td>
 
                     <td style={{ padding: '0.75rem 1rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <span style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: '#cbd5e1' }}>
-                          {w.destination_address}
+                          {w.destination_address || '—'}
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => copyAddress(w.destination_address)}
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.08)',
-                            border: 'none',
-                            borderRadius: '4px',
-                            color: '#38bdf8',
-                            cursor: 'pointer',
-                            fontSize: '0.8rem',
-                            padding: '0.2rem 0.35rem'
-                          }}
-                        >
-                          📋
-                        </button>
+                        {w.destination_address && (
+                          <button
+                            type="button"
+                            onClick={() => copyTextSafe(w.destination_address, 'BEP-20 Address')}
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.08)',
+                              border: 'none',
+                              borderRadius: '4px',
+                              color: '#38bdf8',
+                              cursor: 'pointer',
+                              fontSize: '0.8rem',
+                              padding: '0.2rem 0.35rem'
+                            }}
+                          >
+                            📋
+                          </button>
+                        )}
                       </div>
                     </td>
 
@@ -633,7 +650,7 @@ export const WithdrawalsModule: React.FC = () => {
             </div>
 
             <p style={{ color: '#94a3b8', fontSize: '0.8rem', lineHeight: 1.4, margin: '0 0 1rem 0' }}>
-              Use this when you have manually transferred <b>${manualPaidModalItem.net_amount_usd.toFixed(2)} USDT</b> to the user from Binance, TrustWallet, or an external wallet.
+              Use this when you have manually transferred <b>${(manualPaidModalItem.net_amount_usd ?? 0).toFixed(2)} USDT</b> to the user from Binance, TrustWallet, or an external wallet.
             </p>
 
             {/* Recipient Address Info Box */}
@@ -645,7 +662,7 @@ export const WithdrawalsModule: React.FC = () => {
                 </span>
                 <button
                   type="button"
-                  onClick={() => copyAddress(manualPaidModalItem.destination_address)}
+                  onClick={() => copyTextSafe(manualPaidModalItem.destination_address, 'BEP-20 Address')}
                   style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: '0.9rem' }}
                 >
                   📋
@@ -706,7 +723,7 @@ export const WithdrawalsModule: React.FC = () => {
                   style={{
                     flex: 1,
                     padding: '0.75rem',
-                    background: 'linear-gradient(135deg, #00b0ff, #00e676)',
+                    background: '#ffffff',
                     border: 'none',
                     borderRadius: '10px',
                     color: '#090d16',
@@ -778,7 +795,7 @@ export const WithdrawalsModule: React.FC = () => {
             </div>
 
             <p style={{ color: '#cbd5e1', fontSize: '0.82rem', lineHeight: 1.45, margin: '0 0 1rem 0' }}>
-              Rejecting will automatically refund <b>${rejectModalItem.amount_usd.toFixed(2)} USD</b> back to <b>@{rejectModalItem.username}</b>'s balance in the app.
+              Rejecting will automatically refund <b>${(rejectModalItem.amount_usd ?? 0).toFixed(2)} USD</b> back to <b>@{rejectModalItem.username}</b>'s balance in the app.
             </p>
 
             <form onSubmit={handleConfirmReject} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
