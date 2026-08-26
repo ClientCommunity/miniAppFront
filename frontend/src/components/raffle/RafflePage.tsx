@@ -169,26 +169,26 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack, userProfile }) => {
 
         {/* Asset Badges */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
-          {/* Energy */}
+          {/* USDT Cashout Balance */}
           <div
             style={{
               background: 'rgba(0, 0, 0, 0.42)',
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255, 255, 255, 0.16)',
+              border: '1px solid rgba(250, 204, 21, 0.35)',
               color: '#ffffff',
               padding: '0.15rem 0.45rem',
               borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.2rem',
+              gap: '0.22rem',
               boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
               height: '26px',
               boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>{formatAssetNumber(userProfile?.energy ?? 50)}</span>
+            <img src="./assets/SingleCoin_animated.gif" alt="USDT" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.75rem', color: '#fef08a' }}>${(userProfile?.balance_usd ?? 0).toFixed(2)}</span>
           </div>
 
           {/* Spins */}

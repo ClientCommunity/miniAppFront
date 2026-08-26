@@ -4,11 +4,18 @@ import type { TaskItem, ReadyToClaimItem } from './types';
 import type { UserProfile } from '../../types/api';
 import { ReadyToClaimCard } from './ReadyToClaimCard';
 import { TaskCard } from './TaskCard';
+import { TelegramJoinModal } from './TelegramJoinModal';
 import { haptics } from '../../utils/haptics';
 import { throwConfetti } from '../../utils/confetti';
 import { formatAssetNumber } from '../../utils/format';
 import { notifyToast } from '../../utils/debugToast';
-import { getInitialTasksPageData, fetchTasksPageData, claimTaskReward } from '../../services/dataService';
+import {
+  getInitialTasksPageData,
+  fetchTasksPageData,
+  startTask,
+  verifyTask,
+  claimTaskReward
+} from '../../services/dataService';
 
 export interface TasksPageProps {
   onBack: () => void;
@@ -29,6 +36,7 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack, userProfile, onUpdatePro
   const [error, setError] = useState<string | null>(null);
   const [verifyingTaskId, setVerifyingTaskId] = useState<string | null>(null);
   const [isClaimingReady, setIsClaimingReady] = useState(false);
+  const [selectedJoinTask, setSelectedJoinTask] = useState<TaskItem | null>(null);
 
   const loadTasks = () => {
     setIsLoading(true);
@@ -88,8 +96,10 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack, userProfile, onUpdatePro
         throwConfetti();
 
         const task = tasks.find(t => t.id === taskId);
-        const rewardGems = res.reward_diamonds ?? task?.rewardGems ?? 50;
-        notifyToast(`🎉 Verified & Claimed +${rewardGems} 💎!`, 'success', 3500);
+        const rewardGems = res.reward_diamonds ?? task?.rewardGems ?? task?.reward_gems ?? 50;
+        const rewardSpins = res.reward_spins ?? task?.rewardSpins ?? task?.reward_spins ?? 0;
+        const spinText = rewardSpins > 0 ? ` & +${rewardSpins} Spin${rewardSpins > 1 ? 's' : ''}` : '';
+        notifyToast(`🎉 Verified & Claimed +${rewardGems} 💎${spinText}!`, 'success', 3500);
 
         // Remove claimed task from list
         setTasks(prev => prev.filter(t => t.id !== taskId));
@@ -100,7 +110,7 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack, userProfile, onUpdatePro
         } else {
           onUpdateProfile?.({
             diamonds: (userProfile?.diamonds ?? 0) + rewardGems,
-            spins: (userProfile?.spins ?? 0) + (res.reward_spins || 0)
+            spins: (userProfile?.spins ?? 0) + rewardSpins
           });
         }
       } else {
@@ -110,6 +120,77 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack, userProfile, onUpdatePro
     } catch (err: any) {
       haptics.notification('error');
       notifyToast(`⚠️ Verification failed: ${err?.message || 'Server error'}`, 'error', 3500);
+    } finally {
+      setVerifyingTaskId(null);
+    }
+  };
+
+  // Type 3: Open Telegram Join Modal
+  const handleOpenTelegramModal = (task: TaskItem) => {
+    setSelectedJoinTask(task);
+  };
+
+  // Type 3: Confirm Join Channel & Open Telegram
+  const handleConfirmJoin = async (task: TaskItem) => {
+    try {
+      startTask(task.id);
+    } catch {}
+
+    const channelHandle = task.channelId || task.channel_id || (task.actionUrl?.includes('t.me/') ? task.actionUrl.split('t.me/')[1] : 'EarnCraftCommunity');
+    const cleanHandle = channelHandle.replace('@', '');
+    const targetUrl = task.actionUrl || task.action_url || `https://t.me/${cleanHandle}`;
+
+    const tg = (window as any)?.Telegram?.WebApp;
+    if (tg && typeof tg.openTelegramLink === 'function') {
+      tg.openTelegramLink(targetUrl);
+    } else if (tg && typeof tg.openLink === 'function') {
+      tg.openLink(targetUrl);
+    } else {
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    }
+
+    // Update local task state to 'verifying'
+    setTasks(prev => prev.map(t => (t.id === task.id ? { ...t, status: 'verifying' } : t)));
+    setSelectedJoinTask(null);
+    notifyToast('📢 Channel opened! Return and tap Check / Verify 🔍 to claim.', 'info', 4000);
+  };
+
+  // Type 3: Verify Telegram Channel Join
+  const handleVerifyTelegram = async (task: TaskItem) => {
+    if (verifyingTaskId) return;
+    setVerifyingTaskId(task.id);
+
+    try {
+      const res = await verifyTask(task.id);
+      if (res.success) {
+        haptics.notification('success');
+        haptics.playWinSound();
+        throwConfetti();
+
+        const rewardGems = res.reward_diamonds ?? task.rewardGems ?? task.reward_gems ?? 500;
+        const rewardSpins = res.reward_spins ?? task.rewardSpins ?? task.reward_spins ?? 0;
+        const spinText = rewardSpins > 0 ? ` and +${rewardSpins} Spin${rewardSpins > 1 ? 's' : ''}` : '';
+        notifyToast(`Verified! +${rewardGems} 💎${spinText} added! 🎉`, 'success', 4000);
+
+        setTasks(prev => prev.filter(t => t.id !== task.id));
+
+        if (res.user) {
+          onUpdateProfile?.(res.user);
+        } else {
+          onUpdateProfile?.({
+            diamonds: (userProfile?.diamonds ?? 0) + rewardGems,
+            spins: (userProfile?.spins ?? 0) + rewardSpins
+          });
+        }
+      } else {
+        haptics.notification('warning');
+        notifyToast('⚠️ Please join the channel first before claiming!', 'error', 4000);
+        // Offer modal again
+        setSelectedJoinTask(task);
+      }
+    } catch (err: any) {
+      haptics.notification('error');
+      notifyToast(`Verification failed: ${err?.message || 'Server error'}`, 'error', 3500);
     } finally {
       setVerifyingTaskId(null);
     }
@@ -196,26 +277,26 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack, userProfile, onUpdatePro
         </button>
         {/* Asset Badges */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
-          {/* Energy */}
+          {/* USDT Cashout Balance */}
           <div
             style={{
               background: 'rgba(0, 0, 0, 0.42)',
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255, 255, 255, 0.16)',
+              border: '1px solid rgba(250, 204, 21, 0.35)',
               color: '#ffffff',
               padding: '0.15rem 0.45rem',
               borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.2rem',
+              gap: '0.22rem',
               boxShadow: '0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
               height: '26px',
               boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>{formatAssetNumber(userProfile?.energy ?? 50)}</span>
+            <img src="./assets/SingleCoin_animated.gif" alt="USDT" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.75rem', color: '#fef08a' }}>${(userProfile?.balance_usd ?? 0).toFixed(2)}</span>
           </div>
 
           {/* Spins */}
@@ -475,6 +556,8 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack, userProfile, onUpdatePro
                     task={task}
                     isVerifying={verifyingTaskId === task.id}
                     onClaim={() => handleTaskClaim(task.id)}
+                    onOpenTelegramModal={handleOpenTelegramModal}
+                    onVerifyTelegram={handleVerifyTelegram}
                   />
                 ))}
               </div>
@@ -495,6 +578,14 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack, userProfile, onUpdatePro
           </div>
         </div>
       </div>
+
+      {/* 2-Step Telegram Channel Join Modal */}
+      <TelegramJoinModal
+        task={selectedJoinTask}
+        isOpen={!!selectedJoinTask}
+        onClose={() => setSelectedJoinTask(null)}
+        onConfirmJoin={handleConfirmJoin}
+      />
     </div>
   );
 };

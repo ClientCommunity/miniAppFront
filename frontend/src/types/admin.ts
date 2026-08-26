@@ -80,18 +80,43 @@ export interface AdminRaffle {
 }
 
 // 4. Tasks & Connected Chats
+export type AdminTaskType = 'external_link' | 'invite_count' | 'spin_count' | 'level_reach' | 'telegram_channel';
+
 export interface AdminTask {
   id: number;
   title: string;
+  task_type?: AdminTaskType;
   category: 'daily' | 'social' | 'partner' | 'special';
   icon: string;
-  reward_type: 'diamonds' | 'spins' | 'usd';
-  reward_amount: number;
+  icon_url?: string;
+  reward_type?: 'diamonds' | 'spins' | 'usd';
+  reward_amount?: number;
+  reward_diamonds?: number;
+  reward_spins?: number;
+  reward_usd?: number;
+  target_count?: number;
   action_url: string;
   telegram_chat_id?: string;
+  channel_id?: string;
   is_active: boolean;
-  order_index: number;
-  completion_count: number;
+  order_index?: number;
+  completion_count?: number;
+}
+
+export interface CreateAdminTaskPayload {
+  title: string;
+  task_type: AdminTaskType;
+  category: 'daily' | 'social' | 'partner' | 'special';
+  icon?: string;
+  icon_url?: string;
+  reward_diamonds: number;
+  reward_spins: number;
+  reward_usd?: number;
+  target_count?: number;
+  action_url?: string;
+  telegram_chat_id?: string;
+  channel_id?: string;
+  is_active?: boolean;
 }
 
 export interface ConnectedTelegramChat {

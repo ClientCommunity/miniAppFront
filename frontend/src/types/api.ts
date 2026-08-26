@@ -171,16 +171,34 @@ export interface RaffleDetailsData {
 }
 
 // Tasks
+export type TaskType = 'external_link' | 'invite_count' | 'spin_count' | 'level_reach' | 'telegram_channel';
+
 export interface TaskItemData {
   id: string;
+  taskType?: TaskType;
+  task_type?: TaskType;
   category: 'special' | 'daily' | 'socials';
   title: string;
   icon: string;
+  iconUrl?: string;
+  icon_url?: string;
   isIconImage?: boolean;
   rewardGems: number;
-  secondaryRewardGems?: number;
-  status: 'pending' | 'completed' | 'claimed';
+  reward_gems?: number;
+  reward_diamonds?: number;
+  rewardSpins?: number;
+  reward_spins?: number;
+  rewardUsd?: number;
+  reward_usd?: number;
+  status: 'pending' | 'verifying' | 'completed' | 'claimed';
+  verificationSeconds?: number;
+  verification_seconds?: number;
   actionUrl?: string;
+  action_url?: string;
+  channelId?: string;
+  channel_id?: string;
+  targetCount?: number;
+  target_count?: number;
   progress?: {
     current: number;
     total: number;
@@ -192,6 +210,7 @@ export interface ReadyToClaimItemData {
   title: string;
   icon: string;
   rewardGems: number;
+  rewardSpins?: number;
 }
 
 export interface TasksPageData {

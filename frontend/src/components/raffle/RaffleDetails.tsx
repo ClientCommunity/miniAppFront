@@ -113,13 +113,13 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
 
         {/* Asset Balances (Unified Classic Frosted Glass) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          {/* Energy Balance */}
+          {/* USDT Cashout Balance */}
           <div
             style={{
               background: 'rgba(0, 0, 0, 0.42)',
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255, 255, 255, 0.16)',
+              border: '1px solid rgba(250, 204, 21, 0.35)',
               color: '#ffffff',
               padding: '0.18rem 0.55rem',
               borderRadius: '16px',
@@ -131,8 +131,8 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
               boxSizing: 'border-box'
             }}
           >
-            <img src="./assets/energy_48-Bei1wi9i.png" alt="Energy" style={{ width: '17px', height: '17px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>50</span>
+            <img src="./assets/SingleCoin_animated.gif" alt="USDT" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 800, fontSize: '0.78rem', color: '#fef08a' }}>$0.00</span>
           </div>
 
           {/* Spin Balance */}

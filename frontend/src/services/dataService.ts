@@ -403,6 +403,44 @@ export interface ClaimTaskResult {
   reward_usd?: number;
 }
 
+export const startTask = async (
+  taskId: string
+): Promise<{ success: boolean; message?: string; verification_seconds?: number }> => {
+  if (appConfig.useMockData) {
+    return { success: true, verification_seconds: 15 };
+  }
+  const res = await api.post<any>(`/tasks/${taskId}/start`);
+  return {
+    success: res.success,
+    message: res.message || res.error,
+    verification_seconds: res.data?.verification_seconds ?? 15
+  };
+};
+
+export const verifyTask = async (
+  taskId: string
+): Promise<ClaimTaskResult> => {
+  if (appConfig.useMockData) {
+    await new Promise((res) => setTimeout(res, 400));
+    return {
+      success: true,
+      message: 'Channel membership verified! 🎉',
+      reward_diamonds: 500,
+      reward_spins: 2
+    };
+  }
+  const res = await api.post<any>(`/tasks/${taskId}/verify`);
+  const raw = res.data || {};
+  return {
+    success: res.success,
+    message: res.message || (res.success ? 'Task verified!' : res.error),
+    user: raw.user || (raw.id ? raw : undefined),
+    reward_diamonds: raw.reward_diamonds ?? raw.diamonds ?? (raw.reward_type === 'diamonds' ? raw.reward_amount : undefined),
+    reward_spins: raw.reward_spins ?? raw.spins ?? (raw.reward_type === 'spins' ? raw.reward_amount : undefined),
+    reward_usd: raw.reward_usd ?? raw.usd ?? (raw.reward_type === 'usd' ? raw.reward_amount : undefined)
+  };
+};
+
 export const claimTaskReward = async (
   taskId: string
 ): Promise<ClaimTaskResult> => {
