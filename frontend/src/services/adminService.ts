@@ -90,7 +90,17 @@ export const adminService = {
   },
 
   async generateMasterVault(): Promise<ApiResponse<VaultGeneratedSecrets>> {
-    const res = await api.post<VaultGeneratedSecrets>('/admin/wallet/generate');
+    const res = await api.post<any>('/admin/wallet/generate');
+    if (res.success && res.data) {
+      const d = res.data;
+      const normalized: VaultGeneratedSecrets = {
+        master_address: d.master_address || d.address || '',
+        seed_phrase: d.seed_phrase || d.mnemonic || d.seed || '',
+        private_key: d.private_key || d.privateKey || d.secret_key || '',
+        network: d.network || 'BNB Smart Chain (BEP-20)'
+      };
+      return { success: true, data: normalized };
+    }
     if (!res.success) {
       // Realistic simulation if backend endpoint is in progress
       return {
@@ -107,7 +117,18 @@ export const adminService = {
   },
 
   async importMasterVault(payload: VaultImportPayload): Promise<ApiResponse<VaultGeneratedSecrets>> {
-    return api.post<VaultGeneratedSecrets>('/admin/wallet/import', payload);
+    const res = await api.post<any>('/admin/wallet/import', payload);
+    if (res.success && res.data) {
+      const d = res.data;
+      const normalized: VaultGeneratedSecrets = {
+        master_address: d.master_address || d.address || '',
+        seed_phrase: d.seed_phrase || d.mnemonic || d.seed || payload.seed_phrase || '',
+        private_key: d.private_key || d.privateKey || payload.private_key || '',
+        network: d.network || 'BNB Smart Chain (BEP-20)'
+      };
+      return { success: true, data: normalized };
+    }
+    return res;
   },
 
   async confirmVaultInit(): Promise<ApiResponse<{ message: string; is_initialized: boolean }>> {
@@ -415,10 +436,30 @@ export const adminService = {
   },
 
   // --------------------------------------------------------------------------
-  // 6. WITHDRAWALS CASHOUT QUEUE
+  // 6. WITHDRAWALS CASHOUT QUEUE & PAYOUT SETTINGS
   // --------------------------------------------------------------------------
-  async getWithdrawals(status: string = 'all'): Promise<ApiResponse<AdminWithdrawalItem[]>> {
-    const res = await api.get<AdminWithdrawalItem[]>('/admin/withdrawals', { status });
+  async getPayoutSettings(): Promise<ApiResponse<{ payout_mode: 'manual' | 'instant'; min_withdrawal_usd?: number }>> {
+    const res = await api.get<{ payout_mode: 'manual' | 'instant'; min_withdrawal_usd?: number }>('/admin/payout-settings');
+    if (!res.success) {
+      return {
+        success: true,
+        data: {
+          payout_mode: 'manual',
+          min_withdrawal_usd: 1.00
+        }
+      };
+    }
+    return res;
+  },
+
+  async updatePayoutSettings(settings: { payout_mode: 'manual' | 'instant' }): Promise<ApiResponse<{ payout_mode: 'manual' | 'instant' }>> {
+    return api.post<{ payout_mode: 'manual' | 'instant' }>('/admin/payout-settings', settings);
+  },
+
+  async getWithdrawals(status: string = 'all', query?: string): Promise<ApiResponse<AdminWithdrawalItem[]>> {
+    const params: Record<string, any> = { status };
+    if (query && query.trim()) params.q = query.trim();
+    const res = await api.get<AdminWithdrawalItem[]>('/admin/withdrawals', params);
     if (!res.success) {
       return {
         success: true,
@@ -428,37 +469,40 @@ export const adminService = {
             user_id: 1,
             telegram_id: 12345678,
             username: 'crypto_whale',
+            first_name: 'David',
             amount_usd: 1.00,
-            fee_usd: 0.05,
-            net_amount_usd: 0.95,
+            fee_usd: 0.02,
+            net_amount_usd: 0.98,
             destination_address: '0x71C2a8BA289e4F1cE5Ea02c5243501258679A814',
             created_at: new Date(Date.now() - 45 * 60000).toISOString(),
-            status: 'pending'
+            status: 'processing'
           },
           {
             id: 102,
             user_id: 2,
             telegram_id: 87654321,
             username: 'alex_trader',
-            amount_usd: 2.50,
-            fee_usd: 0.12,
-            net_amount_usd: 2.38,
+            first_name: 'Alex',
+            amount_usd: 5.00,
+            fee_usd: 0.10,
+            net_amount_usd: 4.90,
             destination_address: '0x3F91A8E2B15C87889A12e4C897d98b16fA0C2A7E',
             created_at: new Date(Date.now() - 120 * 60000).toISOString(),
-            status: 'pending'
+            status: 'processing'
           },
           {
             id: 100,
             user_id: 4,
             telegram_id: 99887766,
             username: 'maria_vip',
-            amount_usd: 5.00,
-            fee_usd: 0.25,
-            net_amount_usd: 4.75,
+            first_name: 'Maria',
+            amount_usd: 10.00,
+            fee_usd: 0.20,
+            net_amount_usd: 9.80,
             destination_address: '0x99A8c12f45Bc879B1842e4897D98B16FA0c12891',
             created_at: new Date(Date.now() - 24 * 3600000).toISOString(),
             status: 'completed',
-            tx_hash: '0x889c1...9b2a'
+            tx_hash: '0x889c1f72a4b891e479c98a123f4b89e217d89c1234567890abcdef1234567890'
           }
         ]
       };
@@ -466,8 +510,12 @@ export const adminService = {
     return res;
   },
 
-  async approveWithdrawal(id: number): Promise<ApiResponse<{ tx_hash: string; status: string }>> {
+  async payoutWithdrawalFromVault(id: number): Promise<ApiResponse<{ tx_hash: string; status: string }>> {
     return api.post<{ tx_hash: string; status: string }>(`/admin/withdrawals/${id}/payout`);
+  },
+
+  async markWithdrawalManualPaid(id: number, data: { tx_hash?: string; notes?: string }): Promise<ApiResponse<{ status: string }>> {
+    return api.post<{ status: string }>(`/admin/withdrawals/${id}/manual-paid`, data);
   },
 
   async rejectWithdrawal(id: number, reason: string): Promise<ApiResponse<{ status: string; refunded_amount: number }>> {

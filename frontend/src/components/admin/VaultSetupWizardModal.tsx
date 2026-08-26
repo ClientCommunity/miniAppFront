@@ -416,22 +416,26 @@ export const VaultSetupWizardModal: React.FC<VaultSetupWizardModalProps> = ({
             )}
 
             {/* Private Key Box */}
-            <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.75rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-              <span style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '0.2rem' }}>
-                Master Private Key (Hex)
-              </span>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                <span style={{ color: '#cbd5e1', fontFamily: 'monospace', fontSize: '0.76rem', wordBreak: 'break-all' }}>
-                  {generatedSecrets.private_key.substring(0, 16)}••••••••••••••••••••••••••••••••{generatedSecrets.private_key.substring(generatedSecrets.private_key.length - 8)}
+            {generatedSecrets.private_key && (
+              <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.75rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '0.2rem' }}>
+                  Master Private Key (Hex)
                 </span>
-                <button
-                  onClick={() => copyToClipboard(generatedSecrets.private_key, 'Private Key')}
-                  style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: '0.9rem', padding: 0 }}
-                >
-                  📋
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                  <span style={{ color: '#cbd5e1', fontFamily: 'monospace', fontSize: '0.76rem', wordBreak: 'break-all' }}>
+                    {generatedSecrets.private_key.length > 24
+                      ? `${generatedSecrets.private_key.substring(0, 12)}••••••••••••••••${generatedSecrets.private_key.substring(generatedSecrets.private_key.length - 6)}`
+                      : generatedSecrets.private_key}
+                  </span>
+                  <button
+                    onClick={() => copyToClipboard(generatedSecrets.private_key || '', 'Private Key')}
+                    style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: '0.9rem', padding: 0 }}
+                  >
+                    📋
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Prominent Download Button */}
             <button

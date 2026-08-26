@@ -128,12 +128,20 @@ export interface BalanceAdjustPayload {
   audit_reason: string;
 }
 
-// 6. Withdrawals Cashout Queue
+// 6. Withdrawals Cashout Queue & Payout Settings
+export interface PayoutSettings {
+  payout_mode: 'manual' | 'instant';
+  min_withdrawal_usd?: number;
+  fee_percent?: number;
+}
+
 export interface AdminWithdrawalItem {
   id: number;
   user_id: number;
   telegram_id: number;
   username: string;
+  first_name?: string;
+  phone?: string;
   amount_usd: number;
   fee_usd: number;
   net_amount_usd: number;
@@ -142,6 +150,7 @@ export interface AdminWithdrawalItem {
   status: 'pending' | 'processing' | 'completed' | 'rejected';
   tx_hash?: string;
   reject_reason?: string;
+  notes?: string;
 }
 
 // 7. Promo Gift Codes

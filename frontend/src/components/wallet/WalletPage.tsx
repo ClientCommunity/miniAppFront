@@ -6,6 +6,7 @@ import { WalletRecordsPage } from './WalletRecordsPage';
 import { FeedbackModal } from './FeedbackModal';
 import { haptics } from '../../utils/haptics';
 import { throwConfetti } from '../../utils/confetti';
+import { notifyToast } from '../../utils/debugToast';
 
 import { getInitialWalletData, fetchWalletData, bindWallet, submitWithdrawal } from '../../services/dataService';
 
@@ -16,22 +17,20 @@ export interface WalletPageProps {
 export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
   const initialData = getInitialWalletData();
   const [walletData, setWalletData] = useState<any>(initialData || {
-    balanceUsd: 0.76,
+    availableBalanceUsd: 0.76,
     connected: false,
     tonWalletAddress: '',
-    phone: '',
     minWithdrawalUsd: 1.0,
-    presetAmounts: [1.0, 5.0, 10.0, 20.0, 50.0, 100.0],
+    presetAmounts: [1.0, 2.5, 5.0, 10.0],
     recentTransactions: []
   });
   const [walletConnected, setWalletConnected] = useState(walletData.connected || false);
   const [walletAddress, setWalletAddress] = useState<string | null>(walletData.tonWalletAddress || null);
-  const [walletPhone, setWalletPhone] = useState<string | null>(walletData.phone || null);
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [showAgreementModal, setShowAgreementModal] = useState(false);
   const [showRecordsPage, setShowRecordsPage] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState<number>(walletData.presetAmounts?.[0] || 1.0);
+  const [customAmountStr, setCustomAmountStr] = useState<string>('1.00');
   const [isBtnPressed, setIsBtnPressed] = useState(false);
   const [isLoading, setIsLoading] = useState(() => initialData === null);
 
@@ -41,9 +40,8 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
         setWalletData(data);
         if (data.connected !== undefined) setWalletConnected(data.connected);
         if (data.tonWalletAddress) setWalletAddress(data.tonWalletAddress);
-        if (data.phone) setWalletPhone(data.phone);
         if (data.presetAmounts && data.presetAmounts.length > 0) {
-          setWithdrawAmount(data.presetAmounts[0]);
+          setCustomAmountStr(data.presetAmounts[0].toFixed(2));
         }
       }
       setIsLoading(false);
@@ -61,9 +59,13 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
     haptics.notification('success');
     setWalletConnected(true);
     setWalletAddress(data.address);
-    if (data.phone) setWalletPhone(data.phone);
-    await bindWallet(data.address, data.phone);
+    notifyToast('✓ BEP-20 Wallet address connected!', 'success', 3000);
+    await bindWallet(data.address);
   };
+
+  const withdrawAmount = Math.max(0, parseFloat(customAmountStr) || 0);
+  const fee = withdrawAmount * 0.05;
+  const netAmount = Math.max(0, withdrawAmount - fee);
 
   const handleWithdraw = async () => {
     if (!walletConnected) {
@@ -72,14 +74,24 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
       return;
     }
 
+    const minAmt = walletData.minWithdrawalUsd || 1.0;
+    if (withdrawAmount < minAmt) {
+      notifyToast(`Minimum withdrawal is $${minAmt.toFixed(2)} USDT`, 'error', 3000);
+      return;
+    }
+
+    const maxAmt = walletData.availableBalanceUsd || 0;
+    if (withdrawAmount > maxAmt) {
+      notifyToast(`Amount exceeds available balance ($${maxAmt.toFixed(2)})`, 'error', 3000);
+      return;
+    }
+
     haptics.notification('success');
     haptics.playWinSound();
     throwConfetti();
+    notifyToast(`🚀 Withdrawal request for $${withdrawAmount.toFixed(2)} USDT submitted!`, 'success', 3500);
     await submitWithdrawal(withdrawAmount);
   };
-
-  const fee = withdrawAmount * 0.05;
-  const netAmount = Math.max(0, withdrawAmount - fee);
 
   return (
     <div
@@ -417,47 +429,113 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
 
           {/* 3. Withdrawal Amount Stepper & Fee Calculator */}
           <div>
-            <h2
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+              <h2
+                style={{
+                  fontSize: '0.92rem',
+                  fontWeight: 800,
+                  color: '#ffffff',
+                  margin: 0
+                }}
+              >
+                Withdraw Amount (USDT)
+              </h2>
+              <span style={{ color: '#86efac', fontSize: '0.72rem', fontWeight: 600 }}>
+                Min: ${walletData.minWithdrawalUsd?.toFixed(2) || '1.00'}
+              </span>
+            </div>
+
+            {/* Quick Preset Buttons */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.35rem', marginBottom: '0.5rem' }}>
+              {[1.0, 2.5, 5.0, 10.0].map((amt) => {
+                const isSelected = Math.abs(withdrawAmount - amt) < 0.001;
+                return (
+                  <button
+                    key={amt}
+                    type="button"
+                    onClick={() => {
+                      haptics.selection();
+                      setCustomAmountStr(amt.toFixed(2));
+                    }}
+                    style={{
+                      background:
+                        isSelected
+                          ? 'linear-gradient(180deg, #00e676 0%, #00a854 100%)'
+                          : 'rgba(0, 0, 0, 0.3)',
+                      border:
+                        isSelected
+                          ? '1px solid #86efac'
+                          : '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '0.65rem',
+                      padding: '0.45rem 0',
+                      color: '#ffffff',
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      boxShadow: isSelected ? '0 2px 8px rgba(0, 230, 118, 0.35)' : 'none',
+                      transition: 'all 0.1s ease'
+                    }}
+                  >
+                    ${amt.toFixed(2)}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Custom Amount Input Bar with MAX Button */}
+            <div
               style={{
-                fontSize: '0.92rem',
-                fontWeight: 800,
-                color: '#ffffff',
-                margin: '0 0 0.45rem 0'
+                display: 'flex',
+                alignItems: 'center',
+                background: 'rgba(0, 0, 0, 0.35)',
+                border: '1px solid rgba(52, 211, 153, 0.45)',
+                borderRadius: '0.75rem',
+                padding: '0.4rem 0.65rem 0.4rem 0.75rem',
+                gap: '0.4rem',
+                marginBottom: '0.45rem',
+                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)'
               }}
             >
-              Withdraw Amount
-            </h2>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.35rem', marginBottom: '0.45rem' }}>
-              {[1.0, 2.5, 5.0, 10.0].map((amt) => (
-                <button
-                  key={amt}
-                  onClick={() => {
-                    haptics.selection();
-                    setWithdrawAmount(amt);
-                  }}
-                  style={{
-                    background:
-                      withdrawAmount === amt
-                        ? 'linear-gradient(180deg, #00e676 0%, #00a854 100%)'
-                        : 'rgba(0, 0, 0, 0.3)',
-                    border:
-                      withdrawAmount === amt
-                        ? '1px solid #86efac'
-                        : '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '0.65rem',
-                    padding: '0.45rem 0',
-                    color: '#ffffff',
-                    fontWeight: 800,
-                    fontSize: '0.85rem',
-                    cursor: 'pointer',
-                    boxShadow: withdrawAmount === amt ? '0 2px 8px rgba(0, 230, 118, 0.35)' : 'none',
-                    transition: 'all 0.1s ease'
-                  }}
-                >
-                  ${amt.toFixed(2)}
-                </button>
-              ))}
+              <span style={{ color: '#fbbf24', fontWeight: 900, fontSize: '1.05rem' }}>$</span>
+              <input
+                type="number"
+                step="any"
+                min="1"
+                value={customAmountStr}
+                onChange={(e) => setCustomAmountStr(e.target.value)}
+                placeholder="Enter custom amount..."
+                style={{
+                  flex: 1,
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: '#ffffff',
+                  fontSize: '0.98rem',
+                  fontWeight: 800,
+                  fontFamily: 'monospace'
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  haptics.selection();
+                  const maxVal = walletData.availableBalanceUsd || 0;
+                  setCustomAmountStr(maxVal.toFixed(2));
+                }}
+                style={{
+                  background: 'linear-gradient(180deg, rgba(251, 191, 36, 0.3) 0%, rgba(217, 119, 6, 0.3) 100%)',
+                  border: '1px solid #fbbf24',
+                  color: '#fbbf24',
+                  borderRadius: '6px',
+                  padding: '0.25rem 0.6rem',
+                  fontSize: '0.74rem',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  letterSpacing: '0.5px'
+                }}
+              >
+                MAX
+              </button>
             </div>
 
             {/* Fee Preview Breakdown */}
@@ -588,7 +666,6 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack }) => {
           onClose={() => setShowConnectModal(false)}
           onSave={handleSaveWallet}
           initialAddress={walletAddress}
-          initialPhone={walletPhone}
         />
       )}
 
