@@ -14,8 +14,10 @@ import {
   getInitialMockTasksBanner,
   getInitialFeatureCards,
   getInitialUserProfile,
-  authenticateTelegram
+  authenticateTelegram,
+  fetchUserProfile
 } from './services/dataService';
+import { profileEventBus } from './utils/profileEvents';
 import type { UserProfile } from './types/api';
 import { DebugToastContainer } from './components/debug/DebugToastContainer';
 import { notifyToast } from './utils/debugToast';
@@ -110,6 +112,65 @@ function App() {
     return () => {
       clearTimeout(resizeTimer);
       window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // Global Real-Time Asset Profile Event Bus Subscriber
+  useEffect(() => {
+    const unsubscribeFull = profileEventBus.subscribe((fullProfile) => {
+      setUserProfile((prev) => ({
+        ...prev,
+        ...fullProfile,
+        goal_left: Math.max(0, (fullProfile.goal_usd ?? prev.goal_usd ?? 1.0) - (fullProfile.balance_usd ?? prev.balance_usd ?? 0))
+      }));
+    });
+
+    const unsubscribePartial = profileEventBus.subscribePartial((partial) => {
+      setUserProfile((prev) => {
+        const newDiamonds = partial.diamonds !== undefined
+          ? partial.diamonds
+          : (partial.reward_diamonds || partial.rewardGems || 0)
+            ? prev.diamonds + (partial.reward_diamonds || partial.rewardGems || 0)
+            : prev.diamonds;
+
+        const newSpins = partial.spins !== undefined
+          ? partial.spins
+          : (partial.reward_spins || 0)
+            ? prev.spins + (partial.reward_spins || 0)
+            : prev.spins;
+
+        const newBalance = partial.balance_usd !== undefined
+          ? partial.balance_usd
+          : (partial.reward_usd || 0)
+            ? Number((prev.balance_usd + (partial.reward_usd || 0)).toFixed(4))
+            : prev.balance_usd;
+
+        const goalUsd = partial.goal_usd ?? prev.goal_usd ?? 1.0;
+
+        return {
+          ...prev,
+          ...partial,
+          diamonds: newDiamonds,
+          spins: newSpins,
+          balance_usd: newBalance,
+          goal_left: Math.max(0, goalUsd - newBalance)
+        };
+      });
+    });
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchUserProfile().catch(() => {});
+      }
+    };
+    window.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleVisibility);
+
+    return () => {
+      unsubscribeFull();
+      unsubscribePartial();
+      window.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleVisibility);
     };
   }, []);
 
@@ -823,14 +884,23 @@ function App() {
 
         {/* Raffle Page Overlay */}
         {currentPage === 'raffle' && (
-          <RafflePage userProfile={userProfile} onBack={() => navigateTo('main')} />
+          <RafflePage
+            userProfile={userProfile}
+            onBack={() => {
+              navigateTo('main');
+              fetchUserProfile().catch(() => {});
+            }}
+          />
         )}
 
         {/* Tasks Page Overlay */}
         {currentPage === 'tasks' && (
           <TasksPage
             userProfile={userProfile}
-            onBack={() => navigateTo('main')}
+            onBack={() => {
+              navigateTo('main');
+              fetchUserProfile().catch(() => {});
+            }}
             onUpdateProfile={(updated) => {
               setUserProfile((prev) => ({ ...prev, ...updated }));
             }}
@@ -839,7 +909,13 @@ function App() {
 
         {/* Wallet Page Overlay */}
         {currentPage === 'wallet' && (
-          <WalletPage userProfile={userProfile} onBack={() => navigateTo('main')} />
+          <WalletPage
+            userProfile={userProfile}
+            onBack={() => {
+              navigateTo('main');
+              fetchUserProfile().catch(() => {});
+            }}
+          />
         )}
 
         {/* Admin Secret Passphrase Gate Modal */}

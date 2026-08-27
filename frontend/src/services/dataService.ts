@@ -1,6 +1,7 @@
 import appConfig from '../config.json';
 import mockData from '../data.json';
 import api from '../api/client';
+import { emitProfileUpdate, emitFullProfile } from '../utils/profileEvents';
 import type { SpinSegment } from '../components/SpinWheel';
 import type {
   UserProfile,
@@ -156,11 +157,14 @@ export const authenticateTelegram = async (
 // 2. User Profile (GET /user/profile)
 export const fetchUserProfile = async (): Promise<UserProfile | null> => {
   if (appConfig.useMockData) {
-    return mockData.userProfile as unknown as UserProfile;
+    const user = mockData.userProfile as unknown as UserProfile;
+    emitFullProfile(user);
+    return user;
   }
 
   const res = await api.get<UserProfile>('/user/profile');
   if (res.success && res.data) {
+    emitFullProfile(res.data);
     return res.data;
   }
 
@@ -174,6 +178,20 @@ export const performServerSpin = async (method?: 'spins' | 'diamonds' | 'auto'):
     const segments = mockData.wheelSegments;
     const randomIdx = Math.floor(Math.random() * segments.length);
     const chosen = segments[randomIdx];
+    const mockBalance = {
+      spins: 11,
+      diamonds: 204,
+      balance_usd: 0.76,
+      energy: 50,
+      goal_usd: 1.0,
+      goal_left: 0.24
+    };
+    emitProfileUpdate({
+      spins: mockBalance.spins,
+      diamonds: mockBalance.diamonds,
+      balance_usd: mockBalance.balance_usd,
+      energy: mockBalance.energy
+    });
     return {
       targetIndex: randomIdx,
       isDouble: false,
@@ -186,14 +204,7 @@ export const performServerSpin = async (method?: 'spins' | 'diamonds' | 'auto'):
       },
       txId: `TX-${Math.floor(10000 + Math.random() * 90000)}`,
       timestamp: Date.now(),
-      userBalance: {
-        spins: 11,
-        diamonds: 204,
-        balance_usd: 0.76,
-        energy: 50,
-        goal_usd: 1.0,
-        goal_left: 0.24
-      }
+      userBalance: mockBalance
     };
   }
 
@@ -201,6 +212,15 @@ export const performServerSpin = async (method?: 'spins' | 'diamonds' | 'auto'):
     method: method || 'auto'
   });
   if (res.success && res.data) {
+    if (res.data.userBalance) {
+      const ub = res.data.userBalance;
+      emitProfileUpdate({
+        spins: ub.spins,
+        diamonds: ub.diamonds,
+        balance_usd: ub.balance_usd,
+        energy: ub.energy
+      });
+    }
     return res.data;
   }
 
@@ -545,7 +565,7 @@ export const fetchWalletRecords = async (
   return null;
 };
 
-// 10. Gift Code Redemption (POST /gift-codes/redeem)
+// 10. Gift Code Redemption (POST /gift-codes/claim or /gift-codes/redeem)
 export interface GiftCodeRedeemResult {
   success: boolean;
   message?: string;
@@ -559,10 +579,11 @@ export interface GiftCodeRedeemResult {
 export const redeemGiftCode = async (
   code: string
 ): Promise<GiftCodeRedeemResult> => {
+  const trimmed = code.trim();
   if (appConfig.useMockData) {
     await new Promise((res) => setTimeout(res, 400));
-    if (code.trim().toUpperCase() === 'WELCOME2026' || code.trim().length > 3) {
-      return {
+    if (trimmed.toUpperCase() === 'WELCOME2026' || trimmed.length > 3) {
+      const mockRes = {
         success: true,
         message: 'Gift code redeemed successfully! 🎉',
         diamonds: 500,
@@ -570,17 +591,28 @@ export const redeemGiftCode = async (
         balance_usd: 0.50,
         rewardGems: 500
       };
+      emitProfileUpdate({
+        reward_diamonds: 500,
+        reward_spins: 10,
+        reward_usd: 0.50
+      });
+      return mockRes;
     }
     return { success: false, message: 'Invalid or expired gift code.' };
   }
 
-  const res = await api.post<any>('/gift-codes/redeem', { code });
-  const raw = res.data || {};
-  const diamonds = raw.diamonds ?? raw.reward_diamonds ?? raw.rewardGems ?? (raw.reward_type === 'diamonds' ? raw.reward_amount : 0) ?? 0;
-  const spins = raw.spins ?? raw.reward_spins ?? (raw.reward_type === 'spins' ? raw.reward_amount : 0) ?? 0;
-  const balance_usd = raw.balance_usd ?? raw.reward_usd ?? raw.usd ?? (raw.reward_type === 'usd' ? raw.reward_amount : 0) ?? 0;
+  // Try /gift-codes/claim first, fallback to /gift-codes/redeem
+  let res = await api.post<any>('/gift-codes/claim', { code: trimmed });
+  if (!res.success && (res.error?.includes('404') || (res as any)?.status === 404)) {
+    res = await api.post<any>('/gift-codes/redeem', { code: trimmed });
+  }
 
-  return {
+  const raw = res.data || {};
+  const diamonds = raw.reward_diamonds ?? raw.diamonds ?? raw.rewardGems ?? raw.gems ?? (raw.reward_type === 'diamonds' ? raw.reward_amount : 0) ?? 0;
+  const spins = raw.reward_spins ?? raw.spins ?? raw.tickets ?? (raw.reward_type === 'spins' ? raw.reward_amount : 0) ?? 0;
+  const balance_usd = raw.reward_usd ?? raw.balance_usd ?? raw.usd ?? raw.cash ?? (raw.reward_type === 'usd' ? raw.reward_amount : 0) ?? 0;
+
+  const result: GiftCodeRedeemResult = {
     success: res.success,
     message: res.message || (res.success ? 'Gift code redeemed successfully! 🎉' : res.error),
     diamonds,
@@ -589,6 +621,31 @@ export const redeemGiftCode = async (
     rewardGems: diamonds,
     user: raw.user
   };
+
+  if (res.success) {
+    if (raw.user) {
+      emitFullProfile(raw.user);
+    } else if (raw.user_balance_diamonds !== undefined || raw.user_balance_usd !== undefined || raw.user_balance_spins !== undefined) {
+      emitProfileUpdate({
+        diamonds: raw.user_balance_diamonds,
+        spins: raw.user_balance_spins,
+        balance_usd: raw.user_balance_usd
+      });
+    } else {
+      emitProfileUpdate({
+        reward_diamonds: diamonds,
+        reward_spins: spins,
+        reward_usd: balance_usd
+      });
+    }
+
+    // Trigger immediate background sync of full profile from database
+    setTimeout(() => {
+      fetchUserProfile().catch(() => {});
+    }, 400);
+  }
+
+  return result;
 };
 
 // 11. Support & Feedback (POST /support/feedback)
