@@ -3,6 +3,8 @@ import { AdminSidebar } from './AdminSidebar';
 import type { AdminTab } from './AdminSidebar';
 import { OverviewModule } from './modules/OverviewModule';
 import { WheelSettingsModule } from './modules/WheelSettingsModule';
+import { DailyRewardsModule } from './modules/DailyRewardsModule';
+import { ReferralSettingsModule } from './modules/ReferralSettingsModule';
 import { ContestsModule } from './modules/ContestsModule';
 import { RafflesModule } from './modules/RafflesModule';
 import { TasksModule } from './modules/TasksModule';
@@ -69,6 +71,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToApp, onL
         return <OverviewModule />;
       case 'wheel':
         return <WheelSettingsModule />;
+      case 'daily':
+        return <DailyRewardsModule />;
+      case 'referrals':
+        return <ReferralSettingsModule />;
       case 'contests':
         return <ContestsModule />;
       case 'raffles':

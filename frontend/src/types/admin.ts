@@ -323,3 +323,28 @@ export interface UpdateWheelSettingsPayload {
   max_cash_reward: number;
 }
 
+// 12. Daily Streak Rewards
+export interface AdminDailyStreakDay {
+  day: number;
+  reward_gems: number;
+  reward_spins: number;
+  reward_usd: number;
+  label?: string;
+  icon?: string;
+  is_mega?: boolean;
+}
+
+export interface AdminDailyStreakSettingsPayload {
+  days: AdminDailyStreakDay[];
+}
+
+// 13. Referral Multi-Asset Rewards
+export interface AdminReferralRewardSettings {
+  referrer_spins: number;
+  referrer_diamonds: number;
+  referrer_usd: number;
+  welcome_spins: number;
+  welcome_diamonds: number;
+  welcome_usd: number;
+}
+

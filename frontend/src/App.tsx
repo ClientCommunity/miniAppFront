@@ -338,7 +338,18 @@ function App() {
       >
         {/* User Info (Left) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0, flexShrink: 1 }}>
-          <div style={{ position: 'relative', width: '34px', height: '34px', flexShrink: 0 }}>
+          <div
+            onClick={() => {
+              // Tapping avatar opens Admin Passphrase Modal for quick admin access
+              if (adminService.isAuthenticated()) {
+                setViewMode('admin');
+              } else {
+                setShowAdminAuthModal(true);
+              }
+            }}
+            title="Tap for Admin Access"
+            style={{ position: 'relative', width: '34px', height: '34px', flexShrink: 0, cursor: 'pointer' }}
+          >
             <img
               src={userProfile.photo_url || './assets/avatar.png'}
               alt="Avatar"
@@ -369,15 +380,24 @@ function App() {
               LV{userProfile.level || 1}
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, maxWidth: '75px' }}>
+          <div
+            onClick={() => {
+              if (adminService.isAuthenticated()) {
+                setViewMode('admin');
+              } else {
+                setShowAdminAuthModal(true);
+              }
+            }}
+            style={{ display: 'flex', flexDirection: 'column', minWidth: 0, maxWidth: '75px', cursor: 'pointer' }}
+          >
             <span style={{ color: 'white', fontWeight: 800, fontSize: '0.8rem', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {userProfile.first_name || 'Player'}
             </span>
             <span style={{ color: '#a7f3d0', fontSize: '0.65rem', fontWeight: 600 }}>ID: {userProfile.id}</span>
           </div>
 
-          {/* Admin Mode Switcher Button (Strictly only visible when is_admin === true) */}
-          {userProfile.is_admin && (
+          {/* Admin Mode Switcher Button (Visible when is_admin === true OR admin token is present) */}
+          {Boolean(userProfile.is_admin || (userProfile as any).isAdmin || adminService.isAuthenticated()) && (
             <button
               onClick={() => {
                 haptics.impact('medium');
@@ -389,27 +409,27 @@ function App() {
               }}
               title="Admin Panel"
               style={{
-                background: 'rgba(255, 255, 255, 0.12)',
+                background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(14, 165, 233, 0.15) 100%)',
                 backdropFilter: 'blur(12px)',
                 WebkitBackdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255, 255, 255, 0.38)',
-                color: '#ffffff',
+                border: '1px solid rgba(56, 189, 248, 0.6)',
+                color: '#38bdf8',
                 borderRadius: '12px',
-                padding: '0.15rem 0.45rem',
+                padding: '0.15rem 0.5rem',
                 fontSize: '0.68rem',
-                fontWeight: 700,
+                fontWeight: 800,
                 letterSpacing: '0.2px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.2rem',
-                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.35)',
+                gap: '0.25rem',
+                boxShadow: '0 2px 8px rgba(56, 189, 248, 0.3)',
                 height: '24px',
                 boxSizing: 'border-box',
                 flexShrink: 0
               }}
             >
-              <span style={{ fontSize: '0.72rem' }}>⚙️</span>
+              <span style={{ fontSize: '0.75rem' }}>⚙️</span>
               <span style={{ fontSize: '0.65rem' }}>Admin</span>
             </button>
           )}
@@ -545,105 +565,130 @@ function App() {
         </div>
 
         {/* Center Wheel & Progress Section */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: '1 1 auto', minWidth: 0, padding: '0 0.25rem', marginTop: '-32px' }}>
-          {/* Balance Display with Sparkle Glow */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-            <img
-              src="./assets/icon-gold.png"
-              alt="Coin"
-              style={{
-                width: '32px',
-                height: '32px',
-                objectFit: 'contain',
-                filter: 'drop-shadow(0 2px 6px rgba(250, 204, 21, 0.5))'
-              }}
-            />
-            <span
-              style={{
-                color: '#FFE81A',
-                fontWeight: 900,
-                fontSize: '1.85rem',
-                fontStyle: 'italic',
-                fontFamily: 'Georgia, serif',
-                textShadow: '0 2px 6px rgba(0,0,0,0.6), 0 0 10px rgba(254, 240, 138, 0.4)'
-              }}
-            >
-              ${userProfile.balance_usd.toFixed(2)}
-            </span>
-          </div>
-
-          {/* Upgraded Liquid Gold Milestone Progress Bar */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: '1 1 auto', minWidth: 0, padding: '0 0.25rem', marginTop: '-24px' }}>
+          {/* Refined Compact $1 Cashout Goal Scoring Section */}
           <div
             style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
               width: '100%',
-              maxWidth: '250px',
-              height: '14px',
-              background: 'rgba(0, 0, 0, 0.35)',
-              borderRadius: '10px',
-              position: 'relative',
-              marginBottom: '0.4rem',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)'
+              marginBottom: '0.45rem',
+              transform: 'translateY(-6px)'
             }}
           >
-            {/* Shimmering Fill */}
+            {/* Balance Display */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.2rem' }}>
+              <img
+                src="./assets/icon-gold.png"
+                alt="Coin"
+                style={{
+                  width: '22px',
+                  height: '22px',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 2px 5px rgba(250, 204, 21, 0.5))'
+                }}
+              />
+              <span
+                style={{
+                  color: '#FFE81A',
+                  fontWeight: 900,
+                  fontSize: '1.35rem',
+                  fontFamily: 'Outfit, -apple-system, BlinkMacSystemFont, sans-serif',
+                  letterSpacing: '0.02em',
+                  textShadow: '0 2px 8px rgba(0,0,0,0.7), 0 0 10px rgba(254, 240, 138, 0.4)'
+                }}
+              >
+                ${userProfile.balance_usd.toFixed(2)}
+              </span>
+              <span
+                style={{
+                  color: 'rgba(255, 255, 255, 0.55)',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  fontFamily: 'Outfit, sans-serif',
+                  marginLeft: '1px'
+                }}
+              >
+                / $1.00
+              </span>
+            </div>
+
+            {/* Compact Liquid Gold Milestone Progress Bar */}
             <div
-              className="liquid-gold-shimmer"
               style={{
-                width: `${progressPercent}%`,
-                height: '100%',
+                width: '100%',
+                maxWidth: '200px',
+                height: '8px',
+                background: 'rgba(0, 0, 0, 0.45)',
                 borderRadius: '8px',
                 position: 'relative',
-                boxShadow: '0 0 8px rgba(250, 204, 21, 0.6)'
+                marginBottom: '0.25rem',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.6)'
               }}
             >
-              {/* Glowing Particle Tip */}
+              {/* Shimmering Fill */}
+              <div
+                className="liquid-gold-shimmer"
+                style={{
+                  width: `${progressPercent}%`,
+                  height: '100%',
+                  borderRadius: '6px',
+                  position: 'relative',
+                  boxShadow: '0 0 8px rgba(250, 204, 21, 0.6)'
+                }}
+              >
+                {/* Glowing Particle Tip */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    right: '-4px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '10px',
+                    height: '10px',
+                    background: '#ffffff',
+                    borderRadius: '50%',
+                    boxShadow: '0 0 8px 3px rgba(254, 240, 138, 0.9), 0 0 3px #fbbf24',
+                    zIndex: 2
+                  }}
+                />
+              </div>
+
+              {/* $1 Goal Milestone Pin */}
               <div
                 style={{
                   position: 'absolute',
-                  right: '-6px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '14px',
-                  height: '14px',
-                  background: '#ffffff',
-                  borderRadius: '50%',
-                  boxShadow: '0 0 12px 4px rgba(254, 240, 138, 0.9), 0 0 4px #fbbf24',
-                  zIndex: 2
+                  right: '0px',
+                  top: '-15px',
+                  fontSize: '0.62rem',
+                  fontWeight: 900,
+                  color: '#fef08a',
+                  fontFamily: 'Outfit, sans-serif',
+                  letterSpacing: '0.03em',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.9)'
                 }}
-              />
+              >
+                $1 GOAL 🏁
+              </div>
             </div>
 
-            {/* $1 Goal Milestone Pin */}
+            {/* Helper Subtitle */}
             <div
               style={{
-                position: 'absolute',
-                right: '4px',
-                top: '-18px',
-                fontSize: '0.68rem',
-                fontWeight: 900,
-                color: '#fef08a',
-                fontFamily: 'Georgia, serif',
-                textShadow: '0 1px 2px rgba(0,0,0,0.8)'
+                color: '#d1fae5',
+                fontSize: '0.72rem',
+                fontFamily: 'Outfit, sans-serif',
+                fontWeight: 600,
+                opacity: 0.92,
+                textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+                textAlign: 'center'
               }}
             >
-              $1 Goal 🏁
+              Only <span style={{ color: '#fbbf24', fontWeight: 800 }}>${Math.max(0, (userProfile.goal_usd || 1.0) - userProfile.balance_usd).toFixed(2)}</span> left to cash out $1 instant USDT!
             </div>
-          </div>
-
-          {/* Helper Text */}
-          <div
-            style={{
-              color: '#d1fae5',
-              fontSize: '0.82rem',
-              fontFamily: 'Georgia, serif',
-              fontStyle: 'italic',
-              opacity: 0.95,
-              marginBottom: '1.1rem',
-              textShadow: '0 1px 3px rgba(0,0,0,0.7)'
-            }}
-          >
-            Only <span style={{ color: '#fbbf24', fontWeight: 800 }}>${Math.max(0, (userProfile.goal_usd || 1.0) - userProfile.balance_usd).toFixed(2)}</span> to cash out $1 instant USDT (BEP20)!
           </div>
 
           <SpinWheel

@@ -3,6 +3,8 @@ import React from 'react';
 export type AdminTab =
   | 'overview'
   | 'wheel'
+  | 'daily'
+  | 'referrals'
   | 'contests'
   | 'raffles'
   | 'tasks'
@@ -20,6 +22,8 @@ interface AdminSidebarProps {
 const TABS: { id: AdminTab; label: string; icon: string }[] = [
   { id: 'overview', label: 'Overview', icon: '📊' },
   { id: 'wheel', label: 'Wheel RNG', icon: '🎡' },
+  { id: 'daily', label: 'Daily Streak', icon: '📅' },
+  { id: 'referrals', label: 'Referral Rules', icon: '👥' },
   { id: 'contests', label: 'Contests', icon: '🏆' },
   { id: 'raffles', label: 'Raffles', icon: '🎟️' },
   { id: 'tasks', label: 'Tasks', icon: '📋' },

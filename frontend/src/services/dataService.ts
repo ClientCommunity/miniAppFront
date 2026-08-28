@@ -2,6 +2,7 @@ import appConfig from '../config.json';
 import mockData from '../data.json';
 import api from '../api/client';
 import { emitProfileUpdate, emitFullProfile } from '../utils/profileEvents';
+import { syncUserBalance } from '../utils/syncUser';
 import type { SpinSegment } from '../components/SpinWheel';
 import type {
   UserProfile,
@@ -141,9 +142,13 @@ export const authenticateTelegram = async (
     if (res.data.token) {
       api.setToken(res.data.token);
     }
+    const user = res.data.user;
+    if (user) {
+      user.is_admin = Boolean(user.is_admin ?? (user as any).isAdmin);
+    }
     return {
       success: true,
-      user: res.data.user,
+      user,
       token: res.data.token
     };
   }
@@ -164,8 +169,10 @@ export const fetchUserProfile = async (): Promise<UserProfile | null> => {
 
   const res = await api.get<UserProfile>('/user/profile');
   if (res.success && res.data) {
-    emitFullProfile(res.data);
-    return res.data;
+    const profile = res.data;
+    profile.is_admin = Boolean(profile.is_admin ?? (profile as any).isAdmin);
+    emitFullProfile(profile);
+    return profile;
   }
 
   return null;
@@ -306,6 +313,7 @@ export const claimDailyReward = async (): Promise<{ success: boolean; message?: 
 
   const res = await api.post<ClaimDailyRewardData>('/daily-rewards/claim');
   if (res.success) {
+    syncUserBalance(res.data || res);
     const cached = getCachedDailyRewards();
     if (cached) {
       setCachedDailyRewards({
@@ -450,6 +458,9 @@ export const verifyTask = async (
     };
   }
   const res = await api.post<any>(`/tasks/${taskId}/verify`);
+  if (res.success) {
+    syncUserBalance(res.data || res);
+  }
   const raw = res.data || {};
   return {
     success: res.success,
@@ -474,6 +485,9 @@ export const claimTaskReward = async (
   }
 
   const res = await api.post<any>(`/tasks/${taskId}/claim`);
+  if (res.success) {
+    syncUserBalance(res.data || res);
+  }
   const raw = res.data || {};
   return {
     success: res.success,
@@ -540,6 +554,9 @@ export const submitWithdrawal = async (
   const res = await api.post<WithdrawResultData>('/wallet/withdraw', {
     amount_usd: amountUsd
   });
+  if (res.success) {
+    syncUserBalance(res.data || res);
+  }
   return {
     success: res.success,
     message: res.message || (res.success ? 'Withdrawal submitted!' : res.error),
@@ -680,8 +697,8 @@ export const fetchRafflesData = async (): Promise<{
 
   const res = await api.get<RaffleCardData[]>('/raffles');
   if (res.success && res.data) {
-    const ongoing = res.data.filter((r) => r.status === 'ongoing');
-    const ended = res.data.filter((r) => r.status === 'ended');
+    const ongoing = res.data.filter((r: RaffleCardData) => r.status === 'ongoing');
+    const ended = res.data.filter((r: RaffleCardData) => r.status === 'ended');
     return {
       ongoing,
       ended,
@@ -722,6 +739,9 @@ export const claimRaffleTicket = async (
   }
 
   const res = await api.post(`/raffles/${raffleId}/claim`, { method });
+  if (res.success) {
+    syncUserBalance(res.data || res);
+  }
   return {
     success: res.success,
     message: res.message || (res.success ? 'Ticket claimed!' : res.error)

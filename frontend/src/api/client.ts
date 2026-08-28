@@ -1,6 +1,7 @@
 import appConfig from '../config.json';
 import type { ApiResponse } from '../types/api';
 import { notifyToast } from '../utils/debugToast';
+import { syncUserBalance } from '../utils/syncUser';
 
 export interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: any;
@@ -123,6 +124,12 @@ class ApiClient {
       }));
 
       if (response.ok && json.success !== false) {
+        // Universal 0ms Auto-Sync for any endpoint returning userBalance or user
+        try {
+          syncUserBalance(json);
+        } catch (syncErr) {
+          console.error('[ApiClient] Error during automatic user sync:', syncErr);
+        }
         notifyToast(`[API OK] ${method} ${endpoint} (${response.status})`, 'success', 3000);
       } else {
         const errMsg = json.error || json.message || `HTTP ${response.status}`;

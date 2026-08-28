@@ -22,7 +22,10 @@ import type {
   AdminSupportFeedback,
   AdminWalletStatus,
   AdminWheelSettingsData,
-  UpdateWheelSettingsPayload
+  UpdateWheelSettingsPayload,
+  AdminDailyStreakDay,
+  AdminDailyStreakSettingsPayload,
+  AdminReferralRewardSettings
 } from '../types/admin';
 
 // ============================================================================
@@ -982,6 +985,86 @@ export const adminService = {
 
   async updateWheelSettings(payload: UpdateWheelSettingsPayload): Promise<ApiResponse<any>> {
     return api.post('/admin/wheel/settings', payload);
+  },
+
+  // --------------------------------------------------------------------------
+  // 12. 7-DAY DAILY STREAK REWARDS MANAGER
+  // --------------------------------------------------------------------------
+  async getDailyStreakRewards(): Promise<ApiResponse<AdminDailyStreakDay[]>> {
+    const res = await api.get<any>('/admin/rewards/daily');
+    if (!res.success) {
+      return {
+        success: true,
+        data: [
+          { day: 1, reward_gems: 80, reward_spins: 0, reward_usd: 0.0, label: 'Up to 80 💎', icon: './assets/purple-diamond.png', is_mega: false },
+          { day: 2, reward_gems: 80, reward_spins: 0, reward_usd: 0.0, label: '+80 💎', icon: './assets/purple-diamond.png', is_mega: false },
+          { day: 3, reward_gems: 200, reward_spins: 1, reward_usd: 0.0, label: '+200 💎 + 1 Spin', icon: './assets/giftIconInDailySignIn.png', is_mega: false },
+          { day: 4, reward_gems: 90, reward_spins: 0, reward_usd: 0.0, label: '+90 💎', icon: './assets/purple-diamond.png', is_mega: false },
+          { day: 5, reward_gems: 90, reward_spins: 0, reward_usd: 0.0, label: '+90 💎', icon: './assets/purple-diamond.png', is_mega: false },
+          { day: 6, reward_gems: 90, reward_spins: 0, reward_usd: 0.0, label: '+90 💎', icon: './assets/purple-diamond.png', is_mega: false },
+          { day: 7, reward_gems: 6000, reward_spins: 5, reward_usd: 0.50, label: 'MEGA +6000 💎 + 5 Spins + $0.50', icon: './assets/giftIconInDailySignIn.png', is_mega: true }
+        ]
+      };
+    }
+
+    const raw = res.data;
+    const daysList: AdminDailyStreakDay[] = Array.isArray(raw)
+      ? raw
+      : (raw?.days || raw?.items || []);
+
+    return {
+      success: true,
+      data: daysList
+    };
+  },
+
+  async updateDailyStreakRewards(payload: AdminDailyStreakSettingsPayload): Promise<ApiResponse<any>> {
+    return api.post('/admin/rewards/daily', payload);
+  },
+
+  // --------------------------------------------------------------------------
+  // 13. REFERRAL MULTI-ASSET REWARDS MANAGER
+  // --------------------------------------------------------------------------
+  async getReferralRewards(): Promise<ApiResponse<AdminReferralRewardSettings>> {
+    let res = await api.get<AdminReferralRewardSettings>('/admin/rewards/referral');
+    if (!res.success) {
+      res = await api.get<AdminReferralRewardSettings>('/admin/referral-settings');
+    }
+
+    if (!res.success) {
+      return {
+        success: true,
+        data: {
+          referrer_spins: 1,
+          referrer_diamonds: 100,
+          referrer_usd: 0.05,
+          welcome_spins: 3,
+          welcome_diamonds: 200,
+          welcome_usd: 0.00
+        }
+      };
+    }
+
+    const raw = res.data as any;
+    return {
+      success: true,
+      data: {
+        referrer_spins: raw.referrer_spins ?? raw.inviter_spins ?? 1,
+        referrer_diamonds: raw.referrer_diamonds ?? raw.inviter_diamonds ?? 100,
+        referrer_usd: raw.referrer_usd ?? raw.inviter_usd ?? 0.05,
+        welcome_spins: raw.welcome_spins ?? raw.referee_spins ?? 3,
+        welcome_diamonds: raw.welcome_diamonds ?? raw.referee_diamonds ?? 200,
+        welcome_usd: raw.welcome_usd ?? raw.referee_usd ?? 0.00
+      }
+    };
+  },
+
+  async updateReferralRewards(payload: AdminReferralRewardSettings): Promise<ApiResponse<any>> {
+    let res = await api.post('/admin/rewards/referral', payload);
+    if (!res.success) {
+      res = await api.post('/admin/referral-settings', payload);
+    }
+    return res;
   }
 };
 
