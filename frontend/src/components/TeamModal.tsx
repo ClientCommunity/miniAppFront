@@ -55,7 +55,8 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
     haptics.impact('medium');
     haptics.playClickSound();
 
-    const inviteUrl = teamData?.inviteUrl || `https://t.me/SpinCraftBot?start=ref_user`;
+    const userTgId = (window as any)?.Telegram?.WebApp?.initDataUnsafe?.user?.id || '';
+    const inviteUrl = teamData?.inviteUrl || (userTgId ? `https://t.me/SpinCraft_bot/earnnow?startapp=ref_${userTgId}` : `https://t.me/SpinCraft_bot/earnnow?startapp=ref_user`);
     const shareText = teamData?.shareText || `Join me on Spin Craft and spin the wheel for massive cash rewards! 🎰💰`;
     const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent(shareText)}`;
 
