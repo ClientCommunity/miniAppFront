@@ -352,7 +352,7 @@ export const fetchTeamData = async (): Promise<TeamStatsData | null> => {
       totalCount: raw.totalCount ?? raw.total_count ?? raw.totalFriends ?? members.length,
       activeCount: raw.activeCount ?? raw.active_count ?? members.filter((m: any) => m.joinedChannel).length,
       inviteUrl: raw.inviteUrl || raw.invite_url || '',
-      shareText: raw.shareText || raw.share_text || 'Join me on EarnCraft and spin the wheel for massive cash rewards! 🎰💰',
+      shareText: raw.shareText || raw.share_text || 'Join me on Spin Craft and spin the wheel for massive cash rewards! 🎰💰',
       currentTier: raw.currentTier || raw.current_tier || 'Bronze',
       tierRewards: raw.tierRewards || raw.tier_rewards || ['Bronze: 1 Spin/friend', 'Silver: 2 Spins + 5%', 'Gold: 3 Spins + 10%'],
       members

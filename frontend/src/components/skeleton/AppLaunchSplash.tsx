@@ -85,7 +85,7 @@ export const AppLaunchSplash: FC<AppLaunchSplashProps> = ({
         >
           <img
             src="./assets/SingleCoin_animated.gif"
-            alt="Earn Craft"
+            alt="Spin Craft"
             style={{
               width: '58px',
               height: '58px',
@@ -108,7 +108,7 @@ export const AppLaunchSplash: FC<AppLaunchSplashProps> = ({
               textShadow: '0 2px 10px rgba(0, 230, 118, 0.6), 0 0 20px rgba(254, 240, 138, 0.4)'
             }}
           >
-            EARN CRAFT
+            SPIN CRAFT
           </h1>
           <span
             style={{

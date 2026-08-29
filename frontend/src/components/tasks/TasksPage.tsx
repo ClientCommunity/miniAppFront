@@ -137,7 +137,7 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack, userProfile, onUpdatePro
       startTask(task.id);
     } catch {}
 
-    const channelHandle = task.channelId || task.channel_id || (task.actionUrl?.includes('t.me/') ? task.actionUrl.split('t.me/')[1] : 'EarnCraftCommunity');
+    const channelHandle = task.channelId || task.channel_id || (task.actionUrl?.includes('t.me/') ? task.actionUrl.split('t.me/')[1] : 'SpinCraftCommunity');
     const cleanHandle = channelHandle.replace('@', '');
     const targetUrl = task.actionUrl || task.action_url || `https://t.me/${cleanHandle}`;
 

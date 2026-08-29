@@ -646,7 +646,7 @@ export const TasksModule: React.FC = () => {
                       type="text"
                       value={customChannelId}
                       onChange={(e) => setCustomChannelId(e.target.value)}
-                      placeholder="e.g. @EarnCraftCommunity or -100192847192"
+                      placeholder="e.g. @SpinCraftCommunity or -100192847192"
                       style={{
                         width: '100%',
                         padding: '0.65rem',
@@ -762,7 +762,7 @@ export const TasksModule: React.FC = () => {
                   type="text"
                   value={newChatId}
                   onChange={(e) => setNewChatId(e.target.value)}
-                  placeholder="e.g. @EarnCraftCommunity or -100192847192"
+                  placeholder="e.g. @SpinCraftCommunity or -100192847192"
                   required
                   style={{
                     width: '100%',

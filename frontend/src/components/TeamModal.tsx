@@ -55,8 +55,8 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
     haptics.impact('medium');
     haptics.playClickSound();
 
-    const inviteUrl = teamData?.inviteUrl || `https://t.me/EarnCraftBot?start=ref_user`;
-    const shareText = teamData?.shareText || `Join me on EarnCraft and spin the wheel for massive cash rewards! 🎰💰`;
+    const inviteUrl = teamData?.inviteUrl || `https://t.me/SpinCraftBot?start=ref_user`;
+    const shareText = teamData?.shareText || `Join me on Spin Craft and spin the wheel for massive cash rewards! 🎰💰`;
     const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent(shareText)}`;
 
     try {

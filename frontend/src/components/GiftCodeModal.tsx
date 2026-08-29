@@ -328,8 +328,8 @@ export const GiftCodeModal: FC<GiftCodeModalProps> = ({ onClose, onClaimSuccess 
             }}
             onClick={() => {
               // @ts-ignore
-              window.Telegram?.WebApp?.openTelegramLink?.('https://t.me/EarnCraftCommunity') ||
-                window.open('https://t.me/EarnCraftCommunity', '_blank');
+              window.Telegram?.WebApp?.openTelegramLink?.('https://t.me/SpinCraftCommunity') ||
+                window.open('https://t.me/SpinCraftCommunity', '_blank');
             }}
           >
             Join our community

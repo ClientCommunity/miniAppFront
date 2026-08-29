@@ -81,10 +81,10 @@ export const UserAgreementModal: FC<UserAgreementModalProps> = ({ onClose }) => 
         {/* Intro */}
         <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontWeight: 700, fontSize: '1.05rem', color: '#fbbf24', margin: '0 0 0.5rem 0' }}>
-            Welcome to Earn Craft.
+            Welcome to Spin Craft.
           </p>
           <p style={{ margin: 0 }}>
-            Before registering, logging in, browsing, or using Earn Craft services, please read and fully understand this Agreement. By clicking "Agree", "Register", "Start Using", or by actually using Earn Craft services, you acknowledge that you have read, understood, and agreed to all terms of this Agreement.
+            Before registering, logging in, browsing, or using Spin Craft services, please read and fully understand this Agreement. By clicking "Agree", "Register", "Start Using", or by actually using Spin Craft services, you acknowledge that you have read, understood, and agreed to all terms of this Agreement.
           </p>
         </div>
 
@@ -95,10 +95,10 @@ export const UserAgreementModal: FC<UserAgreementModalProps> = ({ onClose }) => 
               1. Service Description
             </h3>
             <p style={{ margin: '0 0 0.5rem 0' }}>
-              Earn Craft is a task-incentive platform where users may earn points, coins, reward credits, or other benefits by completing tasks, activities, invitations, check-ins, browsing, interactions, or other compliant actions displayed on the platform.
+              Spin Craft is a task-incentive platform where users may earn points, coins, reward credits, or other benefits by completing tasks, activities, invitations, check-ins, browsing, interactions, or other compliant actions displayed on the platform.
             </p>
             <p style={{ margin: 0 }}>
-              Platform rewards do not constitute wages, labor compensation, investment returns, financial returns, or any form of fixed return. Earn Craft does not guarantee that users will earn rewards, nor does it guarantee reward amounts, payout timing, or withdrawal success rates.
+              Platform rewards do not constitute wages, labor compensation, investment returns, financial returns, or any form of fixed return. Spin Craft does not guarantee that users will earn rewards, nor does it guarantee reward amounts, payout timing, or withdrawal success rates.
             </p>
           </section>
 
@@ -108,10 +108,10 @@ export const UserAgreementModal: FC<UserAgreementModalProps> = ({ onClose }) => 
               2. User Eligibility
             </h3>
             <p style={{ margin: '0 0 0.5rem 0' }}>
-              You must have full legal capacity. If you are a minor, you should use Earn Craft with the consent and guidance of a guardian.
+              You must have full legal capacity. If you are a minor, you should use Spin Craft with the consent and guidance of a guardian.
             </p>
             <p style={{ margin: 0 }}>
-              You may not register or use Earn Craft with another person's identity information, false information, temporary numbers, bulk accounts, or illegally obtained accounts.
+              You may not register or use Spin Craft with another person's identity information, false information, temporary numbers, bulk accounts, or illegally obtained accounts.
             </p>
           </section>
 
@@ -127,7 +127,7 @@ export const UserAgreementModal: FC<UserAgreementModalProps> = ({ onClose }) => 
               The same user may not obtain rewards through multiple accounts, device spoofing, emulators, scripts, group control, fake invitations, traffic inflation, credential stuffing, cheating tools, or similar methods.
             </p>
             <p style={{ margin: 0 }}>
-              Earn Craft may review account behavior for security, risk control, anti-fraud, compliance, or operational needs, and may restrict tasks, freeze rewards, delay withdrawals, cancel rewards, restrict login, or ban accounts based on review results.
+              Spin Craft may review account behavior for security, risk control, anti-fraud, compliance, or operational needs, and may restrict tasks, freeze rewards, delay withdrawals, cancel rewards, restrict login, or ban accounts based on review results.
             </p>
           </section>
 
@@ -137,13 +137,13 @@ export const UserAgreementModal: FC<UserAgreementModalProps> = ({ onClose }) => 
               4. Tasks and Reward Rules
             </h3>
             <p style={{ margin: '0 0 0.5rem 0' }}>
-              Earn Craft displays specific task requirements, reward standards, validity periods, review methods, and distribution conditions for different activities. Actual rewards are subject to activity pages, task pages, or platform announcements.
+              Spin Craft displays specific task requirements, reward standards, validity periods, review methods, and distribution conditions for different activities. Actual rewards are subject to activity pages, task pages, or platform announcements.
             </p>
             <p style={{ margin: '0 0 0.5rem 0' }}>
-              After users complete tasks, Earn Craft may conduct authenticity, validity, and risk reviews. Only tasks, invitations, interactions, or transactions confirmed as valid by the platform will count toward rewards.
+              After users complete tasks, Spin Craft may conduct authenticity, validity, and risk reviews. Only tasks, invitations, interactions, or transactions confirmed as valid by the platform will count toward rewards.
             </p>
             <p style={{ margin: '0 0 0.4rem 0' }}>
-              The following behaviors are not considered valid task completion, and Earn Craft may cancel related rewards:
+              The following behaviors are not considered valid task completion, and Spin Craft may cancel related rewards:
             </p>
             <ul style={{ margin: '0 0 0.5rem 1.25rem', padding: 0 }}>
               <li>Participating with fake identities, fake devices, fake network environments, or abnormal accounts;</li>
@@ -160,13 +160,13 @@ export const UserAgreementModal: FC<UserAgreementModalProps> = ({ onClose }) => 
               5. Withdrawals and Settlement
             </h3>
             <p style={{ margin: '0 0 0.5rem 0' }}>
-              After reaching the withdrawal threshold set by Earn Craft, users may apply for withdrawal as prompted on the page. Before withdrawal, Earn Craft may require identity verification, account verification, anti-fraud review, risk review, or tax/compliance information.
+              After reaching the withdrawal threshold set by Spin Craft, users may apply for withdrawal as prompted on the page. Before withdrawal, Spin Craft may require identity verification, account verification, anti-fraud review, risk review, or tax/compliance information.
             </p>
             <p style={{ margin: '0 0 0.5rem 0' }}>
-              Withdrawal arrival time may be affected by platform review, payment channels, banks, or third-party services. Earn Craft is not responsible for delays, failures, or fees caused by third-party payment institutions, banks, or wallet service providers.
+              Withdrawal arrival time may be affected by platform review, payment channels, banks, or third-party services. Spin Craft is not responsible for delays, failures, or fees caused by third-party payment institutions, banks, or wallet service providers.
             </p>
             <p style={{ margin: '0 0 0.5rem 0' }}>
-              If Earn Craft finds abnormal activity, cheating, violations, false information, disputes, complaints, or compliance risks, it may suspend, delay, reject, or cancel withdrawals and require reasonable explanations or supporting materials.
+              If Spin Craft finds abnormal activity, cheating, violations, false information, disputes, complaints, or compliance risks, it may suspend, delay, reject, or cancel withdrawals and require reasonable explanations or supporting materials.
             </p>
             <p style={{ margin: 0 }}>
               Taxes arising from withdrawals, rewards, or other earnings shall be declared and borne by users in accordance with applicable local laws and regulations, unless otherwise required by law.
@@ -178,7 +178,7 @@ export const UserAgreementModal: FC<UserAgreementModalProps> = ({ onClose }) => 
             <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.4rem 0' }}>
               6. User Conduct
             </h3>
-            <p style={{ margin: '0 0 0.4rem 0' }}>When using Earn Craft, you must not:</p>
+            <p style={{ margin: '0 0 0.4rem 0' }}>When using Spin Craft, you must not:</p>
             <ul style={{ margin: '0 0 0.5rem 1.25rem', padding: 0 }}>
               <li>Publish illegal, fraudulent, pornographic, violent, gambling, pyramid scheme, scam, infringing, or other harmful content;</li>
               <li>Impersonate the platform, staff, or other users;</li>
@@ -195,10 +195,10 @@ export const UserAgreementModal: FC<UserAgreementModalProps> = ({ onClose }) => 
               7. Platform Rule Adjustments
             </h3>
             <p style={{ margin: '0 0 0.5rem 0' }}>
-              Earn Craft may adjust task rules, reward rules, withdrawal rules, review standards, platform features, or this Agreement based on business development, risk control, laws, regulations, or regulatory requirements.
+              Spin Craft may adjust task rules, reward rules, withdrawal rules, review standards, platform features, or this Agreement based on business development, risk control, laws, regulations, or regulatory requirements.
             </p>
             <p style={{ margin: 0 }}>
-              For rule changes involving significant user rights, Earn Craft will notify users through page announcements, in-app notifications, pop-ups, or other reasonable means. Continued use of Earn Craft after changes take effect constitutes acceptance of the updated rules; if you disagree, you may stop using Earn Craft services.
+              For rule changes involving significant user rights, Spin Craft will notify users through page announcements, in-app notifications, pop-ups, or other reasonable means. Continued use of Spin Craft after changes take effect constitutes acceptance of the updated rules; if you disagree, you may stop using Spin Craft services.
             </p>
           </section>
 
@@ -208,10 +208,10 @@ export const UserAgreementModal: FC<UserAgreementModalProps> = ({ onClose }) => 
               8. Personal Information Protection
             </h3>
             <p style={{ margin: '0 0 0.5rem 0' }}>
-              Earn Craft collects, uses, stores, and protects your personal information in accordance with applicable laws and regulations and the Privacy Policy. To complete registration, task review, reward distribution, withdrawals, risk control, anti-fraud, and compliance review, Earn Craft may process your account information, device information, network information, task records, invitation relationships, payment information, identity verification information, and more.
+              Spin Craft collects, uses, stores, and protects your personal information in accordance with applicable laws and regulations and the Privacy Policy. To complete registration, task review, reward distribution, withdrawals, risk control, anti-fraud, and compliance review, Spin Craft may process your account information, device information, network information, task records, invitation relationships, payment information, identity verification information, and more.
             </p>
             <p style={{ margin: 0 }}>
-              Earn Craft will process personal information in accordance with the principles of legality, legitimacy, and necessity. Where sensitive personal information, third-party sharing, or cross-border transfer is involved, the platform will provide separate notice or obtain your authorization as required by law.
+              Spin Craft will process personal information in accordance with the principles of legality, legitimacy, and necessity. Where sensitive personal information, third-party sharing, or cross-border transfer is involved, the platform will provide separate notice or obtain your authorization as required by law.
             </p>
           </section>
 
@@ -221,7 +221,7 @@ export const UserAgreementModal: FC<UserAgreementModalProps> = ({ onClose }) => 
               9. Service Suspension and Termination
             </h3>
             <p style={{ margin: '0 0 0.4rem 0' }}>
-              If you violate this Agreement, platform rules, activity rules, or laws and regulations, Earn Craft may take the following measures within a reasonable scope:
+              If you violate this Agreement, platform rules, activity rules, or laws and regulations, Spin Craft may take the following measures within a reasonable scope:
             </p>
             <ul style={{ margin: '0 0 0.5rem 1.25rem', padding: 0 }}>
               <li>Issue warnings or require corrections;</li>
@@ -232,7 +232,7 @@ export const UserAgreementModal: FC<UserAgreementModalProps> = ({ onClose }) => 
               <li>Preserve relevant records and report to authorities as required by law.</li>
             </ul>
             <p style={{ margin: 0 }}>
-              If service interruption or anomalies occur due to system maintenance, network failures, third-party service issues, force majeure, regulatory requirements, or security risks, Earn Craft will try to restore service but does not guarantee permanent, continuous, or error-free operation.
+              If service interruption or anomalies occur due to system maintenance, network failures, third-party service issues, force majeure, regulatory requirements, or security risks, Spin Craft will try to restore service but does not guarantee permanent, continuous, or error-free operation.
             </p>
           </section>
 
@@ -242,7 +242,7 @@ export const UserAgreementModal: FC<UserAgreementModalProps> = ({ onClose }) => 
               10. Disclaimer
             </h3>
             <p style={{ margin: '0 0 0.5rem 0' }}>
-              Earn Craft provides task display, reward recording, review, and settlement services only in accordance with platform rules. Users should assess the risks of participating in tasks, invitations, withdrawals, or other actions on their own.
+              Spin Craft provides task display, reward recording, review, and settlement services only in accordance with platform rules. Users should assess the risks of participating in tasks, invitations, withdrawals, or other actions on their own.
             </p>
             <p style={{ margin: 0 }}>
               Losses caused by user violations, incorrect information, use of third-party tools, abnormal payment accounts, or violation of local laws and regulations shall be borne by users.
@@ -255,7 +255,7 @@ export const UserAgreementModal: FC<UserAgreementModalProps> = ({ onClose }) => 
               11. Dispute Resolution
             </h3>
             <p style={{ margin: '0 0 0.5rem 0' }}>
-              If you disagree with task records, reward amounts, withdrawal results, account handling, or other matters, you may submit explanations and supporting materials through the appeal or feedback channels provided on Earn Craft pages. Earn Craft will review after receiving reasonable materials.
+              If you disagree with task records, reward amounts, withdrawal results, account handling, or other matters, you may submit explanations and supporting materials through the appeal or feedback channels provided on Spin Craft pages. Spin Craft will review after receiving reasonable materials.
             </p>
             <p style={{ margin: 0 }}>
               The formation, performance, interpretation, and dispute resolution of this Agreement shall be governed by applicable laws and regulations. Both parties shall attempt to resolve disputes through friendly negotiation; if negotiation fails, disputes shall be submitted to a competent authority in accordance with law.
@@ -268,10 +268,10 @@ export const UserAgreementModal: FC<UserAgreementModalProps> = ({ onClose }) => 
               12. Miscellaneous
             </h3>
             <p style={{ margin: '0 0 0.5rem 0' }}>
-              This Agreement takes effect from the date the user clicks agree or actually uses Earn Craft services.
+              This Agreement takes effect from the date the user clicks agree or actually uses Spin Craft services.
             </p>
             <p style={{ margin: 0 }}>
-              If Earn Craft updates this Agreement or related platform rules, users will be notified through page announcements, pop-up prompts, in-app notifications, or other reasonable means. Continued use of Earn Craft services constitutes acceptance of the updated Agreement; if you do not agree to the updates, you should stop using Earn Craft services.
+              If Spin Craft updates this Agreement or related platform rules, users will be notified through page announcements, pop-up prompts, in-app notifications, or other reasonable means. Continued use of Spin Craft services constitutes acceptance of the updated Agreement; if you do not agree to the updates, you should stop using Spin Craft services.
             </p>
           </section>
         </div>
