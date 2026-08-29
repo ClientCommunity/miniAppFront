@@ -151,7 +151,7 @@ export const DailyRewardsModule: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
           {days.map((dayItem, idx) => {
             const isMega = dayItem.is_mega || dayItem.day === 7;
             const borderColor = isMega ? '#f59e0b' : dayItem.day === 3 ? '#38bdf8' : 'rgba(255, 255, 255, 0.12)';
@@ -307,3 +307,4 @@ export const DailyRewardsModule: React.FC = () => {
     </div>
   );
 };
+

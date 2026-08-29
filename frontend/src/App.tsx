@@ -484,7 +484,7 @@ function App() {
           </div>
 
           {/* Admin Mode Switcher Button (Strictly visible ONLY when current authenticated account is an admin) */}
-          {Boolean(userProfile.is_admin || (userProfile as any).isAdmin) && (
+          {userProfile.is_admin === true && (
             <button
               onClick={() => {
                 haptics.impact('medium');

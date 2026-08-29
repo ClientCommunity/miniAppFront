@@ -131,7 +131,7 @@ export const ReferralSettingsModule: React.FC = () => {
       </div>
 
       {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
           <div className="skeleton-glow-box" style={{ height: '240px', borderRadius: '16px' }} />
           <div className="skeleton-glow-box" style={{ height: '240px', borderRadius: '16px' }} />
           <div className="skeleton-glow-box" style={{ height: '240px', borderRadius: '16px' }} />
@@ -203,7 +203,7 @@ export const ReferralSettingsModule: React.FC = () => {
           </div>
 
           {/* 2-Card Grid: Inviter & Referee */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
             {/* Card 1: Inviter (Referrer) Rewards */}
             <div
               style={{
@@ -423,3 +423,4 @@ export const ReferralSettingsModule: React.FC = () => {
     </div>
   );
 };
+

@@ -183,7 +183,7 @@ export const UsersModule: React.FC = () => {
           No users matching search query: "{searchQuery}"
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
           {users.map((u) => (
             <div
               key={u.id}
@@ -480,3 +480,4 @@ export const UsersModule: React.FC = () => {
     </div>
   );
 };
+

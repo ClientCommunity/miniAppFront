@@ -324,7 +324,7 @@ export const WheelSettingsModule: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
           {itemsConfig.map((item) => {
             const pct = getPercent(item.weight);
 
@@ -476,3 +476,4 @@ export const WheelSettingsModule: React.FC = () => {
     </div>
   );
 };
+

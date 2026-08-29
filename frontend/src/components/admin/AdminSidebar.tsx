@@ -49,9 +49,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onSelectT
         padding: '0.5rem 1rem',
         background: '#090d16',
         borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
         boxSizing: 'border-box'
       }}
     >

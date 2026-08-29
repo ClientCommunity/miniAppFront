@@ -573,7 +573,7 @@ export const GiftCodesModule: React.FC = () => {
               No bulk voucher batches found. Click "⚡ Bulk Generate Vouchers" to create one.
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
               {batches.map((b) => (
                 <div
                   key={b.batch_id}
@@ -1560,3 +1560,4 @@ export const GiftCodesModule: React.FC = () => {
     </div>
   );
 };
+

@@ -135,7 +135,7 @@ export const RafflesModule: React.FC = () => {
       {loading ? (
         <div className="skeleton-glow-box" style={{ width: '100%', height: '200px', borderRadius: '16px' }} />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
           {raffles.map((r) => {
             const hasUsdt = r.enable_usd_payment !== false && (r.ticket_price_usd ?? 0.5) > 0;
             const hasStars = r.enable_stars_payment !== false && (r.ticket_price_stars ?? 25) > 0;
@@ -478,3 +478,4 @@ export const RafflesModule: React.FC = () => {
     </div>
   );
 };
+

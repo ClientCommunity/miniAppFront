@@ -171,7 +171,7 @@ export const BroadcastModule: React.FC = () => {
       </div>
 
       {activeTab === 'composer' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1.2fr) minmax(280px, 0.8fr)', gap: '1.25rem', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', alignItems: 'start' }}>
           {/* Form Composer */}
           <form
             onSubmit={handleLaunchBroadcast}

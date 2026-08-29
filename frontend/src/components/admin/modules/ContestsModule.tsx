@@ -144,7 +144,7 @@ export const ContestsModule: React.FC = () => {
       {loading ? (
         <div className="skeleton-glow-box" style={{ width: '100%', height: '200px', borderRadius: '16px' }} />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
           {contests.map((c) => (
             <div
               key={c.id}
@@ -383,3 +383,4 @@ export const ContestsModule: React.FC = () => {
     </div>
   );
 };
+
