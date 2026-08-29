@@ -16,7 +16,8 @@ import {
   getInitialUserProfile,
   authenticateTelegram,
   fetchUserProfile,
-  getInvoiceStatus
+  getInvoiceStatus,
+  fetchDailyRewardsData
 } from './services/dataService';
 import { syncUserBalance } from './utils/syncUser';
 import { profileEventBus } from './utils/profileEvents';
@@ -66,6 +67,7 @@ function App() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [showDailyRewards, setShowDailyRewards] = useState(false);
+  const [canClaimDaily, setCanClaimDaily] = useState<boolean>(true);
   const [showGiftModal, setShowGiftModal] = useState(false);
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [showContestModal, setShowContestModal] = useState(false);
@@ -179,14 +181,45 @@ function App() {
     };
   }, []);
 
+  // Daily Streak Reward Status & Once-per-day 10s auto-popup check
   useEffect(() => {
-    // Show Daily Rewards after 10 seconds
-    const timer = setTimeout(() => {
-      setShowDailyRewards(true);
-    }, 10000);
+    let popupTimer: any = null;
 
-    return () => clearTimeout(timer);
-  }, []);
+    const checkDailyStatus = async () => {
+      try {
+        const dailyData = await fetchDailyRewardsData(true);
+        if (dailyData) {
+          const canClaim = !!dailyData.canClaimToday;
+          setCanClaimDaily(canClaim);
+
+          if (canClaim) {
+            const userId = userProfile.telegram_id || userProfile.id || 'guest';
+            const serverDate = dailyData.serverDate || new Date().toISOString().slice(0, 10);
+            const storageKey = `daily_popup_shown_${userId}_${serverDate}`;
+            const hasShownToday = localStorage.getItem(storageKey) === 'true';
+
+            if (!hasShownToday) {
+              // Mark popup as presented for today so subsequent opens/reloads do NOT pop up
+              localStorage.setItem(storageKey, 'true');
+
+              // Auto-popup after 10 seconds only on first open of the day
+              popupTimer = setTimeout(() => {
+                setShowDailyRewards(true);
+              }, 10000);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Daily rewards status check error:', err);
+      }
+    };
+
+    checkDailyStatus();
+
+    return () => {
+      if (popupTimer) clearTimeout(popupTimer);
+    };
+  }, [userProfile.telegram_id, userProfile.id]);
 
   // Telegram Authentication & Deep-Link Referral Boot Sync
   useEffect(() => {
@@ -811,21 +844,29 @@ function App() {
 
         {/* Right Column (3 Cards Vertical) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.78rem', justifyContent: 'center', flexShrink: 0 }}>
-          {RIGHT_CARDS.map(card => (
-            <FeatureCard
-              key={card.title}
-              {...card}
-              onClick={
-                card.title === '+ Spins'
-                  ? () => navigateTo('tasks')
-                  : card.title === 'Sign In'
-                    ? () => setShowDailyRewards(true)
-                    : card.title === 'Wallet'
-                      ? () => navigateTo('wallet')
-                      : undefined
-              }
-            />
-          ))}
+          {RIGHT_CARDS.map(card => {
+            const isSignIn = card.title === 'Sign In' || card.title.toLowerCase().includes('sign in') || card.title.toLowerCase().includes('daily');
+            const effectiveBadge = isSignIn ? (canClaimDaily ? '1' : undefined) : card.badge;
+            const effectiveBadgeColor = isSignIn ? 'red' : card.badgeColor;
+
+            return (
+              <FeatureCard
+                key={card.title}
+                {...card}
+                badge={effectiveBadge}
+                badgeColor={effectiveBadgeColor}
+                onClick={
+                  card.title === '+ Spins'
+                    ? () => navigateTo('tasks')
+                    : isSignIn
+                      ? () => setShowDailyRewards(true)
+                      : card.title === 'Wallet'
+                        ? () => navigateTo('wallet')
+                        : undefined
+                }
+              />
+            );
+          })}
         </div>
 
       </div>
@@ -959,6 +1000,7 @@ function App() {
           <DailyRewardsModal
             onClose={() => setShowDailyRewards(false)}
             onClaimSuccess={(gems) => {
+              setCanClaimDaily(false);
               setUserProfile((prev) => ({
                 ...prev,
                 diamonds: prev.diamonds + (gems || 80)

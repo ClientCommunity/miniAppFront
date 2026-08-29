@@ -73,6 +73,8 @@ export interface DailyStreakDay {
 export interface DailyRewardsStatusData {
   currentDay: number;
   canClaimToday: boolean;
+  hasClaimedToday?: boolean;
+  serverDate?: string;
   streakActive: boolean;
   streakBonus: string;
   days: DailyStreakDay[];

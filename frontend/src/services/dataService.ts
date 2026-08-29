@@ -278,6 +278,8 @@ export const fetchDailyRewardsData = async (forceRefresh: boolean = false): Prom
     const normalized: DailyRewardsStatusData = {
       currentDay: raw.currentDay ?? raw.current_day ?? 1,
       canClaimToday: raw.canClaimToday ?? raw.can_claim_today ?? false,
+      hasClaimedToday: raw.hasClaimedToday ?? raw.has_claimed_today ?? !(raw.canClaimToday ?? raw.can_claim_today ?? false),
+      serverDate: raw.serverDate || raw.server_date || new Date().toISOString().slice(0, 10),
       streakActive: raw.streakActive ?? raw.streak_active ?? false,
       streakBonus: raw.streakBonus || raw.streak_bonus || 'Day Streak',
       days: rawDays.map((d: any, idx: number) => ({
