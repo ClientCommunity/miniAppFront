@@ -99,7 +99,7 @@ export interface CreateRafflePayload {
 }
 
 // 4. Tasks & Connected Chats
-export type AdminTaskType = 'external_link' | 'invite_count' | 'spin_count' | 'level_reach' | 'telegram_channel';
+export type AdminTaskType = 'external_link' | 'invite_count' | 'spin_count' | 'level_reach' | 'telegram_channel' | 'watch_ad' | 'ad_view';
 
 export interface AdminTask {
   id: number;
@@ -278,6 +278,7 @@ export interface AdminSupportFeedback {
   user_id: number;
   telegram_id: number;
   username: string;
+  email?: string;
   category: 'bug' | 'deposit' | 'withdrawal' | 'spin' | 'general';
   message: string;
   screenshot_url?: string;

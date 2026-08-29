@@ -13,27 +13,38 @@ export const DailyRewardsModule: React.FC = () => {
     setLoading(true);
     try {
       const res = await adminService.getDailyStreakRewards();
-      if (res.data && Array.isArray(res.data)) {
-        // Ensure days 1 to 7 are present
-        const fullDays: AdminDailyStreakDay[] = [];
-        for (let i = 1; i <= 7; i++) {
-          const found = res.data.find((d) => d.day === i);
-          if (found) {
-            fullDays.push(found);
-          } else {
-            fullDays.push({
-              day: i,
-              reward_gems: i === 7 ? 6000 : i === 3 ? 200 : 80,
-              reward_spins: i === 7 ? 5 : i === 3 ? 1 : 0,
-              reward_usd: i === 7 ? 0.5 : 0.0,
-              label: i === 7 ? 'MEGA +6000 💎 + 5 Spins + $0.50' : `+80 💎`,
-              icon: i === 7 || i === 3 ? './assets/giftIconInDailySignIn.png' : './assets/purple-diamond.png',
-              is_mega: i === 7
-            });
-          }
+      const rawData = res.data;
+      const daysList: AdminDailyStreakDay[] = Array.isArray(rawData)
+        ? rawData
+        : (rawData as any)?.days || (rawData as any)?.items || [];
+
+      // Ensure days 1 to 7 are present
+      const fullDays: AdminDailyStreakDay[] = [];
+      for (let i = 1; i <= 7; i++) {
+        const found = daysList.find((d) => Number(d.day) === i);
+        if (found) {
+          fullDays.push({
+            ...found,
+            reward_gems: Number(found.reward_gems ?? (found as any).rewardDiamonds ?? (found as any).rewardGems ?? (i === 7 ? 6000 : 80)),
+            reward_spins: Number(found.reward_spins ?? (found as any).rewardSpins ?? (i === 7 ? 5 : 0)),
+            reward_usd: Number(found.reward_usd ?? (found as any).rewardUsd ?? (i === 7 ? 0.5 : 0.0)),
+            label: found.label || (i === 7 ? 'MEGA +6000 💎 + 5 Spins + $0.50' : `+${found.reward_gems || 80} 💎`),
+            icon: found.icon || (i === 7 || i === 3 ? './assets/giftIconInDailySignIn.png' : './assets/purple-diamond.png'),
+            is_mega: Boolean(found.is_mega ?? (found as any).isMega ?? i === 7)
+          });
+        } else {
+          fullDays.push({
+            day: i,
+            reward_gems: i === 7 ? 6000 : i === 3 ? 200 : 80,
+            reward_spins: i === 7 ? 5 : i === 3 ? 1 : 0,
+            reward_usd: i === 7 ? 0.5 : 0.0,
+            label: i === 7 ? 'MEGA +6000 💎 + 5 Spins + $0.50' : `+80 💎`,
+            icon: i === 7 || i === 3 ? './assets/giftIconInDailySignIn.png' : './assets/purple-diamond.png',
+            is_mega: i === 7
+          });
         }
-        setDays(fullDays);
       }
+      setDays(fullDays);
     } catch (err: any) {
       notifyToast(`Failed to load streak rewards: ${err?.message || 'Error'}`, 'error', 3500);
     } finally {
@@ -64,7 +75,7 @@ export const DailyRewardsModule: React.FC = () => {
           reward_spins: Number(d.reward_spins) || 0,
           reward_usd: Number(d.reward_usd) || 0,
           label: d.label?.trim() || `Day ${d.day} Reward`,
-          icon: d.icon || './assets/purple-diamond.png',
+          icon: d.icon || (d.day === 7 || d.day === 3 ? './assets/giftIconInDailySignIn.png' : './assets/purple-diamond.png'),
           is_mega: Boolean(d.is_mega)
         }))
       };
@@ -72,8 +83,12 @@ export const DailyRewardsModule: React.FC = () => {
       const res = await adminService.updateDailyStreakRewards(payload);
       if (res.success) {
         haptics.notification('success');
-        notifyToast('📅 7-Day Rewards Ladder saved successfully!', 'success', 3500);
-        loadDays();
+        // Clear session cache so players get fresh streak definitions immediately
+        try {
+          sessionStorage.removeItem('cached_daily_rewards');
+        } catch {}
+        notifyToast(`📅 Saved 7-Day Rewards Ladder! Day 1: +${payload.days[0].reward_gems} 💎, Day 7: +${payload.days[6].reward_gems} 💎`, 'success', 4000);
+        await loadDays();
       } else {
         haptics.notification('error');
         notifyToast(`Save failed: ${res.error || res.message}`, 'error', 3500);

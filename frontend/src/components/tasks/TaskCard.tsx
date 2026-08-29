@@ -11,6 +11,7 @@ export interface TaskCardProps {
   onClaim?: () => void;
   onOpenTelegramModal?: (task: TaskItem) => void;
   onVerifyTelegram?: (task: TaskItem) => void;
+  onWatchAd?: (task: TaskItem) => void;
 }
 
 export const TaskCard: FC<TaskCardProps> = ({
@@ -18,16 +19,18 @@ export const TaskCard: FC<TaskCardProps> = ({
   isVerifying = false,
   onClaim,
   onOpenTelegramModal,
-  onVerifyTelegram
+  onVerifyTelegram,
+  onWatchAd
 }) => {
   const [isBtnPressed, setIsBtnPressed] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
 
   const effectiveType = task.taskType || task.task_type || (task.channelId || task.channel_id ? 'telegram_channel' : task.category === 'socials' ? 'external_link' : 'external_link');
+  const isWatchAd = effectiveType === 'watch_ad' || effectiveType === 'ad_view';
   const isMilestone = effectiveType === 'invite_count' || effectiveType === 'spin_count' || effectiveType === 'level_reach';
   const isTelegramChannel = effectiveType === 'telegram_channel';
-  const isExternalLink = effectiveType === 'external_link' || (!isMilestone && !isTelegramChannel);
+  const isExternalLink = !isWatchAd && !isMilestone && !isTelegramChannel;
 
   const currentProgress = task.progress?.current ?? 0;
   const totalProgress = task.progress?.total ?? task.targetCount ?? task.target_count ?? 1;
@@ -59,6 +62,16 @@ export const TaskCard: FC<TaskCardProps> = ({
 
     if (task.onAction) {
       task.onAction();
+      return;
+    }
+
+    // Type 4: Watch Rewarded Ad
+    if (isWatchAd) {
+      if (onWatchAd) {
+        onWatchAd(task);
+      } else if (onClaim) {
+        onClaim();
+      }
       return;
     }
 
@@ -130,6 +143,10 @@ export const TaskCard: FC<TaskCardProps> = ({
     }
     if (isCompleted) return 'Done ✓';
 
+    if (isWatchAd) {
+      return '🎬 Watch Ad & Claim';
+    }
+
     if (isTelegramChannel) {
       if (isVerifyingStatus) {
         return 'Check / Verify 🔍';
@@ -158,9 +175,10 @@ export const TaskCard: FC<TaskCardProps> = ({
   };
 
   const isBtnGlowing = (!isCompleted && !isVerifying) && (
-    (isTelegramChannel && isVerifyingStatus) ||
+    isWatchAd ||
     (isMilestone && isMilestoneCompleted) ||
-    (isExternalLink && isUnlocked)
+    (isExternalLink && isUnlocked) ||
+    (isTelegramChannel && isVerifyingStatus)
   );
 
   const isBtnDisabled = isVerifying || isCompleted || (isMilestone && !isMilestoneCompleted) || (isExternalLink && countdown !== null);

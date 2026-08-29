@@ -150,6 +150,9 @@ export const TasksModule: React.FC = () => {
 
   const getTaskTypeBadge = (type?: AdminTaskType) => {
     switch (type) {
+      case 'watch_ad':
+      case 'ad_view':
+        return { label: '🎬 AdsGram Rewarded Ad', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.2)' };
       case 'telegram_channel':
         return { label: '📢 Telegram Channel', color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.15)' };
       case 'invite_count':
@@ -445,7 +448,10 @@ export const TasksModule: React.FC = () => {
                   value={taskType}
                   onChange={(e: any) => {
                     setTaskType(e.target.value);
-                    if (e.target.value === 'telegram_channel') setIcon('📢');
+                    if (e.target.value === 'watch_ad') {
+                      setIcon('🎬');
+                      setCategory('daily');
+                    } else if (e.target.value === 'telegram_channel') setIcon('📢');
                     else if (e.target.value === 'invite_count') setIcon('👥');
                     else if (e.target.value === 'spin_count') setIcon('🎡');
                     else if (e.target.value === 'level_reach') setIcon('🏆');
@@ -461,6 +467,7 @@ export const TasksModule: React.FC = () => {
                     fontWeight: 700
                   }}
                 >
+                  <option value="watch_ad">🎬 Type 4: Watch Rewarded Ad (AdsGram 2x/Daily Reward)</option>
                   <option value="telegram_channel">📢 Type 3: Join Telegram Channel / Group (2-Step Verification)</option>
                   <option value="external_link">🔗 Type 1: External Link / Partner Visit (15s Countdown)</option>
                   <option value="invite_count">👥 Type 2: Invite Friends Milestone</option>

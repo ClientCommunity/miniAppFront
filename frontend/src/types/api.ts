@@ -189,8 +189,7 @@ export interface BuyRaffleTicketPayload {
   payment_method: 'usdt' | 'stars' | 'gems';
 }
 
-// Tasks
-export type TaskType = 'external_link' | 'invite_count' | 'spin_count' | 'level_reach' | 'telegram_channel';
+export type TaskType = 'external_link' | 'invite_count' | 'spin_count' | 'level_reach' | 'telegram_channel' | 'watch_ad' | 'ad_view' | string;
 
 export interface TaskItemData {
   id: string;

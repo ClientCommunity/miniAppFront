@@ -31,9 +31,18 @@ export const RafflesModule: React.FC = () => {
     setLoading(true);
     try {
       const res = await adminService.getRaffles();
-      if (res.data) setRaffles(res.data);
+      const raw = res?.data;
+      let list: AdminRaffle[] = [];
+      if (Array.isArray(raw)) {
+        list = raw;
+      } else if (raw && typeof raw === 'object') {
+        const potential = (raw as any).raffles || (raw as any).items || (raw as any).data;
+        if (Array.isArray(potential)) list = potential;
+      }
+      setRaffles(list);
     } catch (err: any) {
       notifyToast(`Failed to load raffles: ${err.message}`, 'error', 3000);
+      setRaffles([]);
     } finally {
       setLoading(false);
     }

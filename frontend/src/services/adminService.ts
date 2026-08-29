@@ -234,7 +234,18 @@ export const adminService = {
   // 3. RAFFLES & LOTTERIES MANAGER
   // --------------------------------------------------------------------------
   async getRaffles(): Promise<ApiResponse<AdminRaffle[]>> {
-    const res = await api.get<AdminRaffle[]>('/admin/raffles');
+    const res = await api.get<any>('/admin/raffles');
+    if (res.success && res.data) {
+      if (Array.isArray(res.data)) {
+        return res;
+      }
+      if (Array.isArray(res.data.raffles)) {
+        return { ...res, data: res.data.raffles };
+      }
+      if (Array.isArray(res.data.items)) {
+        return { ...res, data: res.data.items };
+      }
+    }
     if (!res.success) {
       return {
         success: true,

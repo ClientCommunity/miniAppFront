@@ -24,7 +24,7 @@ export interface TaskItem {
   progress?: { current: number; total: number };
   targetCount?: number;
   target_count?: number;
-  status?: 'pending' | 'verifying' | 'checking' | 'completed' | 'claimed';
+  status?: 'pending' | 'verifying' | 'checking' | 'completed' | 'claimed' | 'ready';
   verificationSeconds?: number;
   verification_seconds?: number;
   actionUrl?: string;

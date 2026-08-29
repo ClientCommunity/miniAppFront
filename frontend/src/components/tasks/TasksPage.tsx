@@ -16,6 +16,7 @@ import {
   verifyTask,
   claimTaskReward
 } from '../../services/dataService';
+import { showRewardedAd } from '../../services/adController';
 
 export interface TasksPageProps {
   onBack: () => void;
@@ -196,10 +197,72 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack, userProfile, onUpdatePro
     }
   };
 
-  const filteredTasks = tasks.filter(t => {
-    if (activeCategory === 'all') return true;
-    return t.category === activeCategory;
-  });
+  // Type 4: Watch Rewarded Ad Task
+  const handleWatchAdTask = async (task: TaskItem) => {
+    if (verifyingTaskId) return;
+    setVerifyingTaskId(task.id);
+    haptics.impact('heavy');
+
+    const adResult = await showRewardedAd();
+    if (!adResult.success) {
+      setVerifyingTaskId(null);
+      notifyToast(`⚠️ ${adResult.error || 'Please finish watching the full ad to claim your reward!'}`, 'info', 4000);
+      return;
+    }
+
+    haptics.notification('success');
+    haptics.playWinSound();
+    throwConfetti();
+
+    try {
+      const res = await claimTaskReward(task.id);
+      if (res.success) {
+        const rewardGems = res.reward_diamonds ?? task.rewardGems ?? task.reward_gems ?? 100;
+        const rewardSpins = res.reward_spins ?? task.rewardSpins ?? task.reward_spins ?? 1;
+        const spinText = rewardSpins > 0 ? ` and +${rewardSpins} Spin${rewardSpins > 1 ? 's' : ''}` : '';
+        notifyToast(`🎬 Ad Verified! Claimed +${rewardGems} 💎${spinText}!`, 'success', 4000);
+
+        // Remove claimed task from list
+        setTasks(prev => prev.filter(t => t.id !== task.id));
+
+        if (res.user) {
+          onUpdateProfile?.(res.user);
+        } else {
+          onUpdateProfile?.({
+            diamonds: (userProfile?.diamonds ?? 0) + rewardGems,
+            spins: (userProfile?.spins ?? 0) + rewardSpins
+          });
+        }
+      } else {
+        notifyToast(res.message || '⚠️ Could not claim ad reward.', 'error', 3500);
+      }
+    } catch (err: any) {
+      notifyToast(`Error: ${err?.message || 'Server error'}`, 'error', 3500);
+    } finally {
+      setVerifyingTaskId(null);
+    }
+  };
+
+  const isTaskReadyToClaim = (t: TaskItem): boolean => {
+    const cur = t.progress?.current ?? 0;
+    const tot = t.progress?.total ?? t.targetCount ?? t.target_count ?? 1;
+    if (tot > 1 && cur >= tot) return true;
+    if (t.status === 'ready' || (t.status === 'verifying' && (!t.verificationSeconds || t.verificationSeconds <= 0))) return true;
+    return false;
+  };
+
+  const filteredTasks = tasks
+    .filter(t => {
+      if (activeCategory === 'all') return true;
+      return t.category === activeCategory;
+    })
+    .sort((a, b) => {
+      const aReady = isTaskReadyToClaim(a);
+      const bReady = isTaskReadyToClaim(b);
+      if (aReady && !bReady) return -1;
+      if (!aReady && bReady) return 1;
+      return 0;
+    });
 
   return (
     <div
@@ -558,6 +621,7 @@ export const TasksPage: FC<TasksPageProps> = ({ onBack, userProfile, onUpdatePro
                     onClaim={() => handleTaskClaim(task.id)}
                     onOpenTelegramModal={handleOpenTelegramModal}
                     onVerifyTelegram={handleVerifyTelegram}
+                    onWatchAd={handleWatchAdTask}
                   />
                 ))}
               </div>

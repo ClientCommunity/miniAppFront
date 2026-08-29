@@ -298,6 +298,33 @@ export const GiftCodesModule: React.FC = () => {
         </div>
       </div>
 
+      {/* Quick Info & Guide */}
+      <div
+        style={{
+          background: 'rgba(56, 189, 248, 0.08)',
+          border: '1px solid rgba(56, 189, 248, 0.25)',
+          borderRadius: '12px',
+          padding: '0.85rem 1rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.45rem',
+          fontSize: '0.8rem',
+          color: '#cbd5e1'
+        }}
+      >
+        <div style={{ color: '#38bdf8', fontWeight: 800, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <span>💡</span> <span>Quick Guide: Promo Codes vs Bulk Vouchers</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.65rem' }}>
+          <div style={{ background: 'rgba(0,0,0,0.25)', padding: '0.5rem 0.75rem', borderRadius: '8px' }}>
+            <b style={{ color: '#ffffff' }}>🏷️ Option A: Custom Code</b> (e.g. <code>SUMMER2026</code>) — Share one code in Telegram chats or channels. Many players can each claim it once.
+          </div>
+          <div style={{ background: 'rgba(0,0,0,0.25)', padding: '0.5rem 0.75rem', borderRadius: '8px' }}>
+            <b style={{ color: '#ffffff' }}>⚡ Option B: Bulk Vouchers</b> (e.g. <code>VIP-9821</code>) — Auto-generate 50–500 unique single-use voucher codes to distribute individually via CSV export.
+          </div>
+        </div>
+      </div>
+
       {/* Main Module Tabs (Active Codes vs Bulk Batches) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div style={{ display: 'flex', gap: '0.4rem', background: 'rgba(0, 0, 0, 0.35)', padding: '0.3rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
@@ -721,14 +748,17 @@ export const GiftCodesModule: React.FC = () => {
           <div
             style={{
               width: '100%',
-              maxWidth: '460px',
+              maxWidth: 'min(95vw, 460px)',
               background: 'linear-gradient(180deg, #111827 0%, #090d16 100%)',
               border: '1px solid rgba(255, 255, 255, 0.15)',
               borderRadius: '18px',
               padding: '1.5rem',
               color: '#ffffff',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              maxHeight: '90vh',
+              overflowY: 'auto'
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -938,14 +968,17 @@ export const GiftCodesModule: React.FC = () => {
           <div
             style={{
               width: '100%',
-              maxWidth: '480px',
+              maxWidth: 'min(95vw, 480px)',
               background: 'linear-gradient(180deg, #111827 0%, #090d16 100%)',
               border: '1px solid rgba(255, 255, 255, 0.15)',
               borderRadius: '18px',
-              padding: '1.5rem',
+              padding: '1.25rem',
               color: '#ffffff',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              maxHeight: '90vh',
+              overflowY: 'auto'
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>

@@ -8,6 +8,9 @@ export const SupportModule: React.FC = () => {
   const [feedbackList, setFeedbackList] = useState<AdminSupportFeedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'open' | 'resolved'>('open');
+  const [inspectTicket, setInspectTicket] = useState<AdminSupportFeedback | null>(null);
+  const [adminNotes, setAdminNotes] = useState('Resolved after review');
+  const [resolving, setResolving] = useState(false);
 
   const loadFeedback = async () => {
     setLoading(true);
@@ -35,17 +38,18 @@ export const SupportModule: React.FC = () => {
     loadFeedback();
   }, []);
 
-  const handleResolve = async (item: AdminSupportFeedback) => {
-    const notes = window.prompt('Enter internal admin notes (optional):', 'Resolved after review');
-    if (notes === null) return;
-
+  const handleResolve = async (item: AdminSupportFeedback, notes?: string) => {
+    setResolving(true);
     try {
       haptics.notification('success');
-      await adminService.resolveSupportFeedback(item.id, notes);
-      notifyToast('✓ Ticket marked as resolved!', 'success', 3000);
+      await adminService.resolveSupportFeedback(item.id, notes || 'Resolved after review');
+      notifyToast('✓ Ticket marked as resolved and user notified!', 'success', 3500);
+      setInspectTicket(null);
       loadFeedback();
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3000);
+    } finally {
+      setResolving(false);
     }
   };
 
@@ -56,14 +60,16 @@ export const SupportModule: React.FC = () => {
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontFamily: 'Outfit, sans-serif' }}>
       {/* Header & Filter */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
           <h2 style={{ margin: 0, color: '#ffffff', fontSize: '1.3rem', fontWeight: 800 }}>
             📩 Support & Feedback Inbox
           </h2>
-          <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Review player inquiries, bug reports, and transaction issues</span>
+          <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
+            Click any ticket to read full details, inspect screenshots, and resolve with user feedback
+          </span>
         </div>
 
         <div style={{ display: 'flex', gap: '0.4rem' }}>
@@ -74,7 +80,7 @@ export const SupportModule: React.FC = () => {
               style={{
                 background: filter === st ? 'rgba(56, 189, 248, 0.25)' : 'rgba(0, 0, 0, 0.3)',
                 color: filter === st ? '#38bdf8' : '#94a3b8',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                border: filter === st ? '1px solid rgba(56, 189, 248, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '8px',
                 padding: '0.35rem 0.75rem',
                 fontSize: '0.78rem',
@@ -93,7 +99,7 @@ export const SupportModule: React.FC = () => {
       {loading ? (
         <div className="skeleton-glow-box" style={{ width: '100%', height: '220px', borderRadius: '16px' }} />
       ) : filtered.length === 0 ? (
-        <div style={{ background: 'rgba(15, 23, 42, 0.75)', padding: '2rem', borderRadius: '14px', textAlign: 'center', color: '#94a3b8', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+        <div style={{ background: 'rgba(15, 23, 42, 0.75)', padding: '2.5rem', borderRadius: '14px', textAlign: 'center', color: '#94a3b8', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
           No support tickets in this view.
         </div>
       ) : (
@@ -101,6 +107,11 @@ export const SupportModule: React.FC = () => {
           {filtered.map((item) => (
             <div
               key={item.id}
+              onClick={() => {
+                haptics.selection();
+                setInspectTicket(item);
+                setAdminNotes('Resolved after review');
+              }}
               style={{
                 background: 'rgba(15, 23, 42, 0.75)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -108,10 +119,12 @@ export const SupportModule: React.FC = () => {
                 padding: '1.1rem',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.65rem'
+                gap: '0.65rem',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span
                     style={{
@@ -137,7 +150,7 @@ export const SupportModule: React.FC = () => {
                     {item.category}
                   </span>
                   <span style={{ color: '#ffffff', fontWeight: 700, fontSize: '0.88rem' }}>
-                    @{item.username} (ID: {item.telegram_id})
+                    @{item.username || 'user'} (ID: {item.telegram_id})
                   </span>
                 </div>
 
@@ -146,17 +159,9 @@ export const SupportModule: React.FC = () => {
                 </span>
               </div>
 
-              <p style={{ margin: 0, color: '#e2e8f0', fontSize: '0.85rem', lineHeight: 1.45, background: 'rgba(0,0,0,0.25)', padding: '0.65rem', borderRadius: '8px' }}>
+              <p style={{ margin: 0, color: '#e2e8f0', fontSize: '0.85rem', lineHeight: 1.45, background: 'rgba(0,0,0,0.25)', padding: '0.65rem', borderRadius: '8px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                 {item.message}
               </p>
-
-              {item.screenshot_url && (
-                <div>
-                  <a href={item.screenshot_url} target="_blank" rel="noreferrer" style={{ color: '#38bdf8', fontSize: '0.78rem', textDecoration: 'underline' }}>
-                    🖼️ View Attached Screenshot
-                  </a>
-                </div>
-              )}
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
                 <span
@@ -166,29 +171,220 @@ export const SupportModule: React.FC = () => {
                     fontWeight: 700
                   }}
                 >
-                  {item.is_resolved ? '✓ Resolved' : '⏳ Open / Pending Review'}
+                  {item.is_resolved ? '✓ Resolved' : '⏳ Open / Tap to Read & Reply'}
                 </span>
 
-                {!item.is_resolved && (
-                  <button
-                    onClick={() => handleResolve(item)}
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  {item.screenshot_url && (
+                    <span style={{ color: '#38bdf8', fontSize: '0.75rem', fontWeight: 600 }}>
+                      🖼️ Screenshot
+                    </span>
+                  )}
+                  <span style={{ color: '#38bdf8', fontSize: '0.78rem', fontWeight: 700 }}>
+                    Open Ticket ↗
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Ticket Details & Resolution Modal */}
+      {inspectTicket && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            boxSizing: 'border-box'
+          }}
+          onClick={() => setInspectTicket(null)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '520px',
+              maxHeight: '90vh',
+              background: '#090d16',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '16px',
+              padding: '1.5rem',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.8)',
+              overflowY: 'auto',
+              boxSizing: 'border-box'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '1.3rem' }}>📩</span>
+                <div>
+                  <h3 style={{ margin: 0, color: '#ffffff', fontSize: '1.15rem', fontWeight: 800 }}>
+                    Support Ticket #{inspectTicket.id}
+                  </h3>
+                  <span style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
+                    Received {new Date(inspectTicket.created_at).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setInspectTicket(null)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '1.1rem' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* User Details Box */}
+            <div style={{ background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '0.85rem', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div>
+                  <div style={{ color: '#ffffff', fontWeight: 800, fontSize: '0.92rem' }}>
+                    @{inspectTicket.username || 'user'}
+                  </div>
+                  <div style={{ color: '#38bdf8', fontSize: '0.75rem' }}>
+                    Telegram ID: <code>{inspectTicket.telegram_id}</code>
+                  </div>
+                </div>
+
+                {inspectTicket.username && (
+                  <a
+                    href={`https://t.me/${inspectTicket.username}`}
+                    target="_blank"
+                    rel="noreferrer"
                     style={{
-                      background: 'linear-gradient(135deg, #10b981, #059669)',
-                      border: 'none',
+                      background: 'rgba(56, 189, 248, 0.15)',
+                      border: '1px solid rgba(56, 189, 248, 0.35)',
+                      color: '#38bdf8',
+                      borderRadius: '8px',
+                      padding: '0.35rem 0.65rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem'
+                    }}
+                  >
+                    <span>💬 Open DM in Telegram</span>
+                  </a>
+                )}
+              </div>
+
+              {inspectTicket.email && (
+                <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                  📧 Contact Email: <span style={{ color: '#ffffff' }}>{inspectTicket.email}</span>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.2rem' }}>
+                <span style={{ background: 'rgba(255, 255, 255, 0.08)', color: '#cbd5e1', padding: '0.15rem 0.45rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 700 }}>
+                  Category: {inspectTicket.category}
+                </span>
+                <span style={{ background: inspectTicket.is_resolved ? 'rgba(52, 211, 153, 0.15)' : 'rgba(245, 158, 11, 0.15)', color: inspectTicket.is_resolved ? '#34d399' : '#f59e0b', padding: '0.15rem 0.45rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 700 }}>
+                  Status: {inspectTicket.is_resolved ? 'Resolved' : 'Pending'}
+                </span>
+              </div>
+            </div>
+
+            {/* Message Body */}
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.35rem' }}>
+                Player Message:
+              </label>
+              <div style={{ background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '0.9rem', color: '#ffffff', fontSize: '0.9rem', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                {inspectTicket.message}
+              </div>
+            </div>
+
+            {/* Screenshot Preview */}
+            {inspectTicket.screenshot_url && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.35rem' }}>
+                  Attached Screenshot:
+                </label>
+                <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.15)', background: '#000000', textAlign: 'center' }}>
+                  <img
+                    src={inspectTicket.screenshot_url}
+                    alt="Attached Screenshot"
+                    style={{ maxWidth: '100%', maxHeight: '260px', objectFit: 'contain', display: 'block', margin: '0 auto' }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Resolution Actions */}
+            {!inspectTicket.is_resolved ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                <div>
+                  <label style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.35rem' }}>
+                    Resolution Notes & Bot Notification Message:
+                  </label>
+                  <input
+                    type="text"
+                    value={adminNotes}
+                    onChange={(e) => setAdminNotes(e.target.value)}
+                    placeholder="e.g. Issue investigated and solved. Balance updated!"
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      background: 'rgba(0, 0, 0, 0.45)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
                       borderRadius: '8px',
                       color: '#ffffff',
-                      padding: '0.35rem 0.75rem',
-                      fontSize: '0.78rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                  <button
+                    onClick={() => setInspectTicket(null)}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      color: '#94a3b8',
+                      borderRadius: '8px',
+                      padding: '0.55rem 1rem',
+                      fontSize: '0.82rem',
                       fontWeight: 700,
                       cursor: 'pointer'
                     }}
                   >
-                    Mark Resolved ✓
+                    Close
                   </button>
-                )}
+                  <button
+                    onClick={() => handleResolve(inspectTicket, adminNotes)}
+                    disabled={resolving}
+                    style={{
+                      background: 'linear-gradient(135deg, #10b981, #059669)',
+                      border: 'none',
+                      color: '#ffffff',
+                      borderRadius: '8px',
+                      padding: '0.55rem 1.25rem',
+                      fontSize: '0.82rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)'
+                    }}
+                  >
+                    {resolving ? 'Resolving...' : '✓ Mark Resolved & Send Bot Alert'}
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ) : (
+              <div style={{ background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.3)', padding: '0.75rem', borderRadius: '8px', color: '#34d399', fontSize: '0.82rem', textAlign: 'center', fontWeight: 700 }}>
+                ✓ This inquiry has been resolved.
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

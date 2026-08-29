@@ -85,9 +85,20 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose, onClaim
     try {
       const res = await claimDailyReward(false);
       if (res.success) {
-        const gemsWon = res.data?.rewardGems || 80;
+        const rawData = res.data as any;
+        const gemsWon = rawData?.rewardGems ?? rawData?.reward_diamonds ?? rawData?.reward_gems ?? 80;
+        const spinsWon = rawData?.rewardSpins ?? rawData?.reward_spins ?? 0;
+        const usdWon = rawData?.rewardUSD ?? rawData?.reward_usd ?? rawData?.rewardUsd ?? 0;
+
         onClaimSuccess?.(gemsWon);
-        notifyToast(`🎁 Claimed Day ${currentDay} Reward (+${gemsWon} 💎)!`, 'success', 3000);
+
+        const rewardsList: string[] = [];
+        if (gemsWon > 0) rewardsList.push(`+${gemsWon} 💎`);
+        if (spinsWon > 0) rewardsList.push(`+${spinsWon} Spin${spinsWon > 1 ? 's' : ''}`);
+        if (usdWon > 0) rewardsList.push(`+$${Number(usdWon).toFixed(2)}`);
+        const summary = rewardsList.length > 0 ? rewardsList.join(', ') : `+${gemsWon} 💎`;
+
+        notifyToast(`🎁 Claimed Day ${currentDay} Reward (${summary})!`, 'success', 3500);
       } else {
         notifyToast(`🔴 ${res.message || 'Failed to claim reward'}`, 'error', 4000);
       }
@@ -122,9 +133,20 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose, onClaim
     try {
       const res = await claimDailyReward(true);
       if (res.success) {
-        const gemsWon = res.data?.rewardGems || 160;
+        const rawData = res.data as any;
+        const gemsWon = rawData?.rewardGems ?? rawData?.reward_diamonds ?? rawData?.reward_gems ?? 160;
+        const spinsWon = rawData?.rewardSpins ?? rawData?.reward_spins ?? 0;
+        const usdWon = rawData?.rewardUSD ?? rawData?.reward_usd ?? rawData?.rewardUsd ?? 0;
+
         onClaimSuccess?.(gemsWon);
-        notifyToast(`🎉 2x DOUBLE REWARD (+${gemsWon} 💎)!`, 'success', 4000);
+
+        const rewardsList: string[] = [];
+        if (gemsWon > 0) rewardsList.push(`+${gemsWon} 💎`);
+        if (spinsWon > 0) rewardsList.push(`+${spinsWon} Spin${spinsWon > 1 ? 's' : ''}`);
+        if (usdWon > 0) rewardsList.push(`+$${Number(usdWon).toFixed(2)}`);
+        const summary = rewardsList.length > 0 ? rewardsList.join(', ') : `+${gemsWon} 💎`;
+
+        notifyToast(`🎉 2x DOUBLE REWARD (${summary})!`, 'success', 4000);
       } else {
         notifyToast(`🔴 ${res.message || 'Failed to claim double reward'}`, 'error', 4000);
       }

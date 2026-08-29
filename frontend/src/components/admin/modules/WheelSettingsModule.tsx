@@ -192,9 +192,59 @@ export const WheelSettingsModule: React.FC = () => {
     }
   ];
 
+  const handleNormalize100 = () => {
+    if (totalWeight <= 0) return;
+    haptics.selection();
+    const factor = 100 / totalWeight;
+    const newDiamonds = Math.max(1, Math.round(weightDiamonds * factor));
+    const newCash = Math.max(1, Math.round(weightCash * factor));
+    const newSpinTicket = Math.max(1, Math.round(weightSpinTicket * factor));
+    const newDouble = Math.max(1, Math.round(weightDoubleReward * factor));
+    const newSpinTicket2 = Math.max(1, Math.round(weightSpinTicket2 * factor));
+    const remaining = 100 - (newDiamonds + newCash + newSpinTicket + newDouble + newSpinTicket2);
+    const newGemLarge = Math.max(1, remaining > 0 ? remaining : 1);
+
+    setWeightDiamonds(newDiamonds);
+    setWeightCash(newCash);
+    setWeightSpinTicket(newSpinTicket);
+    setWeightDoubleReward(newDouble);
+    setWeightSpinTicket2(newSpinTicket2);
+    setWeightGemLarge(newGemLarge);
+    notifyToast('✨ Normalized all RNG weights to exact 100% total sum!', 'info', 2500);
+  };
+
+  const applyPreset = (name: 'balanced' | 'engagement' | 'jackpot') => {
+    haptics.selection();
+    if (name === 'balanced') {
+      setWeightDiamonds(30);
+      setWeightCash(25);
+      setWeightSpinTicket(15);
+      setWeightDoubleReward(8);
+      setWeightSpinTicket2(10);
+      setWeightGemLarge(12);
+      notifyToast('Applied "Fair & Balanced" probability curve', 'info', 2500);
+    } else if (name === 'engagement') {
+      setWeightDiamonds(35);
+      setWeightCash(15);
+      setWeightSpinTicket(20);
+      setWeightDoubleReward(10);
+      setWeightSpinTicket2(15);
+      setWeightGemLarge(5);
+      notifyToast('Applied "High Engagement (Extra Spins)" curve', 'info', 2500);
+    } else if (name === 'jackpot') {
+      setWeightDiamonds(20);
+      setWeightCash(30);
+      setWeightSpinTicket(15);
+      setWeightDoubleReward(10);
+      setWeightSpinTicket2(10);
+      setWeightGemLarge(15);
+      notifyToast('Applied "Jackpot Heavy" curve', 'info', 2500);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontFamily: 'Outfit, sans-serif' }}>
-      {/* Header */}
+      {/* Header & Actions */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
           <h2 style={{ margin: 0, color: '#ffffff', fontSize: '1.3rem', fontWeight: 800 }}>
@@ -205,7 +255,22 @@ export const WheelSettingsModule: React.FC = () => {
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={handleNormalize100}
+            style={{
+              background: 'rgba(56, 189, 248, 0.15)',
+              border: '1px solid rgba(56, 189, 248, 0.4)',
+              color: '#38bdf8',
+              borderRadius: '8px',
+              padding: '0.45rem 0.85rem',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              cursor: 'pointer'
+            }}
+          >
+            ⚖️ Normalize to 100%
+          </button>
           <button
             onClick={() => {
               haptics.impact('light');
@@ -215,7 +280,7 @@ export const WheelSettingsModule: React.FC = () => {
             style={{
               background: 'rgba(255, 255, 255, 0.08)',
               border: '1px solid rgba(255, 255, 255, 0.15)',
-              color: '#38bdf8',
+              color: '#cbd5e1',
               borderRadius: '8px',
               padding: '0.45rem 0.85rem',
               fontSize: '0.82rem',
@@ -249,6 +314,56 @@ export const WheelSettingsModule: React.FC = () => {
         </div>
       </div>
 
+      {/* Preset Buttons */}
+      <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <span style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 700 }}>Quick Presets:</span>
+        <button
+          onClick={() => applyPreset('balanced')}
+          style={{
+            background: 'rgba(255, 255, 255, 0.06)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            color: '#e2e8f0',
+            borderRadius: '6px',
+            padding: '0.25rem 0.6rem',
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            cursor: 'pointer'
+          }}
+        >
+          🎯 Fair & Balanced
+        </button>
+        <button
+          onClick={() => applyPreset('engagement')}
+          style={{
+            background: 'rgba(255, 255, 255, 0.06)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            color: '#e2e8f0',
+            borderRadius: '6px',
+            padding: '0.25rem 0.6rem',
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            cursor: 'pointer'
+          }}
+        >
+          🔥 High Engagement
+        </button>
+        <button
+          onClick={() => applyPreset('jackpot')}
+          style={{
+            background: 'rgba(255, 255, 255, 0.06)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            color: '#e2e8f0',
+            borderRadius: '6px',
+            padding: '0.25rem 0.6rem',
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            cursor: 'pointer'
+          }}
+        >
+          💰 Jackpot Heavy
+        </button>
+      </div>
+
       {/* Real-Time Probability Distribution Segmented Bar */}
       <div
         style={{
@@ -267,7 +382,7 @@ export const WheelSettingsModule: React.FC = () => {
             Live Win Probability Distribution
           </span>
           <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 700 }}>
-            Total Weight: <b style={{ color: '#38bdf8' }}>{totalWeight}</b>
+            Total Weight: <b style={{ color: totalWeight === 100 ? '#34d399' : '#38bdf8' }}>{totalWeight}</b> {totalWeight === 100 && <span style={{ color: '#34d399' }}>(100% Exact ✓)</span>}
           </span>
         </div>
 
