@@ -12,7 +12,9 @@ export type AdminTab =
   | 'withdrawals'
   | 'giftcodes'
   | 'sweeps'
-  | 'support';
+  | 'support'
+  | 'subadmins'
+  | 'broadcast';
 
 interface AdminSidebarProps {
   activeTab: AdminTab;
@@ -31,7 +33,9 @@ const TABS: { id: AdminTab; label: string; icon: string }[] = [
   { id: 'withdrawals', label: 'Cashouts', icon: '💸' },
   { id: 'giftcodes', label: 'Gift Codes', icon: '🎁' },
   { id: 'sweeps', label: 'Sweeps', icon: '🔍' },
-  { id: 'support', label: 'Support', icon: '📩' }
+  { id: 'support', label: 'Support', icon: '📩' },
+  { id: 'subadmins', label: 'Sub-Admins', icon: '🛡️' },
+  { id: 'broadcast', label: 'Broadcast', icon: '📢' }
 ];
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onSelectTab }) => {

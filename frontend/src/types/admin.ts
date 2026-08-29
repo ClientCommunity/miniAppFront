@@ -399,3 +399,66 @@ export interface AdminUserLookupData {
   recent_transactions: UserLookupTransaction[];
 }
 
+// 15. Sub-Admin RBAC
+export interface AdminSubAdmin {
+  id: number;
+  telegram_id: number;
+  username?: string;
+  role: string;
+  permissions: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateSubAdminPayload {
+  telegram_id: number;
+  username?: string;
+  role: string;
+  permissions: string[];
+}
+
+export interface UpdateSubAdminPayload {
+  role?: string;
+  permissions?: string[];
+  is_active?: boolean;
+}
+
+// 16. Broadcast Campaigns
+export interface AdminBroadcastButton {
+  text: string;
+  url?: string;
+  callback_data?: string;
+}
+
+export interface AdminBroadcastJob {
+  id: number;
+  target_audience: string;
+  message_text: string;
+  media_url?: string;
+  media_type?: string;
+  buttons?: AdminBroadcastButton[][];
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'failed';
+  total_users: number;
+  sent_count: number;
+  failed_count: number;
+  created_at: string;
+  completed_at?: string;
+}
+
+export interface CreateBroadcastJobPayload {
+  target_audience: string;
+  message_text: string;
+  media_url?: string;
+  media_type?: string;
+  buttons?: AdminBroadcastButton[][];
+}
+
+export interface PreviewBroadcastPayload {
+  target_audience?: string;
+  message_text: string;
+  media_url?: string;
+  media_type?: string;
+  buttons?: AdminBroadcastButton[][];
+}
+

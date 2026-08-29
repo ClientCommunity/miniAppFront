@@ -296,22 +296,24 @@ export const fetchDailyRewardsData = async (forceRefresh: boolean = false): Prom
   return null;
 };
 
-export const claimDailyReward = async (): Promise<{ success: boolean; message?: string; data?: ClaimDailyRewardData }> => {
+export const claimDailyReward = async (isDouble?: boolean): Promise<{ success: boolean; message?: string; data?: ClaimDailyRewardData }> => {
   if (appConfig.useMockData) {
     await new Promise((res) => setTimeout(res, 300));
+    const baseGems = 80;
+    const gems = isDouble ? baseGems * 2 : baseGems;
     return {
       success: true,
-      message: 'Claimed daily reward +80 Diamonds!',
+      message: `Claimed daily reward +${gems} Diamonds!`,
       data: {
         claimedDay: 1,
-        rewardGems: 80,
+        rewardGems: gems,
         txId: `TX-${Date.now()}`,
-        userBalance: { diamonds: 204 }
+        userBalance: { diamonds: 204 + gems }
       }
     };
   }
 
-  const res = await api.post<ClaimDailyRewardData>('/daily-rewards/claim');
+  const res = await api.post<ClaimDailyRewardData>('/daily-rewards/claim', { is_double: !!isDouble, isDouble: !!isDouble });
   if (res.success) {
     syncUserBalance(res.data || res);
     const cached = getCachedDailyRewards();

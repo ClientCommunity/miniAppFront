@@ -27,7 +27,13 @@ import type {
   UpdateWheelSettingsPayload,
   AdminDailyStreakDay,
   AdminDailyStreakSettingsPayload,
-  AdminReferralRewardSettings
+  AdminReferralRewardSettings,
+  AdminSubAdmin,
+  CreateSubAdminPayload,
+  UpdateSubAdminPayload,
+  AdminBroadcastJob,
+  CreateBroadcastJobPayload,
+  PreviewBroadcastPayload
 } from '../types/admin';
 
 // ============================================================================
@@ -1168,6 +1174,48 @@ export const adminService = {
       res = await api.post('/admin/referral-settings', payload);
     }
     return res;
+  },
+
+  // --------------------------------------------------------------------------
+  // 14. SUB-ADMIN RBAC DELEGATION
+  // --------------------------------------------------------------------------
+  async getSubAdmins(): Promise<ApiResponse<AdminSubAdmin[]>> {
+    return api.get<AdminSubAdmin[]>('/admin/sub-admins');
+  },
+
+  async createSubAdmin(payload: CreateSubAdminPayload): Promise<ApiResponse<AdminSubAdmin>> {
+    return api.post<AdminSubAdmin>('/admin/sub-admins', payload);
+  },
+
+  async updateSubAdmin(id: number, payload: UpdateSubAdminPayload): Promise<ApiResponse<AdminSubAdmin>> {
+    return api.put<AdminSubAdmin>(`/admin/sub-admins/${id}`, payload);
+  },
+
+  async deleteSubAdmin(id: number): Promise<ApiResponse<any>> {
+    return api.delete(`/admin/sub-admins/${id}`);
+  },
+
+  // --------------------------------------------------------------------------
+  // 15. BROADCAST CAMPAIGNS & TELEGRAM PUSH
+  // --------------------------------------------------------------------------
+  async getBroadcastJobs(): Promise<ApiResponse<AdminBroadcastJob[]>> {
+    return api.get<AdminBroadcastJob[]>('/admin/broadcast');
+  },
+
+  async createBroadcastJob(payload: CreateBroadcastJobPayload): Promise<ApiResponse<AdminBroadcastJob>> {
+    return api.post<AdminBroadcastJob>('/admin/broadcast', payload);
+  },
+
+  async getBroadcastJob(id: number): Promise<ApiResponse<AdminBroadcastJob>> {
+    return api.get<AdminBroadcastJob>(`/admin/broadcast/${id}`);
+  },
+
+  async cancelBroadcastJob(id: number): Promise<ApiResponse<any>> {
+    return api.post(`/admin/broadcast/${id}/cancel`, {});
+  },
+
+  async previewBroadcast(payload: PreviewBroadcastPayload): Promise<ApiResponse<any>> {
+    return api.post('/admin/broadcast/preview', payload);
   }
 };
 

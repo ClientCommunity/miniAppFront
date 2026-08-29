@@ -8,6 +8,7 @@ import {
   fetchDailyRewardsData,
   claimDailyReward
 } from '../services/dataService';
+import { showRewardedAd, fetchAdsConfig } from '../services/adController';
 import type { DailyRewardsStatusData } from '../types/api';
 
 export interface DailyRewardsModalProps {
@@ -21,6 +22,7 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose, onClaim
   const [loading, setLoading] = useState(() => dailyData === null);
   const [error, setError] = useState<string | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
+  const [adsEnabled, setAdsEnabled] = useState(false);
 
   const loadData = (force: boolean = false) => {
     if (!force && dailyData) {
@@ -48,6 +50,9 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose, onClaim
 
   useEffect(() => {
     loadData();
+    fetchAdsConfig().then((cfg) => {
+      setAdsEnabled(cfg.adsgram_enabled);
+    });
   }, []);
 
   useEffect(() => {
@@ -78,7 +83,7 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose, onClaim
     setDailyData((prev) => (prev ? { ...prev, canClaimToday: false } : null));
 
     try {
-      const res = await claimDailyReward();
+      const res = await claimDailyReward(false);
       if (res.success) {
         const gemsWon = res.data?.rewardGems || 80;
         onClaimSuccess?.(gemsWon);
@@ -88,6 +93,43 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose, onClaim
       }
     } catch (err: any) {
       notifyToast(`🔴 ${err?.message || 'Failed to claim daily reward.'}`, 'error', 4000);
+    }
+
+    setTimeout(() => {
+      handleClose();
+    }, 1200);
+  };
+
+  const handleDoubleClaim = async () => {
+    if (!canClaimToday || isClaiming) return;
+
+    setIsClaiming(true);
+    haptics.impact('heavy');
+
+    const adResult = await showRewardedAd();
+    if (!adResult.success) {
+      setIsClaiming(false);
+      notifyToast(`⚠️ ${adResult.error || 'Please finish watching the full ad to double your reward!'}`, 'info', 4000);
+      return;
+    }
+
+    haptics.notification('success');
+    haptics.playWinSound();
+    throwConfetti();
+
+    setDailyData((prev) => (prev ? { ...prev, canClaimToday: false } : null));
+
+    try {
+      const res = await claimDailyReward(true);
+      if (res.success) {
+        const gemsWon = res.data?.rewardGems || 160;
+        onClaimSuccess?.(gemsWon);
+        notifyToast(`🎉 2x DOUBLE REWARD (+${gemsWon} 💎)!`, 'success', 4000);
+      } else {
+        notifyToast(`🔴 ${res.message || 'Failed to claim double reward'}`, 'error', 4000);
+      }
+    } catch (err: any) {
+      notifyToast(`🔴 ${err?.message || 'Failed to claim double reward.'}`, 'error', 4000);
     }
 
     setTimeout(() => {
@@ -564,7 +606,34 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose, onClaim
               </div>
 
               {/* Action Button Section */}
-              <div style={{ padding: '0 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ padding: '0 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.45rem', width: '100%', boxSizing: 'border-box' }}>
+                {canClaimToday && (adsEnabled || true) && (
+                  <button
+                    onClick={handleDoubleClaim}
+                    disabled={isClaiming}
+                    style={{
+                      width: '100%',
+                      background: 'linear-gradient(180deg, #f59e0b 0%, #d97706 100%)',
+                      color: '#ffffff',
+                      border: '1px solid rgba(254, 240, 138, 0.9)',
+                      borderRadius: '0.75rem',
+                      padding: '0.75rem',
+                      fontSize: '0.94rem',
+                      fontWeight: 900,
+                      fontFamily: 'Georgia, serif',
+                      boxShadow: '0 4px 14px rgba(217, 119, 6, 0.4), inset 0 1px 1px rgba(255,255,255,0.5)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.4rem'
+                    }}
+                  >
+                    <span>🎬</span> Watch Ad & Claim 2x Double Reward! (2x 💎)
+                  </button>
+                )}
+
                 <button
                   onClick={handleClaim}
                   disabled={!canClaimToday || isClaiming}
@@ -576,13 +645,12 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose, onClaim
                     color: canClaimToday ? '#ffffff' : 'rgba(255, 255, 255, 0.45)',
                     border: canClaimToday ? '1px solid rgba(167, 243, 208, 0.8)' : '1px solid rgba(255, 255, 255, 0.15)',
                     borderRadius: '0.75rem',
-                    padding: '0.78rem',
-                    fontSize: '0.96rem',
-                    fontWeight: 900,
+                    padding: canClaimToday ? '0.65rem' : '0.78rem',
+                    fontSize: canClaimToday ? '0.86rem' : '0.96rem',
+                    fontWeight: 800,
                     fontFamily: 'Georgia, serif',
-                    boxShadow: canClaimToday ? '0 4px 14px rgba(0, 168, 84, 0.35), inset 0 1px 1px rgba(255,255,255,0.4)' : 'none',
+                    boxShadow: canClaimToday ? '0 3px 10px rgba(0, 168, 84, 0.25)' : 'none',
                     cursor: canClaimToday ? 'pointer' : 'not-allowed',
-                    marginBottom: '0.5rem',
                     transition: 'all 0.15s ease',
                     display: 'flex',
                     alignItems: 'center',
@@ -591,7 +659,7 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose, onClaim
                   }}
                 >
                   {canClaimToday
-                    ? `Claim Day ${currentDay} Reward 💎`
+                    ? `Claim Standard Day ${currentDay} Reward 💎`
                     : '✓ Claimed Today (Come Back Tomorrow)'}
                 </button>
               </div>

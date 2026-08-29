@@ -375,10 +375,44 @@ export const ContestLeaderboardModal: FC<ContestLeaderboardModalProps> = ({ onCl
                       textAlign: 'center',
                       display: 'flex',
                       flexDirection: 'column',
-                      alignItems: 'center'
+                      alignItems: 'center',
+                      position: 'relative'
                     }}
                   >
-                    <div style={{ fontSize: '1.8rem', marginBottom: '0.2rem' }}>🥈</div>
+                    <div style={{ position: 'relative', marginBottom: '0.35rem' }}>
+                      {second.avatar && (second.avatar.startsWith('http') || second.avatar.startsWith('/') || second.avatar.startsWith('data:')) ? (
+                        <img
+                          src={second.avatar}
+                          alt={second.name}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display = 'none';
+                            if (e.currentTarget.nextElementSibling) {
+                              (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                            }
+                          }}
+                          style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #cbd5e1' }}
+                        />
+                      ) : null}
+                      <div
+                        style={{
+                          width: '42px',
+                          height: '42px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)',
+                          border: '2px solid #cbd5e1',
+                          display: second.avatar && (second.avatar.startsWith('http') || second.avatar.startsWith('/') || second.avatar.startsWith('data:')) ? 'none' : 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 900,
+                          color: 'white',
+                          fontSize: '0.9rem'
+                        }}
+                      >
+                        {second.avatar && second.avatar.length <= 4 && !second.avatar.startsWith('http') ? second.avatar : (second.name ? second.name.substring(0, 2).toUpperCase() : '🥈')}
+                      </div>
+                      <span style={{ position: 'absolute', bottom: '-6px', right: '-6px', fontSize: '1rem' }}>🥈</span>
+                    </div>
+
                     <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '85px' }}>
                       {second.name}
                     </div>
@@ -407,10 +441,44 @@ export const ContestLeaderboardModal: FC<ContestLeaderboardModalProps> = ({ onCl
                       flexDirection: 'column',
                       alignItems: 'center',
                       transform: 'scale(1.06)',
-                      zIndex: 2
+                      zIndex: 2,
+                      position: 'relative'
                     }}
                   >
-                    <div style={{ fontSize: '2.2rem', marginBottom: '0.2rem' }}>👑</div>
+                    <div style={{ position: 'relative', marginBottom: '0.35rem' }}>
+                      {first.avatar && (first.avatar.startsWith('http') || first.avatar.startsWith('/') || first.avatar.startsWith('data:')) ? (
+                        <img
+                          src={first.avatar}
+                          alt={first.name}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display = 'none';
+                            if (e.currentTarget.nextElementSibling) {
+                              (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                            }
+                          }}
+                          style={{ width: '52px', height: '52px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #fbbf24' }}
+                        />
+                      ) : null}
+                      <div
+                        style={{
+                          width: '52px',
+                          height: '52px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #f59e0b 0%, #b45309 100%)',
+                          border: '2px solid #fbbf24',
+                          display: first.avatar && (first.avatar.startsWith('http') || first.avatar.startsWith('/') || first.avatar.startsWith('data:')) ? 'none' : 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 900,
+                          color: 'white',
+                          fontSize: '1.1rem'
+                        }}
+                      >
+                        {first.avatar && first.avatar.length <= 4 && !first.avatar.startsWith('http') ? first.avatar : (first.name ? first.name.substring(0, 2).toUpperCase() : '👑')}
+                      </div>
+                      <span style={{ position: 'absolute', bottom: '-6px', right: '-6px', fontSize: '1.3rem' }}>👑</span>
+                    </div>
+
                     <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '95px' }}>
                       {first.name}
                     </div>
@@ -436,10 +504,44 @@ export const ContestLeaderboardModal: FC<ContestLeaderboardModalProps> = ({ onCl
                       textAlign: 'center',
                       display: 'flex',
                       flexDirection: 'column',
-                      alignItems: 'center'
+                      alignItems: 'center',
+                      position: 'relative'
                     }}
                   >
-                    <div style={{ fontSize: '1.8rem', marginBottom: '0.2rem' }}>🥉</div>
+                    <div style={{ position: 'relative', marginBottom: '0.35rem' }}>
+                      {third.avatar && (third.avatar.startsWith('http') || third.avatar.startsWith('/') || third.avatar.startsWith('data:')) ? (
+                        <img
+                          src={third.avatar}
+                          alt={third.name}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display = 'none';
+                            if (e.currentTarget.nextElementSibling) {
+                              (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                            }
+                          }}
+                          style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #d97706' }}
+                        />
+                      ) : null}
+                      <div
+                        style={{
+                          width: '42px',
+                          height: '42px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #b45309 0%, #78350f 100%)',
+                          border: '2px solid #d97706',
+                          display: third.avatar && (third.avatar.startsWith('http') || third.avatar.startsWith('/') || third.avatar.startsWith('data:')) ? 'none' : 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 900,
+                          color: 'white',
+                          fontSize: '0.9rem'
+                        }}
+                      >
+                        {third.avatar && third.avatar.length <= 4 && !third.avatar.startsWith('http') ? third.avatar : (third.name ? third.name.substring(0, 2).toUpperCase() : '🥉')}
+                      </div>
+                      <span style={{ position: 'absolute', bottom: '-6px', right: '-6px', fontSize: '1rem' }}>🥉</span>
+                    </div>
+
                     <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '85px' }}>
                       {third.name}
                     </div>
@@ -462,37 +564,69 @@ export const ContestLeaderboardModal: FC<ContestLeaderboardModalProps> = ({ onCl
                     Top Participants
                   </div>
 
-                  {otherRankings.map((u) => (
-                    <div
-                      key={u.rank}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '0.65rem 0.9rem',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        borderRadius: '0.85rem'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'rgba(255,255,255,0.6)', width: '22px' }}>
-                          #{u.rank}
-                        </span>
-                        <span style={{ fontSize: '1.2rem' }}>{u.avatar || '⭐'}</span>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#ffffff' }}>{u.name}</span>
-                          <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>
-                            {u.spins !== undefined ? u.spins : (u.referrals !== undefined ? u.referrals : u.score || 0)} {metricLabel.toLowerCase()}
+                  {otherRankings.map((u) => {
+                    const isImg = u.avatar && (u.avatar.startsWith('http') || u.avatar.startsWith('/') || u.avatar.startsWith('data:'));
+                    return (
+                      <div
+                        key={u.rank}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0.65rem 0.9rem',
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '0.85rem'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'rgba(255,255,255,0.6)', width: '22px' }}>
+                            #{u.rank}
                           </span>
+                          {isImg ? (
+                            <img
+                              src={u.avatar}
+                              alt={u.name}
+                              onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = 'none';
+                                if (e.currentTarget.nextElementSibling) {
+                                  (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                                }
+                              }}
+                              style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.2)' }}
+                            />
+                          ) : null}
+                          <div
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '50%',
+                              background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                              border: '1px solid rgba(255,255,255,0.2)',
+                              display: isImg ? 'none' : 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 800,
+                              color: 'white',
+                              fontSize: '0.75rem'
+                            }}
+                          >
+                            {u.avatar && u.avatar.length <= 4 && !u.avatar.startsWith('http') ? u.avatar : (u.name ? u.name.substring(0, 2).toUpperCase() : '⭐')}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#ffffff' }}>{u.name}</span>
+                            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>
+                              {u.spins !== undefined ? u.spins : (u.referrals !== undefined ? u.referrals : u.score || 0)} {metricLabel.toLowerCase()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#34d399' }}>
+                          {u.prize}
                         </div>
                       </div>
-
-                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#34d399' }}>
-                        {u.prize}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </>
