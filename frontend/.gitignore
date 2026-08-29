@@ -12,13 +12,26 @@ dist
 dist-ssr
 *.local
 
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+.env.local
+.env.*.local
+
+# Agent Metadata & Workspace Artifacts
+.agents/
+.agent/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
