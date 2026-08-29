@@ -17,7 +17,8 @@ import {
   authenticateTelegram,
   fetchUserProfile,
   getInvoiceStatus,
-  fetchDailyRewardsData
+  fetchDailyRewardsData,
+  fetchTasksPageData
 } from './services/dataService';
 import { syncUserBalance } from './utils/syncUser';
 import { profileEventBus } from './utils/profileEvents';
@@ -43,7 +44,6 @@ const CryptoDepositInvoiceModal = lazy(() => import('./components/raffle/CryptoD
 import adminService from './services/adminService';
 
 const WHEEL_SEGMENTS = getInitialWheelSegments();
-const MOCK_TASKS = getInitialMockTasksBanner();
 const FEATURE_CARDS = getInitialFeatureCards();
 const LEFT_CARDS = FEATURE_CARDS.left as Array<{
   title: string;
@@ -83,6 +83,7 @@ function App() {
     value: string;
   } | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile>(() => getInitialUserProfile());
+  const [bannerTasks, setBannerTasks] = useState<any[]>(() => getInitialMockTasksBanner());
 
   const navigateTo = (page: 'main' | 'raffle' | 'tasks' | 'wallet') => {
     haptics.impact('light');
@@ -283,6 +284,62 @@ function App() {
         notifyToast(`🔴 Failed to authenticate on server: ${res.error || 'Check backend'}`, 'error', 5000);
       }
     });
+
+    // Fetch active dynamic tasks to populate home screen task banner carousel
+    fetchTasksPageData()
+      .then((data) => {
+        if (data && data.tasks && data.tasks.length > 0) {
+          // Filter uncompleted tasks
+          const active = data.tasks.filter((t: any) => t.status !== 'claimed' && t.status !== 'completed');
+          const candidatePool = active.length > 0 ? active : data.tasks;
+
+          // Pick up to 3 random or latest active tasks
+          const shuffled = [...candidatePool].sort(() => 0.5 - Math.random());
+          const selected = shuffled.slice(0, 3);
+
+          const mapped = selected.map((t: any) => {
+            const rewardDiamonds = t.reward_diamonds ?? t.reward_gems ?? t.rewardGems ?? 0;
+            const rewardSpins = t.reward_spins ?? t.rewardSpins ?? 0;
+            const rewardAmount = rewardDiamonds > 0 ? rewardDiamonds : (rewardSpins > 0 ? rewardSpins : 50);
+            const rewardIcon = rewardSpins > 0 ? './assets/ticket_animated.gif' : './assets/diamond_animated.gif';
+
+            let icon = '🎯';
+            if (t.task_type === 'telegram_join' || t.taskType === 'telegram_join' || t.category === 'socials') {
+              icon = '📣';
+            } else if (t.task_type === 'ad_reward' || t.taskType === 'ad_reward') {
+              icon = '📺';
+            } else if (t.category === 'daily') {
+              icon = '📅';
+            } else if (t.task_type === 'spin_count') {
+              icon = '🎡';
+            } else if (t.task_type === 'invite_friends') {
+              icon = '👥';
+            }
+
+            let subtitle = 'Complete task & earn';
+            if (t.category === 'socials') subtitle = 'Join & stay updated';
+            else if (t.task_type === 'ad_reward' || t.taskType === 'ad_reward') subtitle = 'Watch quick ad to earn';
+            else if (t.category === 'daily') subtitle = 'Daily active quest';
+            else if (t.progress && t.progress.total > 1) subtitle = `Progress: ${t.progress.current}/${t.progress.total}`;
+
+            return {
+              id: t.id,
+              title: t.title,
+              subtitle: subtitle,
+              icon: icon,
+              rewardAmount: rewardAmount,
+              rewardIcon: rewardIcon
+            };
+          });
+
+          if (mapped.length > 0) {
+            setBannerTasks(mapped);
+          }
+        }
+      })
+      .catch(() => {
+        // Silently keep default banners fallback
+      });
   }, []);
 
   // Interrupted Session Recovery for Active BEP-20 USDT Deposits
@@ -901,8 +958,8 @@ function App() {
           flexShrink: 0,
           WebkitOverflowScrolling: 'touch',
         }}>
-        {MOCK_TASKS.map((task: any, i: number) => (
-          <TaskBanner key={i} {...task} onClick={() => navigateTo('tasks')} />
+        {bannerTasks.map((task: any, i: number) => (
+          <TaskBanner key={task.id || i} {...task} onClick={() => navigateTo('tasks')} />
         ))}
       </div>
 
