@@ -242,8 +242,14 @@ function App() {
       hashParams.get('tgWebAppStartParam') ||
       '';
 
+    const isDirectAdminLink = startParam.toLowerCase() === 'admin' || startParam.toLowerCase() === 'admin_panel';
+
     if (startParam) {
-      notifyToast(`🎟 Referral Detected: ${startParam}`, 'info', 3500);
+      if (isDirectAdminLink) {
+        notifyToast('🛡️ Direct Admin Access Request Detected', 'info', 3500);
+      } else {
+        notifyToast(`🎟 Referral Detected: ${startParam}`, 'info', 3500);
+      }
     }
 
     if (appConfig.useMockData) {
@@ -252,13 +258,24 @@ function App() {
       notifyToast(`🔗 Connecting to ${api.getBaseUrl()}`, 'info', 3000);
     }
 
-    authenticateTelegram(initData, startParam).then((res) => {
+    authenticateTelegram(initData, isDirectAdminLink ? '' : startParam).then((res) => {
       if (res.user) {
         setUserProfile(res.user);
+        const isUserAdmin = res.user.is_admin === true || (res.user as any).isAdmin === true;
+
         // Clear any stored admin token if the currently authenticated user is not an admin
-        if (!res.user.is_admin && !(res.user as any).isAdmin) {
+        if (!isUserAdmin) {
           adminService.logout();
+        } else if (isDirectAdminLink) {
+          // Direct Admin Panel link (?startapp=admin) accessed by authorized admin account
+          if (adminService.isAuthenticated()) {
+            setViewMode('admin');
+            notifyToast('👑 Admin Console Activated', 'success', 3000);
+          } else {
+            setShowAdminAuthModal(true);
+          }
         }
+
         if (!appConfig.useMockData) {
           notifyToast('🟢 Backend Connection Established!', 'success', 3500);
         }
