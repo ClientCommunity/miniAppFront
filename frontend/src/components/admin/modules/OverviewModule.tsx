@@ -4,6 +4,16 @@ import type { AdminOverviewMetrics, MasterVaultStatus } from '../../../types/adm
 import { notifyToast } from '../../../utils/debugToast';
 import { copyTextSafe } from '../../../utils/clipboard';
 
+const formatUsd = (val?: number | null): string => {
+  if (val === undefined || val === null || isNaN(Number(val))) return '0.00';
+  return Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+const formatCount = (val?: number | null): string => {
+  if (val === undefined || val === null || isNaN(Number(val))) return '0';
+  return Number(val).toLocaleString('en-US');
+};
+
 export const OverviewModule: React.FC = () => {
   const [metrics, setMetrics] = useState<AdminOverviewMetrics | null>(null);
   const [vault, setVault] = useState<MasterVaultStatus | null>(null);
@@ -190,7 +200,7 @@ export const OverviewModule: React.FC = () => {
                 USDT Liquidity Reserve
               </span>
               <span style={{ color: '#34d399', fontSize: '1rem', fontWeight: 800 }}>
-                ${vault.usdt_reserve_balance?.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT
+                ${formatUsd(vault.usdt_reserve_balance)} USDT
               </span>
             </div>
           </div>
@@ -217,7 +227,7 @@ export const OverviewModule: React.FC = () => {
               <span style={{ fontSize: '1.1rem' }}>📥</span>
             </div>
             <span style={{ color: '#10b981', fontSize: '1.35rem', fontWeight: 900 }}>
-              ${metrics.total_deposits_usd?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ${formatUsd(metrics.total_deposits_usd)}
             </span>
             <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Gross user on-chain deposits</span>
           </div>
@@ -239,7 +249,7 @@ export const OverviewModule: React.FC = () => {
               <span style={{ fontSize: '1.1rem' }}>📤</span>
             </div>
             <span style={{ color: '#f59e0b', fontSize: '1.35rem', fontWeight: 900 }}>
-              ${metrics.total_withdrawals_usd?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ${formatUsd(metrics.total_withdrawals_usd)}
             </span>
             <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Completed player payouts</span>
           </div>
@@ -261,9 +271,9 @@ export const OverviewModule: React.FC = () => {
               <span style={{ fontSize: '1.1rem' }}>👥</span>
             </div>
             <span style={{ color: '#38bdf8', fontSize: '1.35rem', fontWeight: 900 }}>
-              {metrics.active_users_dau?.toLocaleString()}
+              {formatCount(metrics.active_users_dau)}
             </span>
-            <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Total: {metrics.total_registered_users?.toLocaleString()} players</span>
+            <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Total: {formatCount(metrics.total_registered_users)} players</span>
           </div>
 
           {/* Card 4: Spins Today */}
@@ -283,7 +293,7 @@ export const OverviewModule: React.FC = () => {
               <span style={{ fontSize: '1.1rem' }}>🎡</span>
             </div>
             <span style={{ color: '#c084fc', fontSize: '1.35rem', fontWeight: 900 }}>
-              {metrics.total_spins_today?.toLocaleString()}
+              {formatCount(metrics.total_spins_today)}
             </span>
             <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Wheel engagement volume</span>
           </div>

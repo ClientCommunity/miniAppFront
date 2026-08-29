@@ -607,7 +607,7 @@ export const DailyRewardsModal: FC<DailyRewardsModalProps> = ({ onClose, onClaim
 
               {/* Action Button Section */}
               <div style={{ padding: '0 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.45rem', width: '100%', boxSizing: 'border-box' }}>
-                {canClaimToday && (adsEnabled || true) && (
+                {canClaimToday && adsEnabled && (
                   <button
                     onClick={handleDoubleClaim}
                     disabled={isClaiming}

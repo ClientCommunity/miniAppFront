@@ -222,6 +222,10 @@ function App() {
     authenticateTelegram(initData, startParam).then((res) => {
       if (res.user) {
         setUserProfile(res.user);
+        // Clear any stored admin token if the currently authenticated user is not an admin
+        if (!res.user.is_admin && !(res.user as any).isAdmin) {
+          adminService.logout();
+        }
         if (!appConfig.useMockData) {
           notifyToast('🟢 Backend Connection Established!', 'success', 3500);
         }
@@ -434,15 +438,9 @@ function App() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0, flexShrink: 1 }}>
           <div
             onClick={() => {
-              // Tapping avatar opens Admin Passphrase Modal for quick admin access
-              if (adminService.isAuthenticated()) {
-                setViewMode('admin');
-              } else {
-                setShowAdminAuthModal(true);
-              }
+              haptics.impact('light');
             }}
-            title="Tap for Admin Access"
-            style={{ position: 'relative', width: '34px', height: '34px', flexShrink: 0, cursor: 'pointer' }}
+            style={{ position: 'relative', width: '34px', height: '34px', flexShrink: 0 }}
           >
             <img
               src={userProfile.photo_url || './assets/avatar.png'}
@@ -475,23 +473,18 @@ function App() {
             </div>
           </div>
           <div
-            onClick={() => {
-              if (adminService.isAuthenticated()) {
-                setViewMode('admin');
-              } else {
-                setShowAdminAuthModal(true);
-              }
-            }}
-            style={{ display: 'flex', flexDirection: 'column', minWidth: 0, maxWidth: '75px', cursor: 'pointer' }}
+            style={{ display: 'flex', flexDirection: 'column', minWidth: 0, maxWidth: '85px' }}
           >
             <span style={{ color: 'white', fontWeight: 800, fontSize: '0.8rem', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {userProfile.first_name || 'Player'}
             </span>
-            <span style={{ color: '#a7f3d0', fontSize: '0.65rem', fontWeight: 600 }}>ID: {userProfile.id}</span>
+            <span style={{ color: '#a7f3d0', fontSize: '0.65rem', fontWeight: 600 }}>
+              ID: {userProfile.telegram_id || userProfile.id}
+            </span>
           </div>
 
-          {/* Admin Mode Switcher Button (Visible when is_admin === true OR admin token is present) */}
-          {Boolean(userProfile.is_admin || (userProfile as any).isAdmin || adminService.isAuthenticated()) && (
+          {/* Admin Mode Switcher Button (Strictly visible ONLY when current authenticated account is an admin) */}
+          {Boolean(userProfile.is_admin || (userProfile as any).isAdmin) && (
             <button
               onClick={() => {
                 haptics.impact('medium');

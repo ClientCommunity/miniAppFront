@@ -125,12 +125,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToApp, onL
         style={{
           background: '#090d16',
           borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          padding: '0.65rem 1.25rem',
+          padding: '0.65rem 0.85rem',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: '0.75rem',
+          gap: '0.6rem',
           position: 'sticky',
           top: 0,
           zIndex: 60
@@ -321,7 +321,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToApp, onL
       <div
         style={{
           flex: 1,
-          padding: '1.25rem',
+          padding: '0.85rem 0.65rem',
           maxWidth: '1200px',
           width: '100%',
           margin: '0 auto',
