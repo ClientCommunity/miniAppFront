@@ -15,6 +15,7 @@ import { SweepsModule } from './modules/SweepsModule';
 import { SupportModule } from './modules/SupportModule';
 import { SubAdminsModule } from './modules/SubAdminsModule';
 import { BroadcastModule } from './modules/BroadcastModule';
+import { SettingsModule } from './modules/SettingsModule';
 import { VaultSetupWizardModal } from './VaultSetupWizardModal';
 import { adminService } from '../../services/adminService';
 import type { AdminWalletStatus } from '../../types/admin';
@@ -97,6 +98,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToApp, onL
         return <SubAdminsModule />;
       case 'broadcast':
         return <BroadcastModule />;
+      case 'settings':
+        return <SettingsModule />;
       default:
         return <OverviewModule />;
     }

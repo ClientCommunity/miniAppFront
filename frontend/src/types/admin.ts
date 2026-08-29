@@ -480,3 +480,12 @@ export interface AdminVaultTransferResponse {
   transferred_at: string;
 }
 
+// 18. Official Telegram Channel Gatekeeper & System Settings
+export interface OfficialChannelGatekeeperSettings {
+  official_channel_username: string;
+  official_channel_link: string;
+  official_channel_reward_spins: number;
+  official_channel_reward_diamonds: number;
+}
+
+

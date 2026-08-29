@@ -976,6 +976,87 @@ export const createTelegramStarsInvoice = async (
   };
 };
 
+// 13. Official Telegram Channel Gatekeeper (GET /user/official-channel/status & POST /user/official-channel/verify)
+export interface OfficialChannelStatusResult {
+  success: boolean;
+  channel_username: string;
+  channel_link: string;
+  reward_spins: number;
+  reward_diamonds: number;
+  has_claimed: boolean;
+  message?: string;
+}
+
+export const getOfficialChannelStatus = async (): Promise<OfficialChannelStatusResult> => {
+  if (appConfig.useMockData) {
+    return {
+      success: true,
+      channel_username: '@SpinCraftNews',
+      channel_link: 'https://t.me/SpinCraftNews',
+      reward_spins: 3,
+      reward_diamonds: 500,
+      has_claimed: false
+    };
+  }
+
+  try {
+    const res = await api.get<any>('/user/official-channel/status');
+    if (res.success && res.data) {
+      return {
+        success: true,
+        channel_username: res.data.channel_username || res.data.channelUsername || '@SpinCraftNews',
+        channel_link: res.data.channel_link || res.data.channelLink || 'https://t.me/SpinCraftNews',
+        reward_spins: Number(res.data.reward_spins ?? res.data.rewardSpins ?? 3),
+        reward_diamonds: Number(res.data.reward_diamonds ?? res.data.rewardDiamonds ?? 500),
+        has_claimed: Boolean(res.data.has_claimed ?? res.data.hasClaimed ?? false)
+      };
+    }
+  } catch (err) {
+    console.warn('Failed to fetch official channel status from backend:', err);
+  }
+
+  return {
+    success: true,
+    channel_username: '@SpinCraftNews',
+    channel_link: 'https://t.me/SpinCraftNews',
+    reward_spins: 3,
+    reward_diamonds: 500,
+    has_claimed: false
+  };
+};
+
+export const verifyOfficialChannelJoin = async (): Promise<{
+  success: boolean;
+  message?: string;
+  reward_spins?: number;
+  reward_diamonds?: number;
+  user?: UserProfile;
+}> => {
+  if (appConfig.useMockData) {
+    await new Promise((res) => setTimeout(res, 450));
+    return {
+      success: true,
+      message: 'Official Channel membership verified! 🎉',
+      reward_spins: 3,
+      reward_diamonds: 500
+    };
+  }
+
+  const res = await api.post<any>('/user/official-channel/verify');
+  if (res.success) {
+    syncUserBalance(res.data || res);
+  }
+  const raw = res.data || {};
+  return {
+    success: res.success,
+    message: res.message || (res.success ? 'Official Channel membership verified! 🎉' : (res.error || 'Verification failed')),
+    reward_spins: Number(raw.reward_spins ?? raw.rewardSpins ?? raw.spins ?? 3),
+    reward_diamonds: Number(raw.reward_diamonds ?? raw.rewardDiamonds ?? raw.diamonds ?? 500),
+    user: raw.user || (raw.id ? raw : undefined)
+  };
+};
+
+
 export default {
   getConfig,
   getInitialUserProfile,
@@ -1006,5 +1087,8 @@ export default {
   fetchRafflesData,
   fetchRaffleDetails,
   claimRaffleTicket,
-  createTelegramStarsInvoice
+  createTelegramStarsInvoice,
+  getOfficialChannelStatus,
+  verifyOfficialChannelJoin
 };
+

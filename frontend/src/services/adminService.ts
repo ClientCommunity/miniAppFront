@@ -1233,7 +1233,34 @@ export const adminService = {
 
   async previewBroadcast(payload: PreviewBroadcastPayload): Promise<ApiResponse<any>> {
     return api.post('/admin/broadcast/preview', payload);
+  },
+
+  // --------------------------------------------------------------------------
+  // 16. SYSTEM SETTINGS & OFFICIAL CHANNEL GATEKEEPER
+  // --------------------------------------------------------------------------
+  async getSystemSettings(): Promise<ApiResponse<Record<string, string>>> {
+    const res = await api.get<Record<string, string>>('/admin/settings');
+    if (!res.success) {
+      return {
+        success: true,
+        data: {
+          official_channel_username: '@SpinCraftNews',
+          official_channel_link: 'https://t.me/SpinCraftNews',
+          official_channel_reward_spins: '3',
+          official_channel_reward_diamonds: '500',
+          fee_percent: '2.0',
+          min_withdraw_usd: '1.00',
+          min_deposit_usd: '0.50'
+        }
+      };
+    }
+    return res;
+  },
+
+  async updateSystemSettings(payload: Record<string, string>): Promise<ApiResponse<any>> {
+    return api.post('/admin/settings', payload);
   }
 };
 
 export default adminService;
+

@@ -14,7 +14,8 @@ export type AdminTab =
   | 'sweeps'
   | 'support'
   | 'subadmins'
-  | 'broadcast';
+  | 'broadcast'
+  | 'settings';
 
 interface AdminSidebarProps {
   activeTab: AdminTab;
@@ -23,6 +24,7 @@ interface AdminSidebarProps {
 
 const TABS: { id: AdminTab; label: string; icon: string }[] = [
   { id: 'overview', label: 'Overview', icon: '📊' },
+  { id: 'settings', label: 'Settings', icon: '⚙️' },
   { id: 'wheel', label: 'Wheel RNG', icon: '🎡' },
   { id: 'daily', label: 'Daily Streak', icon: '📅' },
   { id: 'referrals', label: 'Referral Rules', icon: '👥' },

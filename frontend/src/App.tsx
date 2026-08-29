@@ -35,6 +35,7 @@ const GiftCodeModal = lazy(() => import('./components/GiftCodeModal').then(m => 
 const TeamModal = lazy(() => import('./components/TeamModal').then(m => ({ default: m.TeamModal })));
 const ContestLeaderboardModal = lazy(() => import('./components/ContestLeaderboardModal').then(m => ({ default: m.ContestLeaderboardModal })));
 const OutOfSpinsModal = lazy(() => import('./components/OutOfSpinsModal').then(m => ({ default: m.OutOfSpinsModal })));
+const OfficialChannelModal = lazy(() => import('./components/OfficialChannelModal').then(m => ({ default: m.OfficialChannelModal })));
 const RafflePage = lazy(() => import('./components/raffle/RafflePage').then(m => ({ default: m.RafflePage })));
 const TasksPage = lazy(() => import('./components/tasks/TasksPage').then(m => ({ default: m.TasksPage })));
 const WalletPage = lazy(() => import('./components/wallet/WalletPage').then(m => ({ default: m.WalletPage })));
@@ -72,6 +73,8 @@ function App() {
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [showContestModal, setShowContestModal] = useState(false);
   const [showOutOfSpinsModal, setShowOutOfSpinsModal] = useState(false);
+  const [showOfficialChannelModal, setShowOfficialChannelModal] = useState(false);
+  const [activeTasksCount, setActiveTasksCount] = useState<number>(0);
   const [activePendingInvoice, setActivePendingInvoice] = useState<any>(null);
   const [showPendingInvoiceModal, setShowPendingInvoiceModal] = useState(false);
   const [rewardText, setRewardText] = useState('');
@@ -285,55 +288,59 @@ function App() {
       }
     });
 
-    // Fetch active dynamic tasks to populate home screen task banner carousel
+    // Fetch active dynamic tasks to populate home screen task banner carousel & badge count
     fetchTasksPageData()
       .then((data) => {
-        if (data && data.tasks && data.tasks.length > 0) {
-          // Filter uncompleted tasks
+        if (data && data.tasks) {
+          // Calculate active unclaimed tasks count
           const active = data.tasks.filter((t: any) => t.status !== 'claimed' && t.status !== 'completed');
-          const candidatePool = active.length > 0 ? active : data.tasks;
+          setActiveTasksCount(active.length);
 
-          // Pick up to 3 random or latest active tasks
-          const shuffled = [...candidatePool].sort(() => 0.5 - Math.random());
-          const selected = shuffled.slice(0, 3);
+          if (data.tasks.length > 0) {
+            const candidatePool = active.length > 0 ? active : data.tasks;
 
-          const mapped = selected.map((t: any) => {
-            const rewardDiamonds = t.reward_diamonds ?? t.reward_gems ?? t.rewardGems ?? 0;
-            const rewardSpins = t.reward_spins ?? t.rewardSpins ?? 0;
-            const rewardAmount = rewardDiamonds > 0 ? rewardDiamonds : (rewardSpins > 0 ? rewardSpins : 50);
-            const rewardIcon = rewardSpins > 0 ? './assets/ticket_animated.gif' : './assets/diamond_animated.gif';
+            // Pick up to 3 random or latest active tasks
+            const shuffled = [...candidatePool].sort(() => 0.5 - Math.random());
+            const selected = shuffled.slice(0, 3);
 
-            let icon = '🎯';
-            if (t.task_type === 'telegram_join' || t.taskType === 'telegram_join' || t.category === 'socials') {
-              icon = '📣';
-            } else if (t.task_type === 'ad_reward' || t.taskType === 'ad_reward') {
-              icon = '📺';
-            } else if (t.category === 'daily') {
-              icon = '📅';
-            } else if (t.task_type === 'spin_count') {
-              icon = '🎡';
-            } else if (t.task_type === 'invite_friends') {
-              icon = '👥';
+            const mapped = selected.map((t: any) => {
+              const rewardDiamonds = t.reward_diamonds ?? t.reward_gems ?? t.rewardGems ?? 0;
+              const rewardSpins = t.reward_spins ?? t.rewardSpins ?? 0;
+              const rewardAmount = rewardDiamonds > 0 ? rewardDiamonds : (rewardSpins > 0 ? rewardSpins : 50);
+              const rewardIcon = rewardSpins > 0 ? './assets/ticket_animated.gif' : './assets/diamond_animated.gif';
+
+              let icon = '🎯';
+              if (t.task_type === 'telegram_join' || t.taskType === 'telegram_join' || t.category === 'socials') {
+                icon = '📣';
+              } else if (t.task_type === 'ad_reward' || t.taskType === 'ad_reward') {
+                icon = '📺';
+              } else if (t.category === 'daily') {
+                icon = '📅';
+              } else if (t.task_type === 'spin_count') {
+                icon = '🎡';
+              } else if (t.task_type === 'invite_friends') {
+                icon = '👥';
+              }
+
+              let subtitle = 'Complete task & earn';
+              if (t.category === 'socials') subtitle = 'Join & stay updated';
+              else if (t.task_type === 'ad_reward' || t.taskType === 'ad_reward') subtitle = 'Watch quick ad to earn';
+              else if (t.category === 'daily') subtitle = 'Daily active quest';
+              else if (t.progress && t.progress.total > 1) subtitle = `Progress: ${t.progress.current}/${t.progress.total}`;
+
+              return {
+                id: t.id,
+                title: t.title,
+                subtitle: subtitle,
+                icon: icon,
+                rewardAmount: rewardAmount,
+                rewardIcon: rewardIcon
+              };
+            });
+
+            if (mapped.length > 0) {
+              setBannerTasks(mapped);
             }
-
-            let subtitle = 'Complete task & earn';
-            if (t.category === 'socials') subtitle = 'Join & stay updated';
-            else if (t.task_type === 'ad_reward' || t.taskType === 'ad_reward') subtitle = 'Watch quick ad to earn';
-            else if (t.category === 'daily') subtitle = 'Daily active quest';
-            else if (t.progress && t.progress.total > 1) subtitle = `Progress: ${t.progress.current}/${t.progress.total}`;
-
-            return {
-              id: t.id,
-              title: t.title,
-              subtitle: subtitle,
-              icon: icon,
-              rewardAmount: rewardAmount,
-              rewardIcon: rewardIcon
-            };
-          });
-
-          if (mapped.length > 0) {
-            setBannerTasks(mapped);
           }
         }
       })
@@ -452,6 +459,18 @@ function App() {
     const handleCollect = () => {
       haptics.impact('medium');
       setShowRewardModal(false);
+    };
+
+    const handleOutOfSpins = () => {
+      const userId = userProfile.telegram_id || userProfile.id;
+      const isClaimedLocally = typeof window !== 'undefined' && userId ? localStorage.getItem(`channel_reward_claimed_${userId}`) === 'true' : false;
+      const hasClaimed = Boolean(userProfile.has_claimed_channel_reward || isClaimedLocally);
+
+      if (!hasClaimed) {
+        setShowOfficialChannelModal(true);
+      } else {
+        setShowOutOfSpinsModal(true);
+      }
     };
 
     const progressPercent = Math.min(
@@ -889,10 +908,10 @@ function App() {
             segments={WHEEL_SEGMENTS}
             spins={userProfile.spins}
             diamonds={userProfile.diamonds}
-            onOutOfSpins={() => setShowOutOfSpinsModal(true)}
+            onOutOfSpins={handleOutOfSpins}
             onSpinRequest={async () => {
               if (userProfile.spins <= 0 && userProfile.diamonds < 1000) {
-                setShowOutOfSpinsModal(true);
+                handleOutOfSpins();
                 haptics.notification('warning');
                 throw new Error('Insufficient spins and diamonds');
               }
@@ -920,8 +939,18 @@ function App() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.78rem', justifyContent: 'center', flexShrink: 0 }}>
           {RIGHT_CARDS.map(card => {
             const isSignIn = card.title === 'Sign In' || card.title.toLowerCase().includes('sign in') || card.title.toLowerCase().includes('daily');
-            const effectiveBadge = isSignIn ? (canClaimDaily ? '1' : undefined) : card.badge;
-            const effectiveBadgeColor = isSignIn ? 'red' : card.badgeColor;
+            const isSpins = card.title === '+ Spins' || card.title.includes('Spins');
+
+            let effectiveBadge: string | undefined = card.badge;
+            let effectiveBadgeColor: 'gold' | 'red' | 'emerald' | undefined = card.badgeColor;
+
+            if (isSignIn) {
+              effectiveBadge = canClaimDaily ? '1' : undefined;
+              effectiveBadgeColor = 'red';
+            } else if (isSpins) {
+              effectiveBadge = activeTasksCount > 0 ? String(activeTasksCount) : undefined;
+              effectiveBadgeColor = 'emerald';
+            }
 
             return (
               <FeatureCard
@@ -1130,6 +1159,28 @@ function App() {
           />
         )}
 
+        {/* Official Channel Gatekeeper Modal */}
+        {showOfficialChannelModal && (
+          <OfficialChannelModal
+            isOpen={showOfficialChannelModal}
+            userProfile={userProfile}
+            onClose={() => setShowOfficialChannelModal(false)}
+            onClaimSuccess={(rewards) => {
+              setShowOfficialChannelModal(false);
+              const userId = userProfile.telegram_id || userProfile.id;
+              if (userId) {
+                localStorage.setItem(`channel_reward_claimed_${userId}`, 'true');
+              }
+              setUserProfile((prev) => ({
+                ...prev,
+                spins: prev.spins + (rewards.spins || 3),
+                diamonds: prev.diamonds + (rewards.diamonds || 500),
+                has_claimed_channel_reward: true
+              }));
+            }}
+          />
+        )}
+
         {/* Raffle Page Overlay */}
         {currentPage === 'raffle' && (
           <RafflePage
@@ -1148,9 +1199,21 @@ function App() {
             onBack={() => {
               navigateTo('main');
               fetchUserProfile().catch(() => {});
+              fetchTasksPageData().then((data) => {
+                if (data && data.tasks) {
+                  const active = data.tasks.filter((t: any) => t.status !== 'claimed' && t.status !== 'completed');
+                  setActiveTasksCount(active.length);
+                }
+              }).catch(() => {});
             }}
             onUpdateProfile={(updated) => {
               setUserProfile((prev) => ({ ...prev, ...updated }));
+              fetchTasksPageData().then((data) => {
+                if (data && data.tasks) {
+                  const active = data.tasks.filter((t: any) => t.status !== 'claimed' && t.status !== 'completed');
+                  setActiveTasksCount(active.length);
+                }
+              }).catch(() => {});
             }}
           />
         )}

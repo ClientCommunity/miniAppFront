@@ -24,6 +24,18 @@ export interface UserProfile {
   goal_usd: number;   // Default $1.00
   goal_left: number;  // Remaining to cashout
   is_admin: boolean;  // True if user is authorized admin
+  has_claimed_channel_reward?: boolean;
+}
+
+// Official Telegram Channel Status
+export interface OfficialChannelStatus {
+  success: boolean;
+  channel_username: string;
+  channel_link: string;
+  reward_spins: number;
+  reward_diamonds: number;
+  has_claimed: boolean;
+  message?: string;
 }
 
 // Auth Response
