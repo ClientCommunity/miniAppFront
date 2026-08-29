@@ -463,3 +463,20 @@ export interface PreviewBroadcastPayload {
   buttons?: AdminBroadcastButton[][];
 }
 
+// 17. Master HD Vault On-Chain Fund Transfer
+export interface AdminVaultTransferPayload {
+  asset: 'usdt' | 'bnb';
+  recipient_address: string;
+  amount: number;
+  notes?: string;
+}
+
+export interface AdminVaultTransferResponse {
+  tx_hash: string;
+  asset: string;
+  amount: number;
+  recipient_address: string;
+  explorer_url: string;
+  transferred_at: string;
+}
+

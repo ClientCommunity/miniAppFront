@@ -33,7 +33,9 @@ import type {
   UpdateSubAdminPayload,
   AdminBroadcastJob,
   CreateBroadcastJobPayload,
-  PreviewBroadcastPayload
+  PreviewBroadcastPayload,
+  AdminVaultTransferPayload,
+  AdminVaultTransferResponse
 } from '../types/admin';
 
 // ============================================================================
@@ -171,6 +173,10 @@ export const adminService = {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  },
+
+  async transferVaultFunds(payload: AdminVaultTransferPayload): Promise<ApiResponse<AdminVaultTransferResponse>> {
+    return api.post<AdminVaultTransferResponse>('/admin/wallet/transfer', payload);
   },
 
   // --------------------------------------------------------------------------
