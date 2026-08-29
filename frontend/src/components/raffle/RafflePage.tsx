@@ -33,6 +33,7 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack, userProfile }) => {
     return (
       <RaffleDetails 
         raffle={selectedRaffle}
+        userProfile={userProfile}
         onBack={() => setSelectedRaffle(null)}
       />
     );

@@ -6,12 +6,13 @@ import { haptics } from '../../../utils/haptics';
 
 export const ReferralSettingsModule: React.FC = () => {
   const [settings, setSettings] = useState<AdminReferralRewardSettings>({
-    referrer_spins: 1,
-    referrer_diamonds: 100,
-    referrer_usd: 0.05,
-    welcome_spins: 3,
-    welcome_diamonds: 200,
-    welcome_usd: 0.00
+    initial_organic_spins: 15,
+    referrer_spins: 2,
+    referrer_diamonds: 500,
+    referrer_usd: 0.10,
+    welcome_spins: 5,
+    welcome_diamonds: 1000,
+    welcome_usd: 0.25
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -46,6 +47,7 @@ export const ReferralSettingsModule: React.FC = () => {
     try {
       haptics.impact('medium');
       const payload: AdminReferralRewardSettings = {
+        initial_organic_spins: Number(settings.initial_organic_spins ?? settings.initialOrganicSpins) || 15,
         referrer_spins: Number(settings.referrer_spins) || 0,
         referrer_diamonds: Number(settings.referrer_diamonds) || 0,
         referrer_usd: Number(settings.referrer_usd) || 0,
@@ -57,7 +59,7 @@ export const ReferralSettingsModule: React.FC = () => {
       const res = await adminService.updateReferralRewards(payload);
       if (res.success) {
         haptics.notification('success');
-        notifyToast('👥 Referral Multi-Asset Rules saved successfully!', 'success', 3500);
+        notifyToast('👥 Referral Multi-Asset & Starting Rules saved successfully!', 'success', 3500);
         loadSettings();
       } else {
         haptics.notification('error');
@@ -77,10 +79,10 @@ export const ReferralSettingsModule: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
           <h2 style={{ margin: 0, color: '#ffffff', fontSize: '1.3rem', fontWeight: 800 }}>
-            👥 Referral Multi-Asset Rewards Manager
+            👥 Referral Multi-Asset & Starting Rewards
           </h2>
           <span style={{ color: '#94a3b8', fontSize: '0.82rem' }}>
-            Configure automatic welcome gifts for new players and invite rewards for referrers
+            Configure organic starting spins, welcome gifts for new players, and invite bonuses for referrers
           </span>
         </div>
 
@@ -123,215 +125,300 @@ export const ReferralSettingsModule: React.FC = () => {
             }}
           >
             <span>💾</span>
-            <span>{saving ? 'Saving...' : 'Save Referral Rules'}</span>
+            <span>{saving ? 'Saving...' : 'Save All Settings'}</span>
           </button>
         </div>
       </div>
 
-      {/* Main 2-Card Grid */}
       {loading ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
-          <div className="skeleton-glow-box" style={{ height: '260px', borderRadius: '16px' }} />
-          <div className="skeleton-glow-box" style={{ height: '260px', borderRadius: '16px' }} />
+          <div className="skeleton-glow-box" style={{ height: '240px', borderRadius: '16px' }} />
+          <div className="skeleton-glow-box" style={{ height: '240px', borderRadius: '16px' }} />
+          <div className="skeleton-glow-box" style={{ height: '240px', borderRadius: '16px' }} />
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
-          {/* Card 1: Inviter (Referrer) Rewards */}
+        <>
+          {/* Card 0: Direct (Organic) Starting Spins */}
           <div
             style={{
-              background: 'rgba(15, 23, 42, 0.75)',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
+              background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
+              border: '1.5px solid rgba(56, 189, 248, 0.4)',
               borderRadius: '16px',
-              padding: '1.5rem',
+              padding: '1.25rem',
               display: 'flex',
-              flexDirection: 'column',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
               gap: '1rem',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
+              boxShadow: '0 6px 20px rgba(0,0,0,0.3)'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <span style={{ fontSize: '1.6rem' }}>🎁</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <div
+                style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '12px',
+                  background: 'rgba(56, 189, 248, 0.15)',
+                  border: '1px solid rgba(56, 189, 248, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.4rem'
+                }}
+              >
+                🎯
+              </div>
               <div>
-                <h3 style={{ margin: 0, color: '#38bdf8', fontSize: '1.1rem', fontWeight: 800 }}>
-                  Inviter (Referrer) Reward
+                <h3 style={{ margin: 0, color: '#ffffff', fontSize: '1.05rem', fontWeight: 800 }}>
+                  Direct (Organic) Starting Spins
                 </h3>
                 <span style={{ color: '#94a3b8', fontSize: '0.78rem' }}>
-                  Credited to the user whenever a new friend joins via their invite link
+                  Granted immediately to new players who open the Mini App without any referral/invite link
                 </span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              {/* Spins */}
-              <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.75rem', borderRadius: '10px' }}>
-                <label style={{ color: '#67e8f9', fontSize: '0.78rem', display: 'block', marginBottom: '0.3rem', fontWeight: 700 }}>
-                  🎡 Free Spins per Invite
-                </label>
-                <input
-                  type="number"
-                  value={settings.referrer_spins}
-                  onChange={(e) => handleChange('referrer_spins', parseInt(e.target.value, 10) || 0)}
-                  style={{
-                    width: '100%',
-                    padding: '0.55rem',
-                    background: 'rgba(0, 0, 0, 0.5)',
-                    border: '1px solid rgba(56, 189, 248, 0.35)',
-                    borderRadius: '8px',
-                    color: '#ffffff',
-                    fontWeight: 800,
-                    fontSize: '0.95rem',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-
-              {/* Diamonds */}
-              <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.75rem', borderRadius: '10px' }}>
-                <label style={{ color: '#fde047', fontSize: '0.78rem', display: 'block', marginBottom: '0.3rem', fontWeight: 700 }}>
-                  💎 Bonus Diamonds per Invite
-                </label>
-                <input
-                  type="number"
-                  value={settings.referrer_diamonds}
-                  onChange={(e) => handleChange('referrer_diamonds', parseInt(e.target.value, 10) || 0)}
-                  style={{
-                    width: '100%',
-                    padding: '0.55rem',
-                    background: 'rgba(0, 0, 0, 0.5)',
-                    border: '1px solid rgba(250, 204, 21, 0.35)',
-                    borderRadius: '8px',
-                    color: '#ffffff',
-                    fontWeight: 800,
-                    fontSize: '0.95rem',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-
-              {/* USD Cash */}
-              <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.75rem', borderRadius: '10px' }}>
-                <label style={{ color: '#34d399', fontSize: '0.78rem', display: 'block', marginBottom: '0.3rem', fontWeight: 700 }}>
-                  💵 USD Cash Bonus per Invite ($)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={settings.referrer_usd}
-                  onChange={(e) => handleChange('referrer_usd', parseFloat(e.target.value) || 0)}
-                  style={{
-                    width: '100%',
-                    padding: '0.55rem',
-                    background: 'rgba(0, 0, 0, 0.5)',
-                    border: '1px solid rgba(52, 211, 153, 0.35)',
-                    borderRadius: '8px',
-                    color: '#ffffff',
-                    fontWeight: 800,
-                    fontSize: '0.95rem',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ color: '#a7f3d0', fontSize: '0.85rem', fontWeight: 700 }}>Starting Spins:</span>
+              <input
+                type="number"
+                min="0"
+                value={settings.initial_organic_spins ?? settings.initialOrganicSpins ?? 15}
+                onChange={(e) => handleChange('initial_organic_spins', parseInt(e.target.value, 10) || 0)}
+                style={{
+                  width: '90px',
+                  padding: '0.5rem 0.75rem',
+                  background: 'rgba(0, 0, 0, 0.4)',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  borderRadius: '8px',
+                  color: '#ffffff',
+                  fontSize: '1rem',
+                  fontWeight: 900,
+                  textAlign: 'center'
+                }}
+              />
+              <span style={{ color: '#38bdf8', fontSize: '0.85rem', fontWeight: 800 }}>🎡 Spins</span>
             </div>
           </div>
 
-          {/* Card 2: New Player (Referee) Welcome Gift */}
-          <div
-            style={{
-              background: 'rgba(15, 23, 42, 0.75)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              borderRadius: '16px',
-              padding: '1.5rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <span style={{ fontSize: '1.6rem' }}>🌟</span>
-              <div>
-                <h3 style={{ margin: 0, color: '#34d399', fontSize: '1.1rem', fontWeight: 800 }}>
-                  New Player Welcome Gift
-                </h3>
-                <span style={{ color: '#94a3b8', fontSize: '0.78rem' }}>
-                  Awarded immediately to the newly joined player upon starting the Mini App
-                </span>
+          {/* 2-Card Grid: Inviter & Referee */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
+            {/* Card 1: Inviter (Referrer) Rewards */}
+            <div
+              style={{
+                background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%)',
+                border: '1px solid rgba(251, 191, 36, 0.35)',
+                borderRadius: '16px',
+                padding: '1.25rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    background: 'rgba(251, 191, 36, 0.15)',
+                    border: '1px solid rgba(251, 191, 36, 0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.2rem'
+                  }}
+                >
+                  🎁
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, color: '#ffffff', fontSize: '1rem', fontWeight: 800 }}>
+                    Inviter (Referrer) Rewards
+                  </h3>
+                  <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                    Multi-asset reward credited for each successful invited friend
+                  </span>
+                </div>
+              </div>
+
+              {/* Form Controls */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ color: '#cbd5e1', fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.3rem' }}>
+                    🎡 Free Spins per Invite
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={settings.referrer_spins}
+                    onChange={(e) => handleChange('referrer_spins', parseInt(e.target.value, 10) || 0)}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '8px',
+                      color: '#ffffff',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ color: '#cbd5e1', fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.3rem' }}>
+                    💎 Diamonds per Invite
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={settings.referrer_diamonds}
+                    onChange={(e) => handleChange('referrer_diamonds', parseInt(e.target.value, 10) || 0)}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '8px',
+                      color: '#ffffff',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ color: '#cbd5e1', fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.3rem' }}>
+                    💵 USD Cash per Invite ($)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={settings.referrer_usd}
+                    onChange={(e) => handleChange('referrer_usd', parseFloat(e.target.value) || 0)}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '8px',
+                      color: '#ffffff',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              {/* Welcome Spins */}
-              <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.75rem', borderRadius: '10px' }}>
-                <label style={{ color: '#67e8f9', fontSize: '0.78rem', display: 'block', marginBottom: '0.3rem', fontWeight: 700 }}>
-                  🎡 Welcome Free Spins
-                </label>
-                <input
-                  type="number"
-                  value={settings.welcome_spins}
-                  onChange={(e) => handleChange('welcome_spins', parseInt(e.target.value, 10) || 0)}
+            {/* Card 2: New Player (Referee) Welcome Gifts */}
+            <div
+              style={{
+                background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%)',
+                border: '1px solid rgba(56, 189, 248, 0.35)',
+                borderRadius: '16px',
+                padding: '1.25rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div
                   style={{
-                    width: '100%',
-                    padding: '0.55rem',
-                    background: 'rgba(0, 0, 0, 0.5)',
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    background: 'rgba(56, 189, 248, 0.15)',
                     border: '1px solid rgba(56, 189, 248, 0.35)',
-                    borderRadius: '8px',
-                    color: '#ffffff',
-                    fontWeight: 800,
-                    fontSize: '0.95rem',
-                    boxSizing: 'border-box'
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.2rem'
                   }}
-                />
+                >
+                  🌟
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, color: '#ffffff', fontSize: '1rem', fontWeight: 800 }}>
+                    New Player Welcome Gift
+                  </h3>
+                  <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                    Welcome assets awarded when joining via an invite link
+                  </span>
+                </div>
               </div>
 
-              {/* Welcome Diamonds */}
-              <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.75rem', borderRadius: '10px' }}>
-                <label style={{ color: '#fde047', fontSize: '0.78rem', display: 'block', marginBottom: '0.3rem', fontWeight: 700 }}>
-                  💎 Welcome Diamonds
-                </label>
-                <input
-                  type="number"
-                  value={settings.welcome_diamonds}
-                  onChange={(e) => handleChange('welcome_diamonds', parseInt(e.target.value, 10) || 0)}
-                  style={{
-                    width: '100%',
-                    padding: '0.55rem',
-                    background: 'rgba(0, 0, 0, 0.5)',
-                    border: '1px solid rgba(250, 204, 21, 0.35)',
-                    borderRadius: '8px',
-                    color: '#ffffff',
-                    fontWeight: 800,
-                    fontSize: '0.95rem',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
+              {/* Form Controls */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ color: '#cbd5e1', fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.3rem' }}>
+                    🎡 Welcome Spins
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={settings.welcome_spins}
+                    onChange={(e) => handleChange('welcome_spins', parseInt(e.target.value, 10) || 0)}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '8px',
+                      color: '#ffffff',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
 
-              {/* Welcome Cash */}
-              <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.75rem', borderRadius: '10px' }}>
-                <label style={{ color: '#34d399', fontSize: '0.78rem', display: 'block', marginBottom: '0.3rem', fontWeight: 700 }}>
-                  💵 Welcome Cash Bonus ($)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={settings.welcome_usd}
-                  onChange={(e) => handleChange('welcome_usd', parseFloat(e.target.value) || 0)}
-                  style={{
-                    width: '100%',
-                    padding: '0.55rem',
-                    background: 'rgba(0, 0, 0, 0.5)',
-                    border: '1px solid rgba(52, 211, 153, 0.35)',
-                    borderRadius: '8px',
-                    color: '#ffffff',
-                    fontWeight: 800,
-                    fontSize: '0.95rem',
-                    boxSizing: 'border-box'
-                  }}
-                />
+                <div>
+                  <label style={{ color: '#cbd5e1', fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.3rem' }}>
+                    💎 Welcome Diamonds
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={settings.welcome_diamonds}
+                    onChange={(e) => handleChange('welcome_diamonds', parseInt(e.target.value, 10) || 0)}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '8px',
+                      color: '#ffffff',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ color: '#cbd5e1', fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.3rem' }}>
+                    💵 Welcome USD Cash ($)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={settings.welcome_usd}
+                    onChange={(e) => handleChange('welcome_usd', parseFloat(e.target.value) || 0)}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '8px',
+                      color: '#ffffff',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

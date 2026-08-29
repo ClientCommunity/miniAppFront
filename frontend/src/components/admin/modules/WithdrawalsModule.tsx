@@ -9,7 +9,7 @@ import { openDownloadInBrowser } from '../../../utils/browserOpener';
 
 export const WithdrawalsModule: React.FC = () => {
   const [withdrawals, setWithdrawals] = useState<AdminWithdrawalItem[]>([]);
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('processing');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<number | null>(null);
@@ -50,8 +50,11 @@ export const WithdrawalsModule: React.FC = () => {
   };
 
   useEffect(() => {
-    loadData();
-  }, [statusFilter]);
+    const timer = setTimeout(() => {
+      loadData();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [statusFilter, searchQuery]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();

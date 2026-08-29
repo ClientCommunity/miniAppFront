@@ -6,16 +6,33 @@ import { haptics } from '../../utils/haptics';
 
 export interface RaffleDetailsProps {
   raffle: any;
+  userProfile?: any;
   onBack: () => void;
 }
 
 import { getInitialRafflesData, fetchRaffleDetails } from '../../services/dataService';
 
-export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
+export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, userProfile, onBack }) => {
   const [prizeTiers, setPrizeTiers] = useState<any[]>(() => getInitialRafflesData()?.prizeTiers || []);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showClaimSheet, setShowClaimSheet] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(33);
+  const [userTicketsCount, setUserTicketsCount] = useState<number>(raffle?.tickets || 0);
+
+  // Dynamic price calculation
+  const rawPriceUsd = raffle?.ticket_price_usd ?? raffle?.ticketPriceUsd ?? 0.50;
+  const rawPriceStars = raffle?.ticket_price_stars ?? raffle?.ticketPriceStars ?? 25;
+  const rawPriceGems = raffle?.ticket_gem_price ?? raffle?.ticketPriceGems ?? 0;
+
+  const isUsdtEnabled = raffle?.enable_usd_payment !== false && rawPriceUsd > 0;
+  const isStarsEnabled = raffle?.enable_stars_payment !== false && rawPriceStars > 0;
+  const isGemsEnabled = raffle?.enable_gems_payment !== false && rawPriceGems > 0;
+
+  const priceParts: string[] = [];
+  if (isUsdtEnabled) priceParts.push(`$${rawPriceUsd.toFixed(2)} USDT`);
+  if (isStarsEnabled) priceParts.push(`⭐ ${rawPriceStars} Stars`);
+  if (isGemsEnabled) priceParts.push(`💎 ${rawPriceGems}`);
+  const priceDisplay = priceParts.length > 0 ? priceParts.join(' • ') : '$0.50 USDT';
 
   useEffect(() => {
     if (raffle?.id) {
@@ -132,7 +149,7 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
             }}
           >
             <img src="./assets/SingleCoin_animated.gif" alt="USDT" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem', color: '#fef08a' }}>$0.00</span>
+            <span style={{ fontWeight: 800, fontSize: '0.78rem', color: '#fef08a' }}>${(userProfile?.balance_usd || 0).toFixed(2)}</span>
           </div>
 
           {/* Spin Balance */}
@@ -154,7 +171,7 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
             }}
           >
             <img src="./assets/ticket_animated.gif" alt="Spin" style={{ width: '26px', height: '26px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>12</span>
+            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>{userProfile?.spins || 0}</span>
           </div>
 
           {/* Diamond Balance */}
@@ -176,7 +193,7 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
             }}
           >
             <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '23px', height: '23px', objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
-            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>760</span>
+            <span style={{ fontWeight: 800, fontSize: '0.78rem' }}>{userProfile?.diamonds || 0}</span>
           </div>
         </div>
       </div>
@@ -201,95 +218,43 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
               cursor: 'pointer'
             }}
           >
-            How to Play ℹ️
+            How to play?
           </button>
         </div>
 
-        {/* Live Countdown Clock Banner */}
+        {/* Big Prize Highlight Banner */}
         <div
           style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'baseline',
-            gap: '0.6rem',
-            marginBottom: '1.25rem',
-            background: 'linear-gradient(180deg, rgba(6, 78, 59, 0.5) 0%, rgba(2, 44, 34, 0.7) 100%)',
-            border: '1px solid rgba(251, 191, 36, 0.4)',
-            borderRadius: '1rem',
-            padding: '0.75rem 0',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
-          }}
-        >
-          <div style={{ color: '#fbbf24', fontSize: '2.4rem', fontWeight: 900, fontFamily: 'Georgia, serif' }}>
-            4<span style={{ fontSize: '1rem', marginLeft: '3px', color: '#fde68a' }}>D</span>
-          </div>
-          <div style={{ color: '#fbbf24', fontSize: '2.4rem', fontWeight: 900, fontFamily: 'Georgia, serif' }}>
-            3<span style={{ fontSize: '1rem', marginLeft: '3px', color: '#fde68a' }}>H</span>
-          </div>
-          <div style={{ color: '#fbbf24', fontSize: '2.4rem', fontWeight: 900, fontFamily: 'Georgia, serif' }}>
-            30<span style={{ fontSize: '1rem', marginLeft: '3px', color: '#fde68a' }}>M</span>
-          </div>
-          <div style={{ color: '#fbbf24', fontSize: '2.4rem', fontWeight: 900, fontFamily: 'Georgia, serif' }}>
-            {secondsLeft < 10 ? `0${secondsLeft}` : secondsLeft}<span style={{ fontSize: '1rem', marginLeft: '3px', color: '#fde68a' }}>S</span>
-          </div>
-        </div>
-
-        {/* Stats & Rewards Row */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '1.25rem',
-            padding: '0.75rem 1rem',
-            background: 'rgba(255, 255, 255, 0.06)',
-            borderRadius: '0.85rem',
-            border: '1px solid rgba(255, 255, 255, 0.1)'
-          }}
-        >
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <div style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 700 }}>
-              👥 {raffle.participants.toLocaleString()}
-            </div>
-            <div style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 700 }}>
-              🎟 {raffle.tickets.toLocaleString()}
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.95rem', fontWeight: 800, fontFamily: 'Georgia, serif' }}>
-            <span style={{ color: '#fbbf24' }}>${raffle.cashReward}</span>
-            <span style={{ color: '#fff' }}>+ {raffle.coinRewardStr}</span>
-            <img src="./assets/diamond_animated.gif" alt="Diamond" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
-          </div>
-        </div>
-
-        {/* Provably Fair Trust Badge */}
-        <div
-          style={{
+            background: 'linear-gradient(135deg, rgba(6, 78, 59, 0.9) 0%, rgba(2, 44, 34, 0.95) 100%)',
+            border: '1.5px solid rgba(251, 191, 36, 0.5)',
+            borderRadius: '1.25rem',
+            padding: '1.25rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0.65rem 0.9rem',
-            background: 'rgba(16, 185, 129, 0.15)',
-            border: '1px solid rgba(52, 211, 153, 0.35)',
-            borderRadius: '0.75rem',
-            marginBottom: '1.25rem',
-            fontSize: '0.78rem',
-            color: '#a7f3d0'
+            marginBottom: '1.5rem',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span>🛡️</span>
-            <span style={{ fontWeight: 700 }}>Provably Fair TON Blockchain Hash</span>
+          <div>
+            <div style={{ color: '#a7f3d0', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              GRAND CASH PRIZE
+            </div>
+            <div style={{ fontSize: '2rem', fontWeight: 900, color: '#fbbf24', fontFamily: 'Georgia, serif', lineHeight: 1.1 }}>
+              ${raffle.cash_prize_usd || raffle.cashReward || 100} USDT
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.78rem', marginTop: '0.25rem' }}>
+              Ends in: <span style={{ color: '#fff', fontWeight: 800 }}>{secondsLeft}s</span>
+            </div>
           </div>
-          <span style={{ color: '#fde68a', fontWeight: 800, fontSize: '0.72rem' }}>VERIFIED ✓</span>
+          <img src="./assets/coinSack_animated.gif" alt="Grand Prize" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
         </div>
 
-        {/* Prize Tiers */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        {/* Prize Ladder */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+          <div style={{ color: '#ffffff', fontWeight: 800, fontSize: '0.95rem', marginBottom: '0.25rem' }}>
             Prize Distribution
           </div>
-
           {prizeTiers.map((prize: any, idx: number) => (
             <div
               key={idx}
@@ -341,9 +306,11 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
           <div>
             <div style={{ color: '#fff', fontWeight: 800, fontSize: '0.95rem' }}>
-              My Tickets: <span style={{ color: '#fbbf24', fontSize: '1.1rem' }}>0</span>
+              My Tickets: <span style={{ color: '#fbbf24', fontSize: '1.1rem' }}>{userTicketsCount}</span>
             </div>
-            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem' }}>Price: 100 💎 / Ticket</div>
+            <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.74rem', fontWeight: 600 }}>
+              Price: <span style={{ color: '#a7f3d0' }}>{priceDisplay}</span>
+            </div>
           </div>
 
           <div style={{ fontSize: '0.78rem', color: '#a7f3d0', fontWeight: 700 }}>
@@ -374,7 +341,14 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, onBack }) => {
 
       {/* Modals */}
       {showHowToPlay && <HowToPlayModal onClose={() => setShowHowToPlay(false)} />}
-      {showClaimSheet && <ClaimBottomSheet onClose={() => setShowClaimSheet(false)} />}
+      {showClaimSheet && (
+        <ClaimBottomSheet
+          raffle={raffle}
+          userProfile={userProfile}
+          onClose={() => setShowClaimSheet(false)}
+          onSuccess={() => setUserTicketsCount(prev => prev + 1)}
+        />
+      )}
     </div>
   );
 };

@@ -721,9 +721,27 @@ export const fetchRaffleDetails = async (raffleId: string): Promise<RaffleDetail
     };
   }
 
-  const res = await api.get<RaffleDetailsData>(`/raffles/${raffleId}`);
+  const encodedId = encodeURIComponent(raffleId);
+  let res = await api.get<any>(`/raffles/${encodedId}`);
+  if (!res.success) {
+    res = await api.get<any>(`/raffle/${encodedId}`);
+  }
+
   if (res.success && res.data) {
-    return res.data;
+    const raw = res.data;
+    const rawRaffle = raw.raffle || (raw.id ? raw : null);
+    const userTickets = raw.user_tickets ?? raw.userTickets ?? rawRaffle?.tickets ?? 0;
+    const prizeTiers = raw.prize_tiers ?? raw.prizeTiers ?? [];
+    const secondsLeft = raw.seconds_left ?? raw.secondsLeft ?? 45;
+
+    return {
+      raffle: rawRaffle,
+      userTickets,
+      ticketPriceGems: raw.ticket_price_gems ?? raw.ticketPriceGems ?? rawRaffle?.ticket_gem_price ?? 0,
+      endsTimestamp: raw.ends_timestamp ?? raw.endsTimestamp ?? (Date.now() + 86400000),
+      secondsLeft,
+      prizeTiers
+    };
   }
 
   return null;
@@ -738,7 +756,8 @@ export const claimRaffleTicket = async (
     return { success: true, message: 'Ticket claimed successfully! 🎟️' };
   }
 
-  const res = await api.post(`/raffles/${raffleId}/claim`, { method });
+  const encodedId = encodeURIComponent(raffleId);
+  const res = await api.post(`/raffles/${encodedId}/claim`, { method });
   if (res.success) {
     syncUserBalance(res.data || res);
   }
@@ -747,6 +766,183 @@ export const claimRaffleTicket = async (
     message: res.message || (res.success ? 'Ticket claimed!' : res.error)
   };
 };
+
+export const buyRaffleTickets = async (
+  raffleId: string,
+  ticketCount: number,
+  paymentMethod: 'usdt' | 'stars' | 'gems'
+): Promise<{ success: boolean; message?: string; data?: any; userBalance?: any }> => {
+  if (appConfig.useMockData) {
+    await new Promise((res) => setTimeout(res, 350));
+    return {
+      success: true,
+      message: `Purchased ${ticketCount} ticket(s) via ${paymentMethod.toUpperCase()}! 🎟️`
+    };
+  }
+
+  const encodedId = encodeURIComponent(raffleId);
+  let res = await api.post<any>(`/raffles/${encodedId}/buy`, {
+    ticket_count: ticketCount,
+    payment_method: paymentMethod
+  });
+
+  if (!res.success && (res.error?.includes('404') || (res as any)?.status === 404)) {
+    res = await api.post<any>(`/raffles/${encodedId}/claim`, {
+      method: paymentMethod,
+      ticket_count: ticketCount
+    });
+  }
+
+  if (res.success) {
+    syncUserBalance(res.data || res);
+  }
+
+  return {
+    success: res.success,
+    message: res.message || (res.success ? `Purchased ${ticketCount} ticket(s)! 🎟️` : res.error),
+    data: res.data,
+    userBalance: res.data?.userBalance || res.data?.user
+  };
+};
+
+export const createRaffleStarsInvoice = async (
+  raffleId: string,
+  ticketCount: number
+): Promise<{ success: boolean; invoiceLink?: string; message?: string; totalStars?: number }> => {
+  if (appConfig.useMockData) {
+    await new Promise((res) => setTimeout(res, 300));
+    return {
+      success: true,
+      invoiceLink: 'https://t.me/$invoice_mock_link',
+      totalStars: ticketCount * 25
+    };
+  }
+
+  const encodedId = encodeURIComponent(raffleId);
+  let res = await api.post<any>(`/raffles/${encodedId}/stars-invoice`, {
+    ticket_count: ticketCount
+  });
+
+  if (!res.success && (res.error?.includes('404') || (res as any)?.status === 404)) {
+    res = await api.post<any>('/telegram/stars/invoice', {
+      stars_count: ticketCount * 25,
+      purpose: 'raffle_tickets',
+      raffle_id: raffleId
+    });
+  }
+
+  const raw = res.data || {};
+  const link = raw.invoice_link || raw.invoiceLink || raw.url;
+
+  return {
+    success: res.success,
+    invoiceLink: link,
+    totalStars: raw.total_stars ?? raw.totalStars ?? (ticketCount * 25),
+    message: res.message || res.error
+  };
+};
+
+export const createCryptoInvoice = async (
+  amountUsd: number,
+  purpose: string = 'raffle_tickets',
+  raffleId?: string,
+  ticketCount?: number
+): Promise<{ success: boolean; data?: any; message?: string }> => {
+  if (appConfig.useMockData) {
+    await new Promise((res) => setTimeout(res, 350));
+    const mockInvoice = {
+      invoice_id: `INV-MOCK-${Date.now()}`,
+      deposit_address: '0x58c679f291079d3E01a6132712217c4618e7E1d2',
+      amount_usd: amountUsd,
+      network: 'BNB Smart Chain (BEP-20)',
+      expires_at: Date.now() + 15 * 60 * 1000
+    };
+    try {
+      localStorage.setItem('active_crypto_invoice', JSON.stringify({
+        invoiceId: mockInvoice.invoice_id,
+        invoice_id: mockInvoice.invoice_id,
+        deposit_address: mockInvoice.deposit_address,
+        amount_usd: amountUsd,
+        purpose,
+        raffle_id: raffleId,
+        ticket_count: ticketCount,
+        expiresAt: mockInvoice.expires_at
+      }));
+    } catch {}
+    return {
+      success: true,
+      data: mockInvoice
+    };
+  }
+
+  const res = await api.post<any>('/invoices/crypto', {
+    amount_usd: amountUsd,
+    purpose,
+    raffle_id: raffleId,
+    ticket_count: ticketCount
+  });
+
+  const invoiceData = res.data?.data || res.data;
+  if (res.success && invoiceData) {
+    try {
+      localStorage.setItem('active_crypto_invoice', JSON.stringify({
+        invoiceId: invoiceData.invoice_id || invoiceData.id,
+        invoice_id: invoiceData.invoice_id || invoiceData.id,
+        deposit_address: invoiceData.deposit_address || invoiceData.address,
+        amount_usd: amountUsd,
+        purpose,
+        raffle_id: raffleId,
+        ticket_count: ticketCount,
+        expiresAt: typeof invoiceData.expires_at === 'number'
+          ? invoiceData.expires_at
+          : Date.now() + 15 * 60 * 1000
+      }));
+    } catch {}
+  }
+
+  return {
+    success: res.success,
+    data: invoiceData,
+    message: res.message || res.error
+  };
+};
+
+export const createCryptoDepositInvoice = createCryptoInvoice;
+
+export const getInvoiceStatus = async (invoiceId: string): Promise<any> => {
+  if (appConfig.useMockData) {
+    return { success: true, status: 'pending' };
+  }
+
+  const encodedId = encodeURIComponent(invoiceId);
+  let res = await api.get<any>(`/invoices/${encodedId}/status`);
+  if (!res.success) {
+    res = await api.get<any>(`/invoices/crypto/${encodedId}`);
+  }
+  if (!res.success) {
+    res = await api.get<any>(`/invoices/${encodedId}`);
+  }
+
+  const raw = res.data?.data || res.data || {};
+  const status = raw.status || (res.success ? 'pending' : 'failed');
+
+  if (status === 'paid' || status === 'completed') {
+    try {
+      localStorage.removeItem('active_crypto_invoice');
+    } catch {}
+    if (raw.userBalance || raw.user) {
+      syncUserBalance(raw);
+    }
+  }
+
+  return {
+    success: res.success,
+    status,
+    ...raw
+  };
+};
+
+export const checkCryptoInvoiceStatus = getInvoiceStatus;
 
 export const createTelegramStarsInvoice = async (
   starsCount: number,

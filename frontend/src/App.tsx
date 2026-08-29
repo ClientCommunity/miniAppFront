@@ -15,8 +15,10 @@ import {
   getInitialFeatureCards,
   getInitialUserProfile,
   authenticateTelegram,
-  fetchUserProfile
+  fetchUserProfile,
+  getInvoiceStatus
 } from './services/dataService';
+import { syncUserBalance } from './utils/syncUser';
 import { profileEventBus } from './utils/profileEvents';
 import type { UserProfile } from './types/api';
 import { DebugToastContainer } from './components/debug/DebugToastContainer';
@@ -36,6 +38,7 @@ const TasksPage = lazy(() => import('./components/tasks/TasksPage').then(m => ({
 const WalletPage = lazy(() => import('./components/wallet/WalletPage').then(m => ({ default: m.WalletPage })));
 const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const AdminAuthModal = lazy(() => import('./components/admin/AdminAuthModal').then(m => ({ default: m.AdminAuthModal })));
+const CryptoDepositInvoiceModal = lazy(() => import('./components/raffle/CryptoDepositInvoiceModal').then(m => ({ default: m.CryptoDepositInvoiceModal })));
 import adminService from './services/adminService';
 
 const WHEEL_SEGMENTS = getInitialWheelSegments();
@@ -67,6 +70,8 @@ function App() {
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [showContestModal, setShowContestModal] = useState(false);
   const [showOutOfSpinsModal, setShowOutOfSpinsModal] = useState(false);
+  const [activePendingInvoice, setActivePendingInvoice] = useState<any>(null);
+  const [showPendingInvoiceModal, setShowPendingInvoiceModal] = useState(false);
   const [rewardText, setRewardText] = useState('');
   const [lastServerSpin, setLastServerSpin] = useState<any>(null);
   const [winningReward, setWinningReward] = useState<{
@@ -226,6 +231,53 @@ function App() {
     });
   }, []);
 
+  // Interrupted Session Recovery for Active BEP-20 USDT Deposits
+  useEffect(() => {
+    const checkActiveInvoice = async () => {
+      const cached = localStorage.getItem('active_crypto_invoice');
+      if (!cached) return;
+      try {
+        const parsed = JSON.parse(cached);
+        const invoiceId = parsed.invoiceId || parsed.invoice_id;
+        if (!invoiceId) {
+          localStorage.removeItem('active_crypto_invoice');
+          return;
+        }
+
+        // Expired locally check
+        if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+          localStorage.removeItem('active_crypto_invoice');
+          return;
+        }
+
+        // Query backend status
+        const res = await getInvoiceStatus(invoiceId);
+        if (res?.status === 'paid' || res?.status === 'completed' || res?.data?.status === 'paid') {
+          localStorage.removeItem('active_crypto_invoice');
+          if (res.userBalance || res.data?.userBalance || res.data?.user) {
+            syncUserBalance(res.data || res);
+          }
+          haptics.notification('success');
+          haptics.playWinSound();
+          throwConfetti();
+          notifyToast(
+            `🎉 Deposit Confirmed! ${res.ticketsAwarded || res.ticket_count ? `+${res.ticketsAwarded || res.ticket_count} Raffle Tickets Added!` : 'Balance Updated!'}`,
+            'success',
+            5000
+          );
+        } else if (res?.status === 'pending' || res?.data?.status === 'pending') {
+          setActivePendingInvoice(parsed);
+        } else {
+          localStorage.removeItem('active_crypto_invoice');
+        }
+      } catch (e) {
+        console.warn('Failed to recover active invoice:', e);
+      }
+    };
+
+    checkActiveInvoice();
+  }, []);
+
     const handleSpinEnd = (winner: SpinSegment, serverResult?: any) => {
       // Prioritize live reward data returned by server API
       const spinRes = serverResult || lastServerSpin;
@@ -323,6 +375,48 @@ function App() {
         )}
 
         <div className="layout-container" style={{ height: '100dvh', overflow: 'hidden', padding: '0.25rem 0.5rem 0.5rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0', justifyContent: 'center' }}>
+      {/* Active Crypto Deposit Session Banner */}
+      {activePendingInvoice && (
+        <div
+          onClick={() => {
+            haptics.impact('light');
+            setShowPendingInvoiceModal(true);
+          }}
+          style={{
+            width: '100%',
+            background: 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
+            color: '#060a12',
+            padding: '0.35rem 0.85rem',
+            borderRadius: '10px',
+            marginBottom: '0.3rem',
+            boxSizing: 'border-box',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: '0.76rem',
+            fontWeight: 800,
+            cursor: 'pointer',
+            zIndex: 100,
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span style={{ fontSize: '0.95rem' }}>⚡</span>
+            <span>Deposit of ${(activePendingInvoice.amount_usd || 2.5).toFixed(2)} USDT in progress...</span>
+          </div>
+          <span style={{
+            background: '#060a12',
+            color: '#fbbf24',
+            padding: '0.15rem 0.5rem',
+            borderRadius: '6px',
+            fontSize: '0.68rem',
+            fontWeight: 900
+          }}>
+            View QR 🔍
+          </span>
+        </div>
+      )}
+
       {/* Top Navigation / Resource Bar */}
       <div
         style={{
@@ -971,6 +1065,28 @@ function App() {
             onSuccess={() => {
               setShowAdminAuthModal(false);
               setViewMode('admin');
+            }}
+          />
+        )}
+
+        {/* Active Crypto Deposit Recovery Modal */}
+        {showPendingInvoiceModal && activePendingInvoice && (
+          <CryptoDepositInvoiceModal
+            invoice={{
+              invoice_id: activePendingInvoice.invoiceId || activePendingInvoice.invoice_id,
+              deposit_address: activePendingInvoice.deposit_address,
+              amount_usd: activePendingInvoice.amount_usd,
+              amount_usdt: String(activePendingInvoice.amount_usd),
+              expires_at: activePendingInvoice.expiresAt
+            } as any}
+            amountUsd={activePendingInvoice.amount_usd}
+            ticketCount={activePendingInvoice.ticket_count || 5}
+            raffleId={activePendingInvoice.raffle_id}
+            onClose={() => setShowPendingInvoiceModal(false)}
+            onSuccess={() => {
+              setShowPendingInvoiceModal(false);
+              setActivePendingInvoice(null);
+              fetchUserProfile().catch(() => {});
             }}
           />
         )}

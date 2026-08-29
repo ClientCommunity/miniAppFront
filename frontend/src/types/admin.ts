@@ -66,10 +66,16 @@ export interface AdminContest {
 
 // 3. Raffles & Lotteries
 export interface AdminRaffle {
-  id: number;
+  id: number | string;
   title: string;
   cash_prize_usd: number;
   ticket_gem_price: number;
+  ticket_price_usd?: number;
+  ticket_price_stars?: number;
+  max_tickets_per_user?: number;
+  enable_usd_payment?: boolean;
+  enable_stars_payment?: boolean;
+  enable_gems_payment?: boolean;
   total_tickets_sold: number;
   total_participants: number;
   ends_at: string;
@@ -77,6 +83,19 @@ export interface AdminRaffle {
   winner_telegram_id?: number;
   winner_username?: string;
   winner_tx_id?: string;
+}
+
+export interface CreateRafflePayload {
+  title: string;
+  cash_prize_usd: number;
+  ticket_gem_price?: number;
+  ticket_price_usd?: number;
+  ticket_price_stars?: number;
+  max_tickets_per_user?: number;
+  enable_usd_payment?: boolean;
+  enable_stars_payment?: boolean;
+  enable_gems_payment?: boolean;
+  ends_at: string;
 }
 
 // 4. Tasks & Connected Chats
@@ -340,11 +359,43 @@ export interface AdminDailyStreakSettingsPayload {
 
 // 13. Referral Multi-Asset Rewards
 export interface AdminReferralRewardSettings {
+  initial_organic_spins?: number;
+  initialOrganicSpins?: number;
   referrer_spins: number;
   referrer_diamonds: number;
   referrer_usd: number;
   welcome_spins: number;
   welcome_diamonds: number;
   welcome_usd: number;
+}
+
+// 14. Deep User Lookup
+export interface UserLookupTransaction {
+  id: string | number;
+  type: string;
+  category?: string;
+  amount_usd?: number;
+  amount_diamonds?: number;
+  amount_spins?: number;
+  amount?: string | number;
+  status: 'completed' | 'processing' | 'rejected' | 'failed';
+  tx_hash?: string;
+  txHash?: string;
+  created_at: string;
+  createdAt?: string;
+  description?: string;
+}
+
+export interface AdminUserLookupData {
+  user: AdminUserListItem;
+  stats: {
+    total_deposits_count: number;
+    total_deposits_usd: number;
+    total_cashouts_count: number;
+    total_cashouts_usd: number;
+    total_referrals_count: number;
+    net_profit_usd: number;
+  };
+  recent_transactions: UserLookupTransaction[];
 }
 

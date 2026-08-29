@@ -1,5 +1,6 @@
 import { api } from '../api/client';
 import type { ApiResponse } from '../types/api';
+import { extractAdminList, parseNum } from '../utils/adminExtract';
 import type {
   AdminAuthResponse,
   AdminOverviewMetrics,
@@ -11,6 +12,7 @@ import type {
   AdminTask,
   ConnectedTelegramChat,
   AdminUserListItem,
+  AdminUserLookupData,
   BalanceAdjustPayload,
   AdminWithdrawalItem,
   AdminGiftCode,
@@ -372,7 +374,16 @@ export const adminService = {
   // 5. USER MANAGEMENT & SEARCH
   // --------------------------------------------------------------------------
   async getUsers(params?: { page?: number; limit?: number; search?: string }): Promise<ApiResponse<{ users: AdminUserListItem[]; total: number }>> {
-    const res = await api.get<{ users: AdminUserListItem[]; total: number }>('/admin/users', params);
+    const qParams: Record<string, any> = {
+      limit: params?.limit || 50,
+      offset: ((params?.page || 1) - 1) * (params?.limit || 50)
+    };
+    if (params?.search && params.search.trim()) {
+      qParams.search = params.search.trim();
+      qParams.q = params.search.trim();
+    }
+
+    const res = await api.get<any>('/admin/users', qParams);
     if (!res.success) {
       return {
         success: true,
@@ -409,39 +420,139 @@ export const adminService = {
               is_admin: false,
               created_at: new Date(Date.now() - 12 * 86400000).toISOString(),
               last_active_at: new Date(Date.now() - 2 * 3600000).toISOString()
-            },
-            {
-              id: 3,
-              telegram_id: 55443322,
-              username: 'bot_spammer',
-              first_name: 'Spam Bot',
-              balance_usd: 0.00,
-              diamonds: 50,
-              spins: 0,
-              energy: 0,
-              level: 1,
-              is_banned: true,
-              is_admin: false,
-              created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
-              last_active_at: new Date(Date.now() - 4 * 86400000).toISOString()
             }
           ]
         }
       };
     }
-    return res;
+
+    const rawList = extractAdminList<any>(res, 'users');
+    const normalizedUsers: AdminUserListItem[] = rawList.map((u: any) => ({
+      id: u.id || 0,
+      telegram_id: u.telegramId ?? u.telegram_id ?? 0,
+      username: u.username ?? 'user',
+      first_name: u.firstName ?? u.first_name ?? 'Player',
+      balance_usd: parseNum(u.balanceUsd ?? u.balance_usd),
+      diamonds: parseNum(u.diamonds ?? u.gems),
+      spins: parseNum(u.spins ?? u.tickets),
+      energy: parseNum(u.energy, 100),
+      level: parseNum(u.level, 1),
+      is_banned: Boolean(u.isBanned ?? u.is_banned),
+      is_admin: Boolean(u.isAdmin ?? u.is_admin),
+      created_at: u.createdAt ?? u.created_at ?? new Date().toISOString(),
+      last_active_at: u.lastActiveAt ?? u.last_active_at ?? u.createdAt ?? new Date().toISOString(),
+      ton_wallet: u.tonWallet ?? u.ton_wallet ?? u.wallet_address ?? ''
+    }));
+
+    const totalCount = res.data?.total ?? res.data?.data?.total ?? normalizedUsers.length;
+
+    return {
+      success: true,
+      data: {
+        users: normalizedUsers,
+        total: totalCount
+      }
+    };
   },
 
   async lookupUser(query: string): Promise<ApiResponse<AdminUserListItem[]>> {
-    return api.get<AdminUserListItem[]>('/admin/users/lookup', { q: query });
+    const res = await api.get<any>('/admin/users/lookup', { query, q: query, search: query });
+    if (!res.success) {
+      return { success: false, error: res.error || res.message, data: [] };
+    }
+    const rawList = extractAdminList<any>(res, 'users');
+    const normalized = rawList.map((u: any) => ({
+      id: u.id || 0,
+      telegram_id: u.telegramId ?? u.telegram_id ?? 0,
+      username: u.username ?? 'user',
+      first_name: u.firstName ?? u.first_name ?? 'Player',
+      balance_usd: parseNum(u.balanceUsd ?? u.balance_usd),
+      diamonds: parseNum(u.diamonds ?? u.gems),
+      spins: parseNum(u.spins ?? u.tickets),
+      energy: parseNum(u.energy, 100),
+      level: parseNum(u.level, 1),
+      is_banned: Boolean(u.isBanned ?? u.is_banned),
+      is_admin: Boolean(u.isAdmin ?? u.is_admin),
+      created_at: u.createdAt ?? u.created_at ?? new Date().toISOString(),
+      last_active_at: u.lastActiveAt ?? u.last_active_at ?? u.createdAt ?? new Date().toISOString(),
+      ton_wallet: u.tonWallet ?? u.ton_wallet ?? u.wallet_address ?? ''
+    }));
+    return { success: true, data: normalized };
+  },
+
+  async getDeepUserLookup(query: string): Promise<ApiResponse<AdminUserLookupData>> {
+    const res = await api.get<any>('/admin/users/lookup', { query, q: query, search: query });
+    if (res.success && res.data) {
+      const rawUser = res.data.user || (Array.isArray(res.data.users) ? res.data.users[0] : res.data);
+      const rawStats = res.data.stats || {};
+      const rawTxs = extractAdminList<any>(res.data, 'recent_transactions') || extractAdminList<any>(res.data, 'transactions') || [];
+
+      const user: AdminUserListItem = {
+        id: rawUser?.id || 0,
+        telegram_id: rawUser?.telegramId ?? rawUser?.telegram_id ?? 0,
+        username: rawUser?.username ?? 'user',
+        first_name: rawUser?.firstName ?? rawUser?.first_name ?? 'Player',
+        balance_usd: parseNum(rawUser?.balanceUsd ?? rawUser?.balance_usd),
+        diamonds: parseNum(rawUser?.diamonds ?? rawUser?.gems),
+        spins: parseNum(rawUser?.spins ?? rawUser?.tickets),
+        energy: parseNum(rawUser?.energy, 100),
+        level: parseNum(rawUser?.level, 1),
+        is_banned: Boolean(rawUser?.isBanned ?? rawUser?.is_banned),
+        is_admin: Boolean(rawUser?.isAdmin ?? rawUser?.is_admin),
+        created_at: rawUser?.createdAt ?? rawUser?.created_at ?? new Date().toISOString(),
+        last_active_at: rawUser?.lastActiveAt ?? rawUser?.last_active_at ?? new Date().toISOString(),
+        ton_wallet: rawUser?.tonWallet ?? rawUser?.ton_wallet ?? rawUser?.wallet_address ?? ''
+      };
+
+      const stats = {
+        total_deposits_count: parseNum(rawStats.total_deposits_count ?? rawStats.depositsCount),
+        total_deposits_usd: parseNum(rawStats.total_deposits_usd ?? rawStats.depositsUsd),
+        total_cashouts_count: parseNum(rawStats.total_cashouts_count ?? rawStats.cashoutsCount),
+        total_cashouts_usd: parseNum(rawStats.total_cashouts_usd ?? rawStats.cashoutsUsd),
+        total_referrals_count: parseNum(rawStats.total_referrals_count ?? rawStats.referralsCount),
+        net_profit_usd: parseNum(rawStats.net_profit_usd ?? rawStats.netProfitUsd)
+      };
+
+      return {
+        success: true,
+        data: {
+          user,
+          stats,
+          recent_transactions: rawTxs.map((t: any) => ({
+            id: t.id || `tx-${Date.now()}`,
+            type: t.type || t.category || 'transfer',
+            category: t.category || t.type,
+            amount_usd: t.amountUsd ?? t.amount_usd,
+            amount_diamonds: t.amountDiamonds ?? t.amount_diamonds,
+            amount_spins: t.amountSpins ?? t.amount_spins,
+            amount: t.amount,
+            status: t.status || 'completed',
+            tx_hash: t.txHash ?? t.tx_hash ?? t.hash,
+            created_at: t.createdAt ?? t.created_at ?? new Date().toISOString(),
+            description: t.description ?? t.title ?? ''
+          }))
+        }
+      };
+    }
+
+    return {
+      success: false,
+      error: res.error || 'User not found'
+    };
   },
 
   async adjustBalance(payload: BalanceAdjustPayload): Promise<ApiResponse<{ new_balance: number; message: string }>> {
-    return api.post<{ new_balance: number; message: string }>(`/admin/users/${payload.user_id}/adjust-balance`, payload);
+    return api.post<{ new_balance: number; message: string }>(`/admin/users/${payload.user_id}/adjust-balance`, {
+      spins: payload.adjustment_type === 'spins' ? payload.amount : undefined,
+      diamonds: payload.adjustment_type === 'diamonds' ? payload.amount : undefined,
+      usd: payload.adjustment_type === 'balance_usd' ? payload.amount : undefined,
+      reason: payload.audit_reason,
+      ...payload
+    });
   },
 
   async toggleUserBan(userId: number, ban: boolean, reason?: string): Promise<ApiResponse<{ is_banned: boolean }>> {
-    return api.post<{ is_banned: boolean }>(`/admin/users/${userId}/ban`, { is_banned: ban, reason });
+    return api.post<{ is_banned: boolean }>(`/admin/users/${userId}/ban`, { is_banned: ban, banned: ban, reason });
   },
 
   // --------------------------------------------------------------------------
@@ -465,9 +576,17 @@ export const adminService = {
     return api.post<{ payout_mode: 'manual' | 'instant' }>('/admin/payout-settings', settings);
   },
 
-  async getWithdrawals(status: string = 'all', query?: string): Promise<ApiResponse<AdminWithdrawalItem[]>> {
-    const params: Record<string, any> = { status };
-    if (query && query.trim()) params.q = query.trim();
+  async getWithdrawals(status: string = 'processing', query?: string): Promise<ApiResponse<AdminWithdrawalItem[]>> {
+    const params: Record<string, any> = {
+      status,
+      limit: 50,
+      offset: 0
+    };
+    if (query && query.trim()) {
+      params.search = query.trim();
+      params.q = query.trim();
+    }
+
     const res = await api.get<any>('/admin/withdrawals', params);
     if (!res.success) {
       return {
@@ -498,48 +617,30 @@ export const adminService = {
             destination_address: '0x3F91A8E2B15C87889A12e4C897d98b16fA0C2A7E',
             created_at: new Date(Date.now() - 120 * 60000).toISOString(),
             status: 'processing'
-          },
-          {
-            id: 100,
-            user_id: 4,
-            telegram_id: 99887766,
-            username: 'maria_vip',
-            first_name: 'Maria',
-            amount_usd: 10.00,
-            fee_usd: 0.20,
-            net_amount_usd: 9.80,
-            destination_address: '0x99A8c12f45Bc879B1842e4897D98B16FA0c12891',
-            created_at: new Date(Date.now() - 24 * 3600000).toISOString(),
-            status: 'completed',
-            tx_hash: '0x889c1f72a4b891e479c98a123f4b89e217d89c1234567890abcdef1234567890'
           }
         ]
       };
     }
 
     // Defensive normalization for any backend response structure
-    const rawList = Array.isArray(res.data)
-      ? res.data
-      : (res.data?.withdrawals || res.data?.items || res.data?.data || []);
+    const rawList = extractAdminList<any>(res, 'withdrawals');
 
     const normalizedList: AdminWithdrawalItem[] = rawList.map((w: any) => ({
       id: w.id || 0,
-      user_id: w.user_id || 0,
-      telegram_id: w.telegram_id || 0,
-      username: w.username || 'user',
-      first_name: w.first_name || '',
-      phone: w.phone || '',
-      amount_usd: typeof w.amount_usd === 'number' ? w.amount_usd : (parseFloat(w.amount) || 0),
-      fee_usd: typeof w.fee_usd === 'number' ? w.fee_usd : (parseFloat(w.fee) || 0),
-      net_amount_usd: typeof w.net_amount_usd === 'number'
-        ? w.net_amount_usd
-        : (typeof w.net_amount === 'number' ? w.net_amount : (parseFloat(w.amount_usd || w.amount || 0) * 0.98)),
-      destination_address: w.destination_address || w.ton_wallet || w.wallet_address || '',
-      created_at: w.created_at || new Date().toISOString(),
+      user_id: w.userId ?? w.user_id ?? 0,
+      telegram_id: w.telegramId ?? w.telegram_id ?? 0,
+      username: w.username ?? w.userName ?? 'user',
+      first_name: w.firstName ?? w.first_name ?? w.userName ?? '',
+      phone: w.phone ?? '',
+      amount_usd: parseNum(w.amountUsd ?? w.amount_usd ?? w.amount),
+      fee_usd: parseNum(w.feeUsd ?? w.fee_usd ?? w.fee),
+      net_amount_usd: parseNum(w.netPayoutUsd ?? w.net_amount_usd ?? w.netPayout ?? w.net_amount ?? ((w.amountUsd ?? w.amount_usd ?? 0) * 0.98)),
+      destination_address: w.recipient ?? w.destination_address ?? w.ton_wallet ?? w.wallet_address ?? '',
+      created_at: w.createdAt ?? w.created_at ?? new Date().toISOString(),
       status: w.status === 'pending' ? 'processing' : (w.status || 'processing'),
-      tx_hash: w.tx_hash || '',
-      reject_reason: w.reject_reason || '',
-      notes: w.notes || ''
+      tx_hash: w.referenceId ?? w.txId ?? w.tx_hash ?? '',
+      reject_reason: w.rejectReason ?? w.reject_reason ?? '',
+      notes: w.notes ?? ''
     }));
 
     return {
@@ -1035,12 +1136,13 @@ export const adminService = {
       return {
         success: true,
         data: {
-          referrer_spins: 1,
-          referrer_diamonds: 100,
-          referrer_usd: 0.05,
-          welcome_spins: 3,
-          welcome_diamonds: 200,
-          welcome_usd: 0.00
+          initial_organic_spins: 15,
+          referrer_spins: 2,
+          referrer_diamonds: 500,
+          referrer_usd: 0.10,
+          welcome_spins: 5,
+          welcome_diamonds: 1000,
+          welcome_usd: 0.25
         }
       };
     }
@@ -1049,12 +1151,13 @@ export const adminService = {
     return {
       success: true,
       data: {
-        referrer_spins: raw.referrer_spins ?? raw.inviter_spins ?? 1,
-        referrer_diamonds: raw.referrer_diamonds ?? raw.inviter_diamonds ?? 100,
-        referrer_usd: raw.referrer_usd ?? raw.inviter_usd ?? 0.05,
-        welcome_spins: raw.welcome_spins ?? raw.referee_spins ?? 3,
-        welcome_diamonds: raw.welcome_diamonds ?? raw.referee_diamonds ?? 200,
-        welcome_usd: raw.welcome_usd ?? raw.referee_usd ?? 0.00
+        initial_organic_spins: raw.initial_organic_spins ?? raw.initialOrganicSpins ?? raw.direct_spins ?? 15,
+        referrer_spins: raw.referrer_spins ?? raw.inviter_spins ?? 2,
+        referrer_diamonds: raw.referrer_diamonds ?? raw.inviter_diamonds ?? 500,
+        referrer_usd: raw.referrer_usd ?? raw.inviter_usd ?? 0.10,
+        welcome_spins: raw.welcome_spins ?? raw.referee_spins ?? 5,
+        welcome_diamonds: raw.welcome_diamonds ?? raw.referee_diamonds ?? 1000,
+        welcome_usd: raw.welcome_usd ?? raw.referee_usd ?? 0.25
       }
     };
   },

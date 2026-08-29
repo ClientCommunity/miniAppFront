@@ -146,10 +146,21 @@ export interface ActiveContestItem {
 export interface RaffleCardData {
   id: string;
   cashReward: number;
+  cash_prize_usd?: number;
   coinRewardStr: string;
   participants: number;
   tickets: number;
   status: 'ongoing' | 'ended';
+  ticket_price_usd?: number;
+  ticketPriceUsd?: number;
+  ticket_price_stars?: number;
+  ticketPriceStars?: number;
+  ticket_gem_price?: number;
+  ticketPriceGems?: number;
+  max_tickets_per_user?: number;
+  maxTicketsPerUser?: number;
+  total_tickets_sold?: number;
+  totalTicketsSold?: number;
 }
 
 export interface PrizeTier {
@@ -165,9 +176,17 @@ export interface RaffleDetailsData {
   raffle: RaffleCardData;
   userTickets: number;
   ticketPriceGems: number;
+  ticketPriceUsd?: number;
+  ticketPriceStars?: number;
+  maxTicketsPerUser?: number;
   endsTimestamp: number;
   secondsLeft: number;
   prizeTiers: PrizeTier[];
+}
+
+export interface BuyRaffleTicketPayload {
+  ticket_count: number;
+  payment_method: 'usdt' | 'stars' | 'gems';
 }
 
 // Tasks
@@ -259,16 +278,25 @@ export interface CryptoInvoiceData {
   invoice_id: string;
   deposit_address: string;
   amount_usd: number;
-  amount_usdt: string;
+  amount_usdt?: string;
+  purpose?: string;
+  status?: 'pending' | 'paid' | 'expired' | string;
+  network?: string;
+  expires_at?: number | string;
+  qr_code_data?: string;
+  raffle_id?: string;
+  ticket_count?: number;
+}
+
+export interface CreateCryptoInvoicePayload {
+  amount_usd: number;
   purpose: string;
-  status: 'pending' | 'paid' | 'expired';
-  network: string;
-  expires_at: number;
-  qr_code_data: string;
+  raffle_id?: string;
+  ticket_count?: number;
 }
 
 export interface StarsInvoiceData {
   invoice_link: string;
-  payload: string;
-  stars: number;
+  payload?: string;
+  stars?: number;
 }
