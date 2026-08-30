@@ -18,6 +18,8 @@ export const SettingsModule: React.FC = () => {
   const [feePercent, setFeePercent] = useState('2.0');
   const [minWithdrawUsd, setMinWithdrawUsd] = useState('1.00');
   const [minDepositUsd, setMinDepositUsd] = useState('0.50');
+  const [enableMockSeeds, setEnableMockSeeds] = useState(false);
+  const [savingDataMode, setSavingDataMode] = useState(false);
 
   const loadSettings = async () => {
     setLoading(true);
@@ -33,6 +35,9 @@ export const SettingsModule: React.FC = () => {
         if (s.fee_percent) setFeePercent(s.fee_percent);
         if (s.min_withdraw_usd) setMinWithdrawUsd(s.min_withdraw_usd);
         if (s.min_deposit_usd) setMinDepositUsd(s.min_deposit_usd);
+        if (s.enable_mock_seeds !== undefined) {
+          setEnableMockSeeds(String(s.enable_mock_seeds) === 'true' || String(s.enable_mock_seeds) === '1');
+        }
       }
     } catch (err: any) {
       console.warn('Failed to load system settings:', err);
@@ -101,6 +106,34 @@ export const SettingsModule: React.FC = () => {
       notifyToast(`Error: ${err.message}`, 'error', 3500);
     } finally {
       setSavingFinancial(false);
+    }
+  };
+
+  const handleToggleMockSeeds = async (val: boolean) => {
+    setEnableMockSeeds(val);
+    setSavingDataMode(true);
+    try {
+      const res = await adminService.updateSystemSettings({
+        enable_mock_seeds: val ? 'true' : 'false'
+      });
+      if (res.success) {
+        haptics.notification('success');
+        notifyToast(
+          val
+            ? '✓ Mock seeds enabled for tournament preview.'
+            : '✓ 100% Real Live Data Mode activated! Only real player scores will show.',
+          'success',
+          3500
+        );
+      } else {
+        haptics.notification('error');
+        notifyToast(res.error || 'Failed to update data mode', 'error', 3000);
+      }
+    } catch (err: any) {
+      haptics.notification('error');
+      notifyToast(`Error: ${err.message}`, 'error', 3000);
+    } finally {
+      setSavingDataMode(false);
     }
   };
 
@@ -496,6 +529,53 @@ export const SettingsModule: React.FC = () => {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* Card 3: Tournament Leaderboard & Data Mode */}
+      <div
+        style={{
+          background: 'linear-gradient(180deg, #111827 0%, #0b0f19 100%)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: '12px',
+          padding: '1.25rem',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span>🏆</span>
+              <span>Tournament &amp; Contest Data Mode</span>
+            </h3>
+            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>
+              Switch between 100% Real Live Players mode and Demo Placeholder Competitor seeds.
+            </p>
+          </div>
+
+          <button
+            onClick={() => handleToggleMockSeeds(!enableMockSeeds)}
+            disabled={savingDataMode}
+            style={{
+              background: enableMockSeeds
+                ? 'linear-gradient(135deg, #d97706 0%, #b45309 100%)'
+                : 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+              border: enableMockSeeds ? '1px solid #f59e0b' : '1px solid #10b981',
+              borderRadius: '20px',
+              padding: '0.45rem 1.1rem',
+              color: '#ffffff',
+              fontSize: '0.82rem',
+              fontWeight: 800,
+              cursor: savingDataMode ? 'wait' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              boxShadow: enableMockSeeds ? '0 2px 10px rgba(217, 119, 6, 0.4)' : '0 2px 10px rgba(5, 150, 105, 0.4)'
+            }}
+          >
+            <span>{enableMockSeeds ? '🟡 Demo Seeds Active' : '🟢 100% Real Live Data Active'}</span>
+            <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>({enableMockSeeds ? 'Switch to Real' : 'Switch to Demo'})</span>
+          </button>
+        </div>
       </div>
     </div>
   );

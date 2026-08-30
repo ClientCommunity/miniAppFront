@@ -1,6 +1,5 @@
 import appConfig from '../config.json';
 import type { ApiResponse } from '../types/api';
-import { notifyToast } from '../utils/debugToast';
 import { syncUserBalance } from '../utils/syncUser';
 
 export interface RequestOptions extends Omit<RequestInit, 'body'> {
@@ -130,10 +129,9 @@ class ApiClient {
         } catch (syncErr) {
           console.error('[ApiClient] Error during automatic user sync:', syncErr);
         }
-        notifyToast(`[API OK] ${method} ${endpoint} (${response.status})`, 'success', 3000);
       } else {
         const errMsg = json.error || json.message || `HTTP ${response.status}`;
-        notifyToast(`[API ERR] ${method} ${endpoint}: ${errMsg}`, 'error', 4000);
+        console.warn(`[ApiClient] ${method} ${endpoint}: ${errMsg}`);
       }
 
       if (response.status === 401) {
@@ -145,7 +143,7 @@ class ApiClient {
       clearTimeout(timeoutId);
       const isAbort = err?.name === 'AbortError';
       const errMsg = isAbort ? 'Request Timeout' : (err?.message || 'Network / CORS Error');
-      notifyToast(`[API ERR] ${method} ${endpoint}: ${errMsg}`, 'error', 4000);
+      console.error(`[ApiClient] ${method} ${endpoint} Failed:`, errMsg);
       return {
         success: false,
         error: errMsg

@@ -26,8 +26,6 @@ import type { UserProfile } from './types/api';
 import { DebugToastContainer } from './components/debug/DebugToastContainer';
 import { notifyToast } from './utils/debugToast';
 import { formatAssetNumber } from './utils/format';
-import appConfig from './config.json';
-import api from './api/client';
 
 // Lazy-loaded modals & secondary pages for ultra-fast initial boot
 const DailyRewardsModal = lazy(() => import('./components/DailyRewardsModal').then(m => ({ default: m.DailyRewardsModal })));
@@ -248,18 +246,8 @@ function App() {
 
     const isDirectAdminLink = startParam.toLowerCase() === 'admin' || startParam.toLowerCase() === 'admin_panel';
 
-    if (startParam) {
-      if (isDirectAdminLink) {
-        notifyToast('🛡️ Direct Admin Access Request Detected', 'info', 3500);
-      } else {
-        notifyToast(`🎟 Referral Detected: ${startParam}`, 'info', 3500);
-      }
-    }
-
-    if (appConfig.useMockData) {
-      notifyToast('🟡 Mock Mode Active (Using data.json)', 'info', 4000);
-    } else {
-      notifyToast(`🔗 Connecting to ${api.getBaseUrl()}`, 'info', 3000);
+    if (startParam && isDirectAdminLink) {
+      notifyToast('🛡️ Direct Admin Access Request Detected', 'info', 3500);
     }
 
     authenticateTelegram(initData, isDirectAdminLink ? '' : startParam).then((res) => {
@@ -279,12 +267,6 @@ function App() {
             setShowAdminAuthModal(true);
           }
         }
-
-        if (!appConfig.useMockData) {
-          notifyToast('🟢 Backend Connection Established!', 'success', 3500);
-        }
-      } else if (!appConfig.useMockData) {
-        notifyToast(`🔴 Failed to authenticate on server: ${res.error || 'Check backend'}`, 'error', 5000);
       }
     });
 
