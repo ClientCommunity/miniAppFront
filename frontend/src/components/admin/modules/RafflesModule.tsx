@@ -98,9 +98,48 @@ export const RafflesModule: React.FC = () => {
 
     try {
       haptics.impact('heavy');
-      const res = await adminService.drawRaffleWinner(Number(raffle.id));
+      const res = await adminService.drawRaffleWinner(raffle.id);
       if (res.success && res.data) {
-        notifyToast(`🎉 Winner drawn: ${res.data.winner_username}!`, 'success', 4000);
+        const winner = res.data.winner_username || (res.data as any).winnerName || (res.data as any).winner_name || 'Player';
+        notifyToast(`🎉 Winner drawn: ${winner}!`, 'success', 4000);
+        loadRaffles();
+      } else {
+        notifyToast(`Failed: ${res.error || 'Server error'}`, 'error', 3500);
+      }
+    } catch (err: any) {
+      notifyToast(`Error: ${err.message}`, 'error', 3500);
+    }
+  };
+
+  const handleEndRaffle = async (raffle: AdminRaffle) => {
+    if (!window.confirm(`Are you sure you want to end raffle "${raffle.title}"?`)) {
+      return;
+    }
+
+    try {
+      haptics.impact('medium');
+      const res = await adminService.endRaffle(raffle.id);
+      if (res.success) {
+        notifyToast(`🛑 Raffle "${raffle.title}" marked as ended!`, 'success', 3000);
+        loadRaffles();
+      } else {
+        notifyToast(`Failed: ${res.error || 'Server error'}`, 'error', 3500);
+      }
+    } catch (err: any) {
+      notifyToast(`Error: ${err.message}`, 'error', 3500);
+    }
+  };
+
+  const handleDeleteRaffle = async (raffle: AdminRaffle) => {
+    if (!window.confirm(`⚠️ Permanently DELETE raffle "${raffle.title}" (${raffle.id})? This will delete the raffle and its tickets completely.`)) {
+      return;
+    }
+
+    try {
+      haptics.impact('heavy');
+      const res = await adminService.deleteRaffle(raffle.id);
+      if (res.success) {
+        notifyToast(`🗑️ Raffle deleted successfully!`, 'success', 3000);
         loadRaffles();
       } else {
         notifyToast(`Failed: ${res.error || 'Server error'}`, 'error', 3500);
@@ -227,24 +266,74 @@ export const RafflesModule: React.FC = () => {
                   </div>
                 )}
 
-                {r.status === 'active' && (
+                {/* Actions Row */}
+                <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.45rem', paddingTop: '0.35rem' }}>
+                  {(r.status === 'active' || r.status === 'ongoing') && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.45rem' }}>
+                      <button
+                        onClick={() => handleDrawWinner(r)}
+                        style={{
+                          background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                          border: 'none',
+                          borderRadius: '8px',
+                          color: '#ffffff',
+                          padding: '0.5rem 0.4rem',
+                          fontSize: '0.78rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.25rem'
+                        }}
+                      >
+                        🎲 Draw Winner
+                      </button>
+
+                      <button
+                        onClick={() => handleEndRaffle(r)}
+                        style={{
+                          background: 'rgba(234, 179, 8, 0.15)',
+                          border: '1px solid rgba(234, 179, 8, 0.4)',
+                          borderRadius: '8px',
+                          color: '#facc15',
+                          padding: '0.5rem 0.4rem',
+                          fontSize: '0.78rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.25rem'
+                        }}
+                      >
+                        🛑 End Raffle
+                      </button>
+                    </div>
+                  )}
+
                   <button
-                    onClick={() => handleDrawWinner(r)}
+                    onClick={() => handleDeleteRaffle(r)}
                     style={{
-                      marginTop: 'auto',
-                      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                      border: 'none',
+                      width: '100%',
+                      background: 'rgba(239, 68, 68, 0.12)',
+                      border: '1px solid rgba(239, 68, 68, 0.35)',
                       borderRadius: '8px',
-                      color: '#ffffff',
-                      padding: '0.5rem',
-                      fontSize: '0.82rem',
+                      color: '#f87171',
+                      padding: '0.45rem',
+                      fontSize: '0.78rem',
                       fontWeight: 800,
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.25rem',
+                      transition: 'all 0.15s ease'
                     }}
                   >
-                    🎲 Draw Winner Now
+                    🗑️ Delete Raffle
                   </button>
-                )}
+                </div>
               </div>
             );
           })}

@@ -79,7 +79,7 @@ export interface AdminRaffle {
   total_tickets_sold: number;
   total_participants: number;
   ends_at: string;
-  status: 'active' | 'drawn' | 'cancelled';
+  status: 'active' | 'ongoing' | 'ended' | 'drawn' | 'cancelled';
   winner_telegram_id?: number;
   winner_username?: string;
   winner_tx_id?: string;

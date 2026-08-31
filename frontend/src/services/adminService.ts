@@ -288,8 +288,16 @@ export const adminService = {
     return api.post<AdminRaffle>('/admin/raffles', data);
   },
 
-  async drawRaffleWinner(id: number): Promise<ApiResponse<{ winner_username: string; prize_usd: number }>> {
+  async drawRaffleWinner(id: string | number): Promise<ApiResponse<{ winner_username: string; prize_usd: number }>> {
     return api.post<{ winner_username: string; prize_usd: number }>(`/admin/raffles/${id}/draw`);
+  },
+
+  async endRaffle(id: string | number): Promise<ApiResponse<any>> {
+    return api.post<any>(`/admin/raffles/${id}/end`);
+  },
+
+  async deleteRaffle(id: string | number): Promise<ApiResponse<any>> {
+    return api.delete<any>(`/admin/raffles/${id}`);
   },
 
   // --------------------------------------------------------------------------
