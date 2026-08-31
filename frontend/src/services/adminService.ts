@@ -1267,6 +1267,16 @@ export const adminService = {
 
   async updateSystemSettings(payload: Record<string, string>): Promise<ApiResponse<any>> {
     return api.post('/admin/settings', payload);
+  },
+
+  async verifyAndConnectChannel(chatId: string): Promise<ApiResponse<{
+    chat_id: string;
+    title: string;
+    username: string;
+    invite_link: string;
+    is_admin: boolean;
+  }>> {
+    return api.post('/admin/settings/verify-channel', { chat_id: chatId });
   }
 };
 

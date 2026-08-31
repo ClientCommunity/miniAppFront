@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getOfficialChannelStatus, verifyOfficialChannelJoin } from '../services/dataService';
 import type { UserProfile } from '../types/api';
 import { throwConfetti } from '../utils/confetti';
@@ -8,7 +8,7 @@ import { notifyToast } from '../utils/debugToast';
 export interface OfficialChannelModalProps {
   isOpen?: boolean;
   onClose: () => void;
-  onClaimSuccess: (rewards: { spins: number; diamonds: number }) => void;
+  onClaimSuccess: (rewards: { spins: number; diamonds: number; user?: UserProfile }) => void;
   userProfile?: UserProfile;
 }
 
@@ -94,7 +94,7 @@ export const OfficialChannelModal: React.FC<OfficialChannelModalProps> = ({
 
         setIsVisible(false);
         setTimeout(() => {
-          onClaimSuccess({ spins: awardedSpins, diamonds: awardedDiamonds });
+          onClaimSuccess({ spins: awardedSpins, diamonds: awardedDiamonds, user: res.user });
         }, 250);
       } else {
         haptics.notification('warning');

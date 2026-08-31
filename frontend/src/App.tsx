@@ -1145,16 +1145,23 @@ function App() {
             onClose={() => setShowOfficialChannelModal(false)}
             onClaimSuccess={(rewards) => {
               setShowOfficialChannelModal(false);
-              const userId = userProfile.telegram_id || userProfile.id;
-              if (userId) {
-                localStorage.setItem(`channel_reward_claimed_${userId}`, 'true');
-              }
-              setUserProfile((prev) => ({
-                ...prev,
-                spins: prev.spins + (rewards.spins || 3),
-                diamonds: prev.diamonds + (rewards.diamonds || 500),
-                has_claimed_channel_reward: true
-              }));
+              // Authoritative backend sync
+              fetchUserProfile().catch(() => {});
+              setUserProfile((prev) => {
+                if (rewards.user) {
+                  return {
+                    ...prev,
+                    ...rewards.user,
+                    has_claimed_channel_reward: true
+                  };
+                }
+                return {
+                  ...prev,
+                  spins: prev.spins + (rewards.spins || 3),
+                  diamonds: prev.diamonds + (rewards.diamonds || 500),
+                  has_claimed_channel_reward: true
+                };
+              });
             }}
           />
         )}

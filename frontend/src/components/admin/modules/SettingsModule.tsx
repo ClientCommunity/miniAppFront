@@ -9,10 +9,14 @@ export const SettingsModule: React.FC = () => {
   const [savingFinancial, setSavingFinancial] = useState(false);
 
   // Official Channel Gatekeeper Settings
+  const [channelId, setChannelId] = useState('');
+  const [channelTitle, setChannelTitle] = useState('');
   const [channelUsername, setChannelUsername] = useState('@SpinCraftNews');
   const [channelLink, setChannelLink] = useState('https://t.me/SpinCraftNews');
   const [rewardSpins, setRewardSpins] = useState('3');
   const [rewardDiamonds, setRewardDiamonds] = useState('500');
+  const [verifyingChannel, setVerifyingChannel] = useState(false);
+  const [channelVerified, setChannelVerified] = useState(false);
 
   // General Financial & System Settings
   const [feePercent, setFeePercent] = useState('2.0');
@@ -27,6 +31,8 @@ export const SettingsModule: React.FC = () => {
       const res = await adminService.getSystemSettings();
       if (res && res.data) {
         const s = res.data;
+        if (s.official_channel_id) setChannelId(s.official_channel_id);
+        if (s.official_channel_title) setChannelTitle(s.official_channel_title);
         if (s.official_channel_username) setChannelUsername(s.official_channel_username);
         if (s.official_channel_link) setChannelLink(s.official_channel_link);
         if (s.official_channel_reward_spins) setRewardSpins(String(s.official_channel_reward_spins));
@@ -51,16 +57,52 @@ export const SettingsModule: React.FC = () => {
     loadSettings();
   }, []);
 
+  const handleAutoDetectChannel = async () => {
+    const target = channelId.trim() || channelUsername.trim();
+    if (!target) {
+      notifyToast('Please enter a Telegram Chat ID (e.g. -100...) or @username', 'info', 3000);
+      return;
+    }
+
+    setVerifyingChannel(true);
+    try {
+      haptics.impact('medium');
+      const res = await adminService.verifyAndConnectChannel(target);
+      if (res.success && res.data) {
+        setChannelVerified(true);
+        if (res.data.title) setChannelTitle(res.data.title);
+        if (res.data.username) setChannelUsername(res.data.username);
+        if (res.data.invite_link) setChannelLink(res.data.invite_link);
+        if (res.data.chat_id) setChannelId(res.data.chat_id);
+        haptics.notification('success');
+        notifyToast(`✓ Connected: ${res.data.title}! Permanent invite link generated.`, 'success', 4000);
+      } else {
+        setChannelVerified(false);
+        haptics.notification('error');
+        notifyToast(res.error || 'Failed to detect channel. Ensure the bot is an Administrator in that chat!', 'error', 4500);
+      }
+    } catch (err: any) {
+      setChannelVerified(false);
+      haptics.notification('error');
+      notifyToast(`Error: ${err.message}`, 'error', 4500);
+    } finally {
+      setVerifyingChannel(false);
+    }
+  };
+
   const handleSaveChannelSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!channelUsername.trim() || !channelLink.trim()) {
-      notifyToast('Channel username and invite link are required', 'info', 3000);
+    const targetId = channelId.trim() || channelUsername.trim();
+    if (!targetId && !channelLink.trim()) {
+      notifyToast('Channel ID or invite link is required', 'info', 3000);
       return;
     }
 
     setSavingChannel(true);
     try {
       const payload: Record<string, string> = {
+        official_channel_id: channelId.trim(),
+        official_channel_title: channelTitle.trim(),
         official_channel_username: channelUsername.trim(),
         official_channel_link: channelLink.trim(),
         official_channel_reward_spins: String(parseInt(rewardSpins, 10) || 3),
@@ -229,37 +271,63 @@ export const SettingsModule: React.FC = () => {
 
         <form onSubmit={handleSaveChannelSettings} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-            {/* Official Channel Username / Handle */}
+            {/* Telegram Chat ID or Username */}
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                Official Channel Handle / Username
+                Telegram Channel Chat ID (or @username)
               </label>
-              <input
-                type="text"
-                value={channelUsername}
-                onChange={(e) => setChannelUsername(e.target.value)}
-                placeholder="@SpinCraftNews"
-                style={{
-                  width: '100%',
-                  background: '#070a12',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  borderRadius: '8px',
-                  padding: '0.6rem 0.85rem',
-                  color: '#ffffff',
-                  fontSize: '0.85rem',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <input
+                  type="text"
+                  value={channelId || channelUsername}
+                  onChange={(e) => {
+                    setChannelId(e.target.value);
+                    if (e.target.value.startsWith('@')) {
+                      setChannelUsername(e.target.value);
+                    }
+                  }}
+                  placeholder="-1002345678901 or @channel"
+                  style={{
+                    flex: 1,
+                    background: '#070a12',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    borderRadius: '8px',
+                    padding: '0.6rem 0.85rem',
+                    color: '#ffffff',
+                    fontSize: '0.85rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleAutoDetectChannel}
+                  disabled={verifyingChannel}
+                  style={{
+                    background: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.5rem 0.85rem',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.78rem',
+                    cursor: verifyingChannel ? 'wait' : 'pointer',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 2px 8px rgba(14, 165, 233, 0.3)'
+                  }}
+                >
+                  {verifyingChannel ? '⏳ Detecting...' : '🔍 Detect Link'}
+                </button>
+              </div>
               <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.25rem', display: 'block' }}>
-                Displayed on the out-of-spins pop-up modal header.
+                Enter your Chat ID (e.g. -100...). The Bot will auto-export the permanent invite link.
               </span>
             </div>
 
-            {/* Official Channel Invite Link */}
+            {/* Official Channel Invite Link (Auto-Generated) */}
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                Official Channel Invite Link
+                Permanent Channel Invite Link
               </label>
               <div style={{ display: 'flex', gap: '0.4rem' }}>
                 <input
@@ -298,8 +366,8 @@ export const SettingsModule: React.FC = () => {
                   🔗 Test
                 </button>
               </div>
-              <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.25rem', display: 'block' }}>
-                Opened when players tap "🚀 Join Channel".
+              <span style={{ fontSize: '0.7rem', color: channelVerified ? '#34d399' : '#64748b', marginTop: '0.25rem', display: 'block' }}>
+                {channelVerified ? `🛡️ Verified Administrator | Title: "${channelTitle}"` : (channelTitle ? `📢 Channel Title: "${channelTitle}"` : 'Opened when players tap "🚀 Join Channel".')}
               </span>
             </div>
 
