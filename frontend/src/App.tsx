@@ -26,6 +26,7 @@ import type { UserProfile } from './types/api';
 import { DebugToastContainer } from './components/debug/DebugToastContainer';
 import { notifyToast } from './utils/debugToast';
 import { formatAssetNumber } from './utils/format';
+import { UserAvatar } from './components/UserAvatar';
 
 // Lazy-loaded modals & secondary pages for ultra-fast initial boot
 const DailyRewardsModal = lazy(() => import('./components/DailyRewardsModal').then(m => ({ default: m.DailyRewardsModal })));
@@ -550,17 +551,12 @@ function App() {
             }}
             style={{ position: 'relative', width: '34px', height: '34px', flexShrink: 0 }}
           >
-            <img
-              src={userProfile.photo_url || './assets/avatar.png'}
-              alt="Avatar"
-              style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: '50%',
-                border: '1.5px solid #00e676',
-                boxShadow: '0 2px 8px rgba(0, 230, 118, 0.4)',
-                objectFit: 'cover'
-              }}
+            <UserAvatar
+              photoUrl={userProfile.photo_url}
+              name={userProfile.first_name || userProfile.username || 'Player'}
+              size={34}
+              border="1.5px solid #00e676"
+              boxShadow="0 2px 8px rgba(0, 230, 118, 0.4)"
             />
             {/* Level badge */}
             <div

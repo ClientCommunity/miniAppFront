@@ -4,6 +4,7 @@ import { haptics } from '../utils/haptics';
 import { getInitialTeamData, fetchTeamData } from '../services/dataService';
 import { notifyToast } from '../utils/debugToast';
 import type { TeamStatsData } from '../types/api';
+import { UserAvatar } from './UserAvatar';
 
 export interface TeamModalProps {
   onClose: () => void;
@@ -477,20 +478,13 @@ export const TeamModal: FC<TeamModalProps> = ({ onClose }) => {
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                        <div
-                          style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '50%',
-                            background: 'rgba(255, 255, 255, 0.15)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '0.9rem'
-                          }}
-                        >
-                          👤
-                        </div>
+                        <UserAvatar
+                          name={member.name || 'Friend'}
+                          photoUrl={member.photo_url || member.avatar}
+                          size={32}
+                          border="1px solid rgba(255, 255, 255, 0.2)"
+                          boxShadow="0 2px 6px rgba(0, 0, 0, 0.25)"
+                        />
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#ffffff' }}>
                             {member.name}
