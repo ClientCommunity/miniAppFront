@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import type { FC } from 'react';
 import { HowToPlayModal } from './HowToPlayModal';
 import { ClaimBottomSheet } from './ClaimBottomSheet';
 import { haptics } from '../../utils/haptics';
+import { getInitialRafflesData, fetchRaffleDetails } from '../../services/dataService';
 
 export interface RaffleDetailsProps {
   raffle: any;
@@ -10,14 +11,12 @@ export interface RaffleDetailsProps {
   onBack: () => void;
 }
 
-import { getInitialRafflesData, fetchRaffleDetails } from '../../services/dataService';
-
 export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, userProfile, onBack }) => {
   const [prizeTiers, setPrizeTiers] = useState<any[]>(() => getInitialRafflesData()?.prizeTiers || []);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showClaimSheet, setShowClaimSheet] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(33);
-  const [userTicketsCount, setUserTicketsCount] = useState<number>(raffle?.tickets || 0);
+  const [userTicketsCount, setUserTicketsCount] = useState<number>(0);
 
   // Dynamic price calculation
   const rawPriceUsd = raffle?.ticket_price_usd ?? raffle?.ticketPriceUsd ?? 0.50;
@@ -34,17 +33,26 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, userProfile, onB
   if (isGemsEnabled) priceParts.push(`💎 ${rawPriceGems}`);
   const priceDisplay = priceParts.length > 0 ? priceParts.join(' • ') : '$0.50 USDT';
 
-  useEffect(() => {
+  const refreshDetails = () => {
     if (raffle?.id) {
       fetchRaffleDetails(raffle.id).then((details) => {
-        if (details?.prizeTiers) {
-          setPrizeTiers(details.prizeTiers);
-        }
-        if (details?.secondsLeft !== undefined) {
-          setSecondsLeft(details.secondsLeft);
+        if (details) {
+          if (details.prizeTiers) {
+            setPrizeTiers(details.prizeTiers);
+          }
+          if (details.secondsLeft !== undefined) {
+            setSecondsLeft(details.secondsLeft);
+          }
+          if (details.userTickets !== undefined) {
+            setUserTicketsCount(details.userTickets);
+          }
         }
       });
     }
+  };
+
+  useEffect(() => {
+    refreshDetails();
   }, [raffle?.id]);
 
   useEffect(() => {
@@ -246,6 +254,26 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, userProfile, onB
             <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.78rem', marginTop: '0.25rem' }}>
               Ends in: <span style={{ color: '#fff', fontWeight: 800 }}>{secondsLeft}s</span>
             </div>
+            {userTicketsCount > 0 && (
+              <div
+                style={{
+                  marginTop: '0.5rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  background: 'rgba(16, 185, 129, 0.25)',
+                  border: '1px solid #10b981',
+                  borderRadius: '12px',
+                  padding: '0.25rem 0.6rem',
+                  color: '#6ee7b7',
+                  fontSize: '0.76rem',
+                  fontWeight: 800
+                }}
+              >
+                <span>🎉</span>
+                <span>You are in this Draw ({userTicketsCount} {userTicketsCount === 1 ? 'Ticket' : 'Tickets'})</span>
+              </div>
+            )}
           </div>
           <img src="./assets/coinSack_animated.gif" alt="Grand Prize" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
         </div>
@@ -314,7 +342,9 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, userProfile, onB
           </div>
 
           <div style={{ fontSize: '0.78rem', color: '#a7f3d0', fontWeight: 700 }}>
-            ⚡ Instant Win Odds: 1 in 48
+            {userTicketsCount > 0
+              ? `⚡ Win Odds: 1 in ${Math.max(1, Math.round(((raffle.tickets || 100) + userTicketsCount) / userTicketsCount))}`
+              : '⚡ Instant Win Odds: 1 in 48'}
           </div>
         </div>
 
@@ -335,7 +365,7 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, userProfile, onB
             boxShadow: '0 4px 15px rgba(234, 179, 8, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.5)'
           }}
         >
-          Get Tickets & Enter 🎟
+          {userTicketsCount > 0 ? '➕ Buy More Tickets (Boost Odds) 🎟️' : 'Get Tickets & Enter 🎟'}
         </button>
       </div>
 
@@ -346,9 +376,14 @@ export const RaffleDetails: FC<RaffleDetailsProps> = ({ raffle, userProfile, onB
           raffle={raffle}
           userProfile={userProfile}
           onClose={() => setShowClaimSheet(false)}
-          onSuccess={() => setUserTicketsCount(prev => prev + 1)}
+          onSuccess={(addedCount?: number) => {
+            setUserTicketsCount(prev => prev + (addedCount || 1));
+            refreshDetails();
+          }}
         />
       )}
     </div>
   );
 };
+
+export default RaffleDetails;

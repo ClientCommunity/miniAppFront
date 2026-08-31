@@ -10,6 +10,7 @@ export interface RaffleCardProps {
   participants: number;
   tickets: number;
   totalTickets?: number;
+  userTickets?: number;
   onClickDetails?: () => void;
 }
 
@@ -21,6 +22,7 @@ export const RaffleCard: FC<RaffleCardProps> = ({
   participants,
   tickets,
   totalTickets = 10000,
+  userTickets = 0,
   onClickDetails
 }) => {
   const isOngoing = status === 'ongoing';
@@ -151,6 +153,25 @@ export const RaffleCard: FC<RaffleCardProps> = ({
               }}
             >
               <span>⏳</span> {countdown}
+            </div>
+          )}
+
+          {userTickets > 0 && (
+            <div
+              style={{
+                background: 'rgba(16, 185, 129, 0.25)',
+                border: '1px solid #10b981',
+                borderRadius: '1rem',
+                padding: '0.15rem 0.55rem',
+                fontSize: '0.68rem',
+                fontWeight: 900,
+                color: '#6ee7b7',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem'
+              }}
+            >
+              <span>✓</span> {userTickets} 🎟️
             </div>
           )}
         </div>

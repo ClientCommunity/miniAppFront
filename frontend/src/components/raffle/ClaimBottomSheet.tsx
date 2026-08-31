@@ -10,7 +10,7 @@ export interface ClaimBottomSheetProps {
   raffle: any;
   userProfile?: any;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (addedTickets?: number) => void;
 }
 
 export const ClaimBottomSheet: FC<ClaimBottomSheetProps> = ({
@@ -66,7 +66,7 @@ export const ClaimBottomSheet: FC<ClaimBottomSheetProps> = ({
           haptics.playWinSound();
           throwConfetti();
           notifyToast(`🎉 Successfully purchased ${ticketCount} Ticket(s) for $${totalUsd} USDT!`, 'success', 4000);
-          onSuccess?.();
+          onSuccess?.(ticketCount);
           setTimeout(onClose, 800);
         } else {
           haptics.notification('error');
@@ -106,7 +106,7 @@ export const ClaimBottomSheet: FC<ClaimBottomSheetProps> = ({
             haptics.playWinSound();
             throwConfetti();
             notifyToast(`⭐ Paid ${totalStars} Stars! ${ticketCount} Ticket(s) Added!`, 'success', 4500);
-            onSuccess?.();
+            onSuccess?.(ticketCount);
             setTimeout(onClose, 800);
           } else if (status === 'cancelled') {
             notifyToast('Stars payment cancelled.', 'info', 2500);
@@ -126,7 +126,7 @@ export const ClaimBottomSheet: FC<ClaimBottomSheetProps> = ({
         haptics.playWinSound();
         throwConfetti();
         notifyToast(`⭐ ${ticketCount} Ticket(s) reserved with ${totalStars} Stars!`, 'success', 4000);
-        onSuccess?.();
+        onSuccess?.(ticketCount);
         setTimeout(onClose, 800);
       }
     } catch (err: any) {
@@ -159,7 +159,7 @@ export const ClaimBottomSheet: FC<ClaimBottomSheetProps> = ({
         haptics.playWinSound();
         throwConfetti();
         notifyToast(`🎉 Exchanged ${totalGems} 💎 for ${ticketCount} Raffle Ticket(s)!`, 'success', 4000);
-        onSuccess?.();
+        onSuccess?.(ticketCount);
         setTimeout(onClose, 800);
       } else {
         haptics.notification('error');
@@ -531,7 +531,7 @@ export const ClaimBottomSheet: FC<ClaimBottomSheetProps> = ({
           onClose={() => setShowCryptoModal(false)}
           onSuccess={() => {
             setShowCryptoModal(false);
-            onSuccess?.();
+            onSuccess?.(ticketCount);
             onClose();
           }}
         />

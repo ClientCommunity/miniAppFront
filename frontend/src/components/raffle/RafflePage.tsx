@@ -282,6 +282,7 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack, userProfile }) => {
               <RaffleCard 
                 key={raffle.id}
                 {...raffle}
+                userTickets={raffle.user_tickets ?? raffle.userTickets ?? 0}
                 status="ongoing"
                 onClickDetails={() => setSelectedRaffle(raffle)}
               />
@@ -297,6 +298,7 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack, userProfile }) => {
               <RaffleCard 
                 key={raffle.id}
                 {...raffle}
+                userTickets={raffle.user_tickets ?? raffle.userTickets ?? 0}
                 status="ended"
                 onClickDetails={() => setSelectedRaffle(raffle)}
               />
