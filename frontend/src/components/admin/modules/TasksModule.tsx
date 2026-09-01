@@ -4,6 +4,76 @@ import type { AdminTask, AdminTaskType, ConnectedTelegramChat } from '../../../t
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
 
+// Smart Icon Renderer (Prevents raw path strings from ever rendering on screen)
+export const TaskIconRenderer: React.FC<{ icon?: string; size?: number; style?: React.CSSProperties }> = ({
+  icon = '🎯',
+  size = 28,
+  style
+}) => {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [icon]);
+
+  const isImage =
+    !hasError &&
+    typeof icon === 'string' &&
+    (icon.endsWith('.png') ||
+      icon.endsWith('.jpg') ||
+      icon.endsWith('.jpeg') ||
+      icon.endsWith('.svg') ||
+      icon.endsWith('.gif') ||
+      icon.endsWith('.webp') ||
+      icon.includes('/') ||
+      icon.startsWith('http'));
+
+  if (isImage) {
+    return (
+      <img
+        src={icon}
+        alt="Task Icon"
+        onError={() => setHasError(true)}
+        style={{
+          width: `${size}px`,
+          height: `${size}px`,
+          objectFit: 'contain',
+          borderRadius: '7px',
+          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.35))',
+          ...style
+        }}
+      />
+    );
+  }
+
+  return (
+    <span
+      style={{
+        fontSize: `${Math.max(14, size - 4)}px`,
+        lineHeight: 1,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...style
+      }}
+    >
+      {icon || '🎯'}
+    </span>
+  );
+};
+
+const ICON_PRESETS = [
+  { label: 'Telegram', value: './assets/telegram.png', display: '📢' },
+  { label: 'AdsGram Ad', value: '🎬', display: '🎬' },
+  { label: 'YouTube', value: './assets/youtube.png', display: '🎥' },
+  { label: 'X / Twitter', value: './assets/x-twitter.png', display: '🐦' },
+  { label: 'Lucky Wheel', value: './assets/wheel-of-fortune.png', display: '🎡' },
+  { label: 'Diamonds', value: './assets/diamond_animated.gif', display: '💎' },
+  { label: 'Friends / Gift', value: './assets/gift_animated.gif', display: '👥' },
+  { label: 'Trophy / Level', value: './assets/trophy.png', display: '🏆' },
+  { label: 'Website / Link', value: '🔗', display: '🔗' }
+];
+
 export const TasksModule: React.FC = () => {
   const [tasks, setTasks] = useState<AdminTask[]>([]);
   const [chats, setChats] = useState<ConnectedTelegramChat[]>([]);
@@ -15,11 +85,11 @@ export const TasksModule: React.FC = () => {
   const [taskType, setTaskType] = useState<AdminTaskType>('telegram_channel');
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<'social' | 'daily' | 'partner' | 'special'>('social');
-  const [icon, setIcon] = useState('📢');
+  const [icon, setIcon] = useState('./assets/telegram.png');
   const [rewardDiamonds, setRewardDiamonds] = useState('500');
   const [rewardSpins, setRewardSpins] = useState('2');
   const [targetCount, setTargetCount] = useState('5');
-  const [actionUrl, setActionUrl] = useState('https://t.me/');
+  const [actionUrl, setActionUrl] = useState('');
   const [selectedChatId, setSelectedChatId] = useState('');
   const [customChannelId, setCustomChannelId] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -32,10 +102,7 @@ export const TasksModule: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [tRes, cRes] = await Promise.all([
-        adminService.getTasks(),
-        adminService.getConnectedChats()
-      ]);
+      const [tRes, cRes] = await Promise.all([adminService.getTasks(), adminService.getConnectedChats()]);
       const rawTasks = tRes.data;
       let taskList: AdminTask[] = [];
       if (Array.isArray(rawTasks)) {
@@ -67,6 +134,35 @@ export const TasksModule: React.FC = () => {
     loadData();
   }, []);
 
+  const handleTaskTypeChange = (newType: AdminTaskType) => {
+    setTaskType(newType);
+    if (newType === 'watch_ad') {
+      setIcon('🎬');
+      setCategory('daily');
+      setActionUrl('');
+    } else if (newType === 'telegram_channel') {
+      setIcon('./assets/telegram.png');
+      setCategory('social');
+      setActionUrl('');
+    } else if (newType === 'invite_count') {
+      setIcon('./assets/gift_animated.gif');
+      setCategory('special');
+      setActionUrl('');
+    } else if (newType === 'spin_count') {
+      setIcon('./assets/wheel-of-fortune.png');
+      setCategory('daily');
+      setActionUrl('');
+    } else if (newType === 'level_reach') {
+      setIcon('./assets/trophy.png');
+      setCategory('special');
+      setActionUrl('');
+    } else {
+      setIcon('./assets/youtube.png');
+      setCategory('social');
+      if (!actionUrl) setActionUrl('https://');
+    }
+  };
+
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
@@ -74,19 +170,38 @@ export const TasksModule: React.FC = () => {
       return;
     }
 
+    if (taskType === 'external_link' && (!actionUrl.trim() || actionUrl.trim() === 'https://')) {
+      notifyToast('Redirect URL is required for External Link tasks', 'info', 3000);
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const resolvedChannelId = selectedChatId === 'custom' ? customChannelId.trim() : (selectedChatId || customChannelId.trim());
+      let resolvedChannelId = '';
+      let resolvedActionUrl = actionUrl.trim();
+
+      if (taskType === 'telegram_channel') {
+        resolvedChannelId = selectedChatId === 'custom' ? customChannelId.trim() : (selectedChatId || customChannelId.trim());
+        if (!resolvedActionUrl && resolvedChannelId) {
+          const clean = resolvedChannelId.replace('@', '');
+          if (!clean.startsWith('-100')) {
+            resolvedActionUrl = `https://t.me/${clean}`;
+          }
+        }
+      } else if (taskType !== 'external_link') {
+        resolvedActionUrl = '';
+      }
 
       await adminService.createTask({
         title: title.trim(),
         task_type: taskType,
         category,
         icon: icon.trim() || '🎯',
+        icon_url: icon.trim() || '🎯',
         reward_diamonds: parseInt(rewardDiamonds, 10) || 0,
         reward_spins: parseInt(rewardSpins, 10) || 0,
-        target_count: ['invite_count', 'spin_count', 'level_reach'].includes(taskType) ? (parseInt(targetCount, 10) || 1) : undefined,
-        action_url: actionUrl.trim(),
+        target_count: ['invite_count', 'spin_count', 'level_reach'].includes(taskType) ? (parseInt(targetCount, 10) || 1) : 1,
+        action_url: resolvedActionUrl,
         telegram_chat_id: resolvedChannelId || undefined,
         channel_id: resolvedChannelId || undefined,
         is_active: true
@@ -96,7 +211,7 @@ export const TasksModule: React.FC = () => {
       notifyToast('📋 Quest Task created successfully!', 'success', 3500);
       setShowTaskModal(false);
       setTitle('');
-      setActionUrl('https://t.me/');
+      setActionUrl('');
       setSelectedChatId('');
       setCustomChannelId('');
       loadData();
@@ -175,7 +290,7 @@ export const TasksModule: React.FC = () => {
             📋 Quests, Tasks & Channels
           </h2>
           <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
-            Configure 3 task types (External Links, Milestones, Telegram Channels) & rewards
+            Configure task requirements (Links, Milestones, Telegram Channels, Ads) & rewards
           </span>
         </div>
 
@@ -274,7 +389,7 @@ export const TasksModule: React.FC = () => {
                   <th style={{ padding: '0.75rem 1rem' }}>Task Details</th>
                   <th style={{ padding: '0.75rem 1rem' }}>Type</th>
                   <th style={{ padding: '0.75rem 1rem' }}>Rewards</th>
-                  <th style={{ padding: '0.75rem 1rem' }}>Target / Channel</th>
+                  <th style={{ padding: '0.75rem 1rem' }}>Requirements / Target</th>
                   <th style={{ padding: '0.75rem 1rem' }}>Completions</th>
                   <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Action</th>
                 </tr>
@@ -288,8 +403,22 @@ export const TasksModule: React.FC = () => {
                   return (
                     <tr key={t.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', color: '#f1f5f9' }}>
                       <td style={{ padding: '0.75rem 1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '1.2rem' }}>{t.icon || '🎯'}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                          <div
+                            style={{
+                              width: '38px',
+                              height: '38px',
+                              borderRadius: '10px',
+                              background: 'rgba(0, 0, 0, 0.4)',
+                              border: '1px solid rgba(255, 255, 255, 0.12)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0
+                            }}
+                          >
+                            <TaskIconRenderer icon={t.icon || t.icon_url || (t as any).iconUrl} size={26} />
+                          </div>
                           <div>
                             <div style={{ fontWeight: 700, color: '#ffffff' }}>{t.title}</div>
                             <div style={{ color: '#64748b', fontSize: '0.72rem', textTransform: 'capitalize' }}>Category: {t.category}</div>
@@ -312,11 +441,23 @@ export const TasksModule: React.FC = () => {
 
                       <td style={{ padding: '0.75rem 1rem', color: '#cbd5e1' }}>
                         {t.task_type === 'telegram_channel' ? (
-                          <code style={{ color: '#38bdf8' }}>{t.telegram_chat_id || t.channel_id || '@channel'}</code>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <span style={{ fontSize: '0.9rem' }}>📢</span>
+                            <code style={{ color: '#38bdf8' }}>{t.channel_id || t.telegram_chat_id || '@channel'}</code>
+                          </div>
+                        ) : t.task_type === 'watch_ad' || t.task_type === 'ad_view' ? (
+                          <span style={{ color: '#f59e0b', fontSize: '0.78rem', fontWeight: 700 }}>🎬 In-App Video Ad</span>
                         ) : ['invite_count', 'spin_count', 'level_reach'].includes(t.task_type || '') ? (
                           <span style={{ fontWeight: 700, color: '#a7f3d0' }}>Target: {t.target_count || 1}</span>
                         ) : (
-                          <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>15s Countdown</span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                            <span style={{ color: '#fb923c', fontSize: '0.75rem', fontWeight: 700 }}>⏱ 15s Timer</span>
+                            {t.action_url && (
+                              <span style={{ color: '#94a3b8', fontSize: '0.7rem', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {t.action_url}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </td>
 
@@ -418,7 +559,7 @@ export const TasksModule: React.FC = () => {
           <div
             style={{
               width: '100%',
-              maxWidth: '480px',
+              maxWidth: '500px',
               background: '#090d16',
               border: '1px solid rgba(255, 255, 255, 0.15)',
               borderRadius: '16px',
@@ -439,24 +580,14 @@ export const TasksModule: React.FC = () => {
             </div>
 
             <form onSubmit={handleCreateTask} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              {/* Task Type Selector */}
+              {/* 1. Task Type Selector */}
               <div>
                 <label style={{ color: '#94a3b8', fontSize: '0.78rem', display: 'block', marginBottom: '0.3rem', fontWeight: 700 }}>
                   1. Task Type
                 </label>
                 <select
                   value={taskType}
-                  onChange={(e: any) => {
-                    setTaskType(e.target.value);
-                    if (e.target.value === 'watch_ad') {
-                      setIcon('🎬');
-                      setCategory('daily');
-                    } else if (e.target.value === 'telegram_channel') setIcon('📢');
-                    else if (e.target.value === 'invite_count') setIcon('👥');
-                    else if (e.target.value === 'spin_count') setIcon('🎡');
-                    else if (e.target.value === 'level_reach') setIcon('🏆');
-                    else setIcon('🔗');
-                  }}
+                  onChange={(e: any) => handleTaskTypeChange(e.target.value)}
                   style={{
                     width: '100%',
                     padding: '0.65rem',
@@ -467,16 +598,16 @@ export const TasksModule: React.FC = () => {
                     fontWeight: 700
                   }}
                 >
-                  <option value="watch_ad">🎬 Type 4: Watch Rewarded Ad (AdsGram 2x/Daily Reward)</option>
-                  <option value="telegram_channel">📢 Type 3: Join Telegram Channel / Group (2-Step Verification)</option>
-                  <option value="external_link">🔗 Type 1: External Link / Partner Visit (15s Countdown)</option>
-                  <option value="invite_count">👥 Type 2: Invite Friends Milestone</option>
-                  <option value="spin_count">🎡 Type 2: Wheel Spins Milestone</option>
-                  <option value="level_reach">🏆 Type 2: Level Reach Milestone</option>
+                  <option value="telegram_channel">📢 Type 1: Join Telegram Channel / Group (Bot Auto-Verify)</option>
+                  <option value="watch_ad">🎬 Type 2: Watch Rewarded Ad (AdsGram In-App Video)</option>
+                  <option value="external_link">🔗 Type 3: External Link / Partner Visit (15s Countdown)</option>
+                  <option value="invite_count">👥 Type 4: Invite Friends Milestone</option>
+                  <option value="spin_count">🎡 Type 4: Wheel Spins Milestone</option>
+                  <option value="level_reach">🏆 Type 4: Level Reach Milestone</option>
                 </select>
               </div>
 
-              {/* Title & Category */}
+              {/* 2. Title & Category */}
               <div>
                 <label style={{ color: '#94a3b8', fontSize: '0.78rem', display: 'block', marginBottom: '0.3rem', fontWeight: 700 }}>
                   2. Task Title
@@ -499,53 +630,256 @@ export const TasksModule: React.FC = () => {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <div>
-                  <label style={{ color: '#94a3b8', fontSize: '0.78rem', display: 'block', marginBottom: '0.3rem' }}>
-                    Category Tab
+              <div>
+                <label style={{ color: '#94a3b8', fontSize: '0.78rem', display: 'block', marginBottom: '0.3rem' }}>
+                  Category Tab
+                </label>
+                <select
+                  value={category}
+                  onChange={(e: any) => setCategory(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem',
+                    background: 'rgba(0, 0, 0, 0.4)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '8px',
+                    color: '#ffffff'
+                  }}
+                >
+                  <option value="social">Socials</option>
+                  <option value="daily">Daily</option>
+                  <option value="special">Special</option>
+                  <option value="partner">Partner</option>
+                </select>
+              </div>
+
+              {/* 3. DYNAMIC REQUIREMENTS (Conditional per Task Type) */}
+
+              {/* Type 1: Telegram Channel */}
+              {taskType === 'telegram_channel' && (
+                <div
+                  style={{
+                    background: 'rgba(56, 189, 248, 0.08)',
+                    border: '1px solid rgba(56, 189, 248, 0.25)',
+                    borderRadius: '10px',
+                    padding: '0.85rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.65rem'
+                  }}
+                >
+                  <label style={{ color: '#38bdf8', fontSize: '0.78rem', display: 'block', fontWeight: 700 }}>
+                    📢 Connect Telegram Channel / Group
                   </label>
                   <select
-                    value={category}
-                    onChange={(e: any) => setCategory(e.target.value)}
+                    value={selectedChatId}
+                    onChange={(e) => setSelectedChatId(e.target.value)}
                     style={{
                       width: '100%',
                       padding: '0.65rem',
-                      background: 'rgba(0, 0, 0, 0.4)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      background: 'rgba(0, 0, 0, 0.5)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
                       borderRadius: '8px',
                       color: '#ffffff'
                     }}
                   >
-                    <option value="social">Socials</option>
-                    <option value="special">Special</option>
-                    <option value="daily">Daily</option>
-                    <option value="partner">Partner</option>
+                    <option value="">-- Select Linked Channel or Input Custom --</option>
+                    {chats.map((c) => (
+                      <option key={c.id} value={c.chat_id}>
+                        {c.title} ({c.username})
+                      </option>
+                    ))}
+                    <option value="custom">✏️ Enter Custom @Username / Chat ID</option>
                   </select>
-                </div>
 
-                <div>
-                  <label style={{ color: '#94a3b8', fontSize: '0.78rem', display: 'block', marginBottom: '0.3rem' }}>
-                    Icon Emoji
+                  {(selectedChatId === 'custom' || chats.length === 0) && (
+                    <input
+                      type="text"
+                      value={customChannelId}
+                      onChange={(e) => setCustomChannelId(e.target.value)}
+                      placeholder="e.g. @SpinCraftNews or -100192847192"
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem',
+                        background: 'rgba(0, 0, 0, 0.5)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '8px',
+                        color: '#ffffff',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  )}
+
+                  <span style={{ color: '#94a3b8', fontSize: '0.72rem', lineHeight: 1.35 }}>
+                    💡 When the user taps Join, the Telegram channel opens automatically. The bot checks membership directly upon verification. No external redirect link needed.
+                  </span>
+                </div>
+              )}
+
+              {/* Type 2: Watch Rewarded Ad */}
+              {taskType === 'watch_ad' && (
+                <div
+                  style={{
+                    background: 'rgba(245, 158, 11, 0.08)',
+                    border: '1px solid rgba(245, 158, 11, 0.25)',
+                    borderRadius: '10px',
+                    padding: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem'
+                  }}
+                >
+                  <span style={{ fontSize: '1.5rem' }}>🎬</span>
+                  <div>
+                    <div style={{ color: '#f59e0b', fontSize: '0.82rem', fontWeight: 800 }}>
+                      AdsGram In-App Video Ad
+                    </div>
+                    <div style={{ color: '#94a3b8', fontSize: '0.72rem', marginTop: '0.15rem' }}>
+                      Plays directly inside the mini app via AdsGram SDK. Users are rewarded upon video completion. No redirect link required.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Type 3: External Link / Partner Visit */}
+              {taskType === 'external_link' && (
+                <div
+                  style={{
+                    background: 'rgba(251, 146, 60, 0.08)',
+                    border: '1px solid rgba(251, 146, 60, 0.25)',
+                    borderRadius: '10px',
+                    padding: '0.85rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <label style={{ color: '#fb923c', fontSize: '0.78rem', display: 'block', fontWeight: 700 }}>
+                    🔗 Action / Redirect URL (Required)
                   </label>
                   <input
-                    type="text"
-                    value={icon}
-                    onChange={(e) => setIcon(e.target.value)}
-                    placeholder="e.g. 📢"
+                    type="url"
+                    value={actionUrl}
+                    onChange={(e) => setActionUrl(e.target.value)}
+                    placeholder="https://youtube.com/... or https://x.com/..."
+                    required
                     style={{
                       width: '100%',
                       padding: '0.65rem',
-                      background: 'rgba(0, 0, 0, 0.4)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      background: 'rgba(0, 0, 0, 0.5)',
+                      border: '1px solid rgba(251, 146, 60, 0.3)',
                       borderRadius: '8px',
                       color: '#ffffff',
                       boxSizing: 'border-box'
                     }}
                   />
+                  <span style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
+                    ⏱ Opening this link starts a 15-second countdown timer before unlocking claim.
+                  </span>
                 </div>
+              )}
+
+              {/* Type 4: In-App Milestone Targets */}
+              {['invite_count', 'spin_count', 'level_reach'].includes(taskType) && (
+                <div
+                  style={{
+                    background: 'rgba(16, 185, 129, 0.08)',
+                    border: '1px solid rgba(16, 185, 129, 0.25)',
+                    borderRadius: '10px',
+                    padding: '0.85rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <label style={{ color: '#a7f3d0', fontSize: '0.78rem', display: 'block', fontWeight: 700 }}>
+                    🎯 Milestone Target Count ({taskType === 'invite_count' ? 'Invited Friends' : taskType === 'spin_count' ? 'Wheel Spins' : 'User Level'})
+                  </label>
+                  <input
+                    type="number"
+                    value={targetCount}
+                    onChange={(e) => setTargetCount(e.target.value)}
+                    placeholder="5"
+                    min="1"
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem',
+                      background: 'rgba(0, 0, 0, 0.5)',
+                      border: '1px solid rgba(16, 185, 129, 0.4)',
+                      borderRadius: '8px',
+                      color: '#ffffff',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <span style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
+                    🎮 Verified automatically in real-time by game progression. No external link required.
+                  </span>
+                </div>
+              )}
+
+              {/* 4. Task Icon Picker & Custom URL */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 700 }}>
+                    4. Task Icon (Preset or Custom URL)
+                  </label>
+                  {/* Live Visual Preview */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(0,0,0,0.5)', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
+                    <span style={{ color: '#94a3b8', fontSize: '0.7rem' }}>Preview:</span>
+                    <TaskIconRenderer icon={icon || '🎯'} size={20} />
+                  </div>
+                </div>
+
+                {/* 1-Click Icon Presets */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                  {ICON_PRESETS.map((p) => {
+                    const isSelected = icon === p.value;
+                    return (
+                      <button
+                        key={p.label}
+                        type="button"
+                        onClick={() => setIcon(p.value)}
+                        style={{
+                          background: isSelected ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                          border: isSelected ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '8px',
+                          padding: '0.25rem 0.45rem',
+                          color: isSelected ? '#38bdf8' : '#cbd5e1',
+                          fontSize: '0.72rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          cursor: 'pointer',
+                          fontWeight: isSelected ? 800 : 500
+                        }}
+                      >
+                        <TaskIconRenderer icon={p.value} size={16} />
+                        <span>{p.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Icon URL / Emoji input */}
+                <input
+                  type="text"
+                  value={icon}
+                  onChange={(e) => setIcon(e.target.value)}
+                  placeholder="Custom image URL (https://...) or path (./assets/...) or emoji"
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem',
+                    background: 'rgba(0, 0, 0, 0.4)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '8px',
+                    color: '#ffffff',
+                    boxSizing: 'border-box',
+                    fontSize: '0.8rem'
+                  }}
+                />
               </div>
 
-              {/* Rewards (Diamonds & Spins) */}
+              {/* 5. Rewards (Diamonds & Spins) */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
                   <label style={{ color: '#fde047', fontSize: '0.78rem', display: 'block', marginBottom: '0.3rem', fontWeight: 700 }}>
@@ -590,100 +924,8 @@ export const TasksModule: React.FC = () => {
                 </div>
               </div>
 
-              {/* Target Count (for milestones) */}
-              {['invite_count', 'spin_count', 'level_reach'].includes(taskType) && (
-                <div>
-                  <label style={{ color: '#a7f3d0', fontSize: '0.78rem', display: 'block', marginBottom: '0.3rem', fontWeight: 700 }}>
-                    🎯 Milestone Target Count (e.g. 5 invites, 50 spins, level 3)
-                  </label>
-                  <input
-                    type="number"
-                    value={targetCount}
-                    onChange={(e) => setTargetCount(e.target.value)}
-                    placeholder="5"
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem',
-                      background: 'rgba(0, 0, 0, 0.4)',
-                      border: '1px solid rgba(16, 185, 129, 0.4)',
-                      borderRadius: '8px',
-                      color: '#ffffff',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* Telegram Channel Selector (for telegram_channel) */}
-              {taskType === 'telegram_channel' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <label style={{ color: '#38bdf8', fontSize: '0.78rem', display: 'block', fontWeight: 700 }}>
-                    📢 Connected Telegram Channel (Bot must be admin)
-                  </label>
-                  <select
-                    value={selectedChatId}
-                    onChange={(e) => setSelectedChatId(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem',
-                      background: 'rgba(0, 0, 0, 0.4)',
-                      border: '1px solid rgba(56, 189, 248, 0.3)',
-                      borderRadius: '8px',
-                      color: '#ffffff'
-                    }}
-                  >
-                    <option value="">-- Select Linked Channel or Input Custom --</option>
-                    {chats.map((c) => (
-                      <option key={c.id} value={c.chat_id}>
-                        {c.title} ({c.username})
-                      </option>
-                    ))}
-                    <option value="custom">✏️ Enter Custom @Username / ID</option>
-                  </select>
-
-                  {(selectedChatId === 'custom' || chats.length === 0) && (
-                    <input
-                      type="text"
-                      value={customChannelId}
-                      onChange={(e) => setCustomChannelId(e.target.value)}
-                      placeholder="e.g. @SpinCraftCommunity or -100192847192"
-                      style={{
-                        width: '100%',
-                        padding: '0.65rem',
-                        background: 'rgba(0, 0, 0, 0.4)',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
-                        borderRadius: '8px',
-                        color: '#ffffff',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  )}
-                </div>
-              )}
-
-              {/* Action / Invite URL */}
-              <div>
-                <label style={{ color: '#94a3b8', fontSize: '0.78rem', display: 'block', marginBottom: '0.3rem' }}>
-                  Action / Redirect URL
-                </label>
-                <input
-                  type="text"
-                  value={actionUrl}
-                  onChange={(e) => setActionUrl(e.target.value)}
-                  placeholder="https://t.me/your_channel or https://partner.com"
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem',
-                    background: 'rgba(0, 0, 0, 0.4)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '8px',
-                    color: '#ffffff',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }}>
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.75rem' }}>
                 <button
                   type="button"
                   onClick={() => setShowTaskModal(false)}
@@ -815,3 +1057,5 @@ export const TasksModule: React.FC = () => {
     </div>
   );
 };
+
+export default TasksModule;
