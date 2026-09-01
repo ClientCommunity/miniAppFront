@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { adminService } from '../../../services/adminService';
 import type { AdminTask, AdminTaskType, ConnectedTelegramChat } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
@@ -19,19 +19,21 @@ export const TaskIconRenderer: React.FC<{ icon?: string; size?: number; style?: 
   const isImage =
     !hasError &&
     typeof icon === 'string' &&
-    (icon.endsWith('.png') ||
+    (icon.startsWith('http://') ||
+      icon.startsWith('https://') ||
+      icon.startsWith('/uploads/') ||
+      icon.endsWith('.png') ||
       icon.endsWith('.jpg') ||
       icon.endsWith('.jpeg') ||
       icon.endsWith('.svg') ||
       icon.endsWith('.gif') ||
-      icon.endsWith('.webp') ||
-      icon.includes('/') ||
-      icon.startsWith('http'));
+      icon.endsWith('.webp'));
 
   if (isImage) {
+    const src = icon.startsWith('/uploads/') ? `https://craftspin.duckdns.org${icon}` : icon;
     return (
       <img
-        src={icon}
+        src={src}
         alt="Task Icon"
         onError={() => setHasError(true)}
         style={{
@@ -63,15 +65,16 @@ export const TaskIconRenderer: React.FC<{ icon?: string; size?: number; style?: 
 };
 
 const ICON_PRESETS = [
-  { label: 'Telegram', value: './assets/telegram.png', display: '📢' },
-  { label: 'AdsGram Ad', value: '🎬', display: '🎬' },
-  { label: 'YouTube', value: './assets/youtube.png', display: '🎥' },
-  { label: 'X / Twitter', value: './assets/x-twitter.png', display: '🐦' },
-  { label: 'Lucky Wheel', value: './assets/wheel-of-fortune.png', display: '🎡' },
-  { label: 'Diamonds', value: './assets/diamond_animated.gif', display: '💎' },
-  { label: 'Friends / Gift', value: './assets/gift_animated.gif', display: '👥' },
-  { label: 'Trophy / Level', value: './assets/trophy.png', display: '🏆' },
-  { label: 'Website / Link', value: '🔗', display: '🔗' }
+  { label: 'Telegram', value: '📢', emoji: '📢' },
+  { label: 'AdsGram', value: '🎬', emoji: '🎬' },
+  { label: 'YouTube', value: '🎥', emoji: '🎥' },
+  { label: 'X / Twitter', value: '🐦', emoji: '🐦' },
+  { label: 'Lucky Wheel', value: '🎡', emoji: '🎡' },
+  { label: 'Diamonds', value: '💎', emoji: '💎' },
+  { label: 'Friends / Gift', value: '👥', emoji: '👥' },
+  { label: 'Trophy / Level', value: '🏆', emoji: '🏆' },
+  { label: 'Daily Reward', value: '🎁', emoji: '🎁' },
+  { label: 'Website / Link', value: '🔗', emoji: '🔗' }
 ];
 
 export const TasksModule: React.FC = () => {
@@ -85,7 +88,7 @@ export const TasksModule: React.FC = () => {
   const [taskType, setTaskType] = useState<AdminTaskType>('telegram_channel');
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<'social' | 'daily' | 'partner' | 'special'>('social');
-  const [icon, setIcon] = useState('./assets/telegram.png');
+  const [icon, setIcon] = useState('📢');
   const [rewardDiamonds, setRewardDiamonds] = useState('500');
   const [rewardSpins, setRewardSpins] = useState('2');
   const [targetCount, setTargetCount] = useState('5');
@@ -93,6 +96,20 @@ export const TasksModule: React.FC = () => {
   const [selectedChatId, setSelectedChatId] = useState('');
   const [customChannelId, setCustomChannelId] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Live Channel Verification State
+  const [verifyingChannel, setVerifyingChannel] = useState(false);
+  const [channelVerifyResult, setChannelVerifyResult] = useState<{
+    verified: boolean;
+    title?: string;
+    username?: string;
+    invite_link?: string;
+    error?: string;
+  } | null>(null);
+
+  // File Upload State
+  const [uploadingIcon, setUploadingIcon] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Chat Link Modal
   const [showChatModal, setShowChatModal] = useState(false);
@@ -136,30 +153,99 @@ export const TasksModule: React.FC = () => {
 
   const handleTaskTypeChange = (newType: AdminTaskType) => {
     setTaskType(newType);
+    setChannelVerifyResult(null);
     if (newType === 'watch_ad') {
       setIcon('🎬');
       setCategory('daily');
       setActionUrl('');
     } else if (newType === 'telegram_channel') {
-      setIcon('./assets/telegram.png');
+      setIcon('📢');
       setCategory('social');
       setActionUrl('');
     } else if (newType === 'invite_count') {
-      setIcon('./assets/gift_animated.gif');
+      setIcon('👥');
       setCategory('special');
       setActionUrl('');
     } else if (newType === 'spin_count') {
-      setIcon('./assets/wheel-of-fortune.png');
+      setIcon('🎡');
       setCategory('daily');
       setActionUrl('');
     } else if (newType === 'level_reach') {
-      setIcon('./assets/trophy.png');
+      setIcon('🏆');
       setCategory('special');
       setActionUrl('');
     } else {
-      setIcon('./assets/youtube.png');
+      setIcon('🔗');
       setCategory('social');
       if (!actionUrl) setActionUrl('https://');
+    }
+  };
+
+  // Live Test / Verify Telegram Channel
+  const handleVerifyChannelLive = async (targetId?: string) => {
+    const channelToTest = targetId || (selectedChatId === 'custom' ? customChannelId.trim() : (selectedChatId || customChannelId.trim()));
+    if (!channelToTest) {
+      notifyToast('Please enter a Channel @username or Chat ID to test', 'info', 2500);
+      return;
+    }
+
+    setVerifyingChannel(true);
+    setChannelVerifyResult(null);
+    try {
+      const res = await adminService.verifyAndConnectChannel(channelToTest);
+      if (res.success && res.data) {
+        setChannelVerifyResult({
+          verified: true,
+          title: res.data.title || 'Official Channel',
+          username: res.data.username || channelToTest,
+          invite_link: res.data.invite_link
+        });
+        haptics.notification('success');
+        notifyToast('✓ Bot is verified as Administrator in this channel!', 'success', 3500);
+      } else {
+        setChannelVerifyResult({
+          verified: false,
+          error: res.error || 'Bot is not an administrator in this channel'
+        });
+        haptics.notification('warning');
+        notifyToast('⚠️ Bot not detected as admin. Please add bot as admin to channel.', 'error', 4000);
+      }
+    } catch (err: any) {
+      setChannelVerifyResult({
+        verified: false,
+        error: err.message || 'Connection error'
+      });
+      notifyToast(`Verification failed: ${err.message}`, 'error', 3500);
+    } finally {
+      setVerifyingChannel(false);
+    }
+  };
+
+  // Handle Direct Icon File Upload to VPS
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      notifyToast('Please select a valid image file (PNG, JPG, SVG, WebP)', 'info', 3000);
+      return;
+    }
+
+    setUploadingIcon(true);
+    try {
+      const res = await adminService.uploadImage(file);
+      if (res.success && res.data?.url) {
+        setIcon(res.data.url);
+        haptics.notification('success');
+        notifyToast('📁 Icon uploaded and hosted on server successfully!', 'success', 3000);
+      } else {
+        notifyToast(res.error || 'Failed to upload image', 'error', 3000);
+      }
+    } catch (err: any) {
+      notifyToast(`Upload error: ${err.message}`, 'error', 3000);
+    } finally {
+      setUploadingIcon(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -182,7 +268,9 @@ export const TasksModule: React.FC = () => {
 
       if (taskType === 'telegram_channel') {
         resolvedChannelId = selectedChatId === 'custom' ? customChannelId.trim() : (selectedChatId || customChannelId.trim());
-        if (!resolvedActionUrl && resolvedChannelId) {
+        if (channelVerifyResult?.invite_link) {
+          resolvedActionUrl = channelVerifyResult.invite_link;
+        } else if (!resolvedActionUrl && resolvedChannelId) {
           const clean = resolvedChannelId.replace('@', '');
           if (!clean.startsWith('-100')) {
             resolvedActionUrl = `https://t.me/${clean}`;
@@ -214,6 +302,7 @@ export const TasksModule: React.FC = () => {
       setActionUrl('');
       setSelectedChatId('');
       setCustomChannelId('');
+      setChannelVerifyResult(null);
       loadData();
     } catch (err: any) {
       haptics.notification('error');
@@ -290,7 +379,7 @@ export const TasksModule: React.FC = () => {
             📋 Quests, Tasks & Channels
           </h2>
           <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
-            Configure task requirements (Links, Milestones, Telegram Channels, Ads) & rewards
+            Configure 100% dynamic quest requirements, media icons, and rewards
           </span>
         </div>
 
@@ -330,7 +419,10 @@ export const TasksModule: React.FC = () => {
 
           {activeSubTab === 'tasks' ? (
             <button
-              onClick={() => setShowTaskModal(true)}
+              onClick={() => {
+                setShowTaskModal(true);
+                setChannelVerifyResult(null);
+              }}
               style={{
                 background: 'linear-gradient(135deg, #10b981, #059669)',
                 border: 'none',
@@ -559,7 +651,7 @@ export const TasksModule: React.FC = () => {
           <div
             style={{
               width: '100%',
-              maxWidth: '500px',
+              maxWidth: '520px',
               background: '#090d16',
               border: '1px solid rgba(255, 255, 255, 0.15)',
               borderRadius: '16px',
@@ -655,7 +747,7 @@ export const TasksModule: React.FC = () => {
 
               {/* 3. DYNAMIC REQUIREMENTS (Conditional per Task Type) */}
 
-              {/* Type 1: Telegram Channel */}
+              {/* Type 1: Telegram Channel with Live Bot Verification */}
               {taskType === 'telegram_channel' && (
                 <div
                   style={{
@@ -668,12 +760,38 @@ export const TasksModule: React.FC = () => {
                     gap: '0.65rem'
                   }}
                 >
-                  <label style={{ color: '#38bdf8', fontSize: '0.78rem', display: 'block', fontWeight: 700 }}>
-                    📢 Connect Telegram Channel / Group
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ color: '#38bdf8', fontSize: '0.78rem', fontWeight: 700 }}>
+                      📢 Connect Telegram Channel / Group
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleVerifyChannelLive()}
+                      disabled={verifyingChannel}
+                      style={{
+                        background: 'rgba(56, 189, 248, 0.2)',
+                        border: '1px solid #38bdf8',
+                        borderRadius: '6px',
+                        padding: '0.2rem 0.5rem',
+                        color: '#38bdf8',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {verifyingChannel ? 'Testing...' : '🔍 Test Bot Connection'}
+                    </button>
+                  </div>
+
                   <select
                     value={selectedChatId}
-                    onChange={(e) => setSelectedChatId(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedChatId(e.target.value);
+                      setChannelVerifyResult(null);
+                      if (e.target.value && e.target.value !== 'custom') {
+                        handleVerifyChannelLive(e.target.value);
+                      }
+                    }}
                     style={{
                       width: '100%',
                       padding: '0.65rem',
@@ -693,21 +811,67 @@ export const TasksModule: React.FC = () => {
                   </select>
 
                   {(selectedChatId === 'custom' || chats.length === 0) && (
-                    <input
-                      type="text"
-                      value={customChannelId}
-                      onChange={(e) => setCustomChannelId(e.target.value)}
-                      placeholder="e.g. @SpinCraftNews or -100192847192"
+                    <div style={{ display: 'flex', gap: '0.4rem' }}>
+                      <input
+                        type="text"
+                        value={customChannelId}
+                        onChange={(e) => {
+                          setCustomChannelId(e.target.value);
+                          setChannelVerifyResult(null);
+                        }}
+                        placeholder="e.g. @SpinCraftNews or -100192847192"
+                        style={{
+                          flex: 1,
+                          padding: '0.65rem',
+                          background: 'rgba(0, 0, 0, 0.5)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '8px',
+                          color: '#ffffff',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleVerifyChannelLive(customChannelId.trim())}
+                        disabled={verifyingChannel || !customChannelId.trim()}
+                        style={{
+                          background: 'rgba(56, 189, 248, 0.25)',
+                          border: '1px solid #38bdf8',
+                          borderRadius: '8px',
+                          padding: '0 0.75rem',
+                          color: '#38bdf8',
+                          fontWeight: 800,
+                          fontSize: '0.75rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {verifyingChannel ? '...' : 'Verify'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Live Bot Verification Feedback */}
+                  {channelVerifyResult && (
+                    <div
                       style={{
-                        width: '100%',
-                        padding: '0.65rem',
-                        background: 'rgba(0, 0, 0, 0.5)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        background: channelVerifyResult.verified ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                        border: channelVerifyResult.verified ? '1px solid #10b981' : '1px solid #ef4444',
                         borderRadius: '8px',
-                        color: '#ffffff',
-                        boxSizing: 'border-box'
+                        padding: '0.5rem 0.65rem',
+                        fontSize: '0.74rem'
                       }}
-                    />
+                    >
+                      {channelVerifyResult.verified ? (
+                        <div style={{ color: '#6ee7b7', display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                          <span style={{ fontWeight: 800 }}>✓ Live Verified: "{channelVerifyResult.title}" ({channelVerifyResult.username})</span>
+                          <span style={{ color: '#a7f3d0', fontSize: '0.7rem' }}>🛡️ Bot is Administrator in channel | Link: {channelVerifyResult.invite_link || 'Auto-derived'}</span>
+                        </div>
+                      ) : (
+                        <div style={{ color: '#fca5a5' }}>
+                          <span style={{ fontWeight: 800 }}>⚠️ Bot Admin Required:</span> {channelVerifyResult.error || 'Please add the bot as an Administrator to this channel/group.'}
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   <span style={{ color: '#94a3b8', fontSize: '0.72rem', lineHeight: 1.35 }}>
@@ -817,20 +981,20 @@ export const TasksModule: React.FC = () => {
                 </div>
               )}
 
-              {/* 4. Task Icon Picker & Custom URL */}
+              {/* 4. Task Icon (Direct File Upload / Public URL / Universal Emojis) */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <label style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 700 }}>
-                    4. Task Icon (Preset or Custom URL)
+                    4. Task Icon (Public URL, Upload, or Emoji)
                   </label>
                   {/* Live Visual Preview */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(0,0,0,0.5)', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
                     <span style={{ color: '#94a3b8', fontSize: '0.7rem' }}>Preview:</span>
-                    <TaskIconRenderer icon={icon || '🎯'} size={20} />
+                    <TaskIconRenderer icon={icon || '🎯'} size={22} />
                   </div>
                 </div>
 
-                {/* 1-Click Icon Presets */}
+                {/* 1-Click Universal Emoji Presets */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
                   {ICON_PRESETS.map((p) => {
                     const isSelected = icon === p.value;
@@ -853,30 +1017,61 @@ export const TasksModule: React.FC = () => {
                           fontWeight: isSelected ? 800 : 500
                         }}
                       >
-                        <TaskIconRenderer icon={p.value} size={16} />
+                        <span style={{ fontSize: '0.9rem' }}>{p.emoji}</span>
                         <span>{p.label}</span>
                       </button>
                     );
                   })}
                 </div>
 
-                {/* Custom Icon URL / Emoji input */}
-                <input
-                  type="text"
-                  value={icon}
-                  onChange={(e) => setIcon(e.target.value)}
-                  placeholder="Custom image URL (https://...) or path (./assets/...) or emoji"
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem',
-                    background: 'rgba(0, 0, 0, 0.4)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '8px',
-                    color: '#ffffff',
-                    boxSizing: 'border-box',
-                    fontSize: '0.8rem'
-                  }}
-                />
+                {/* Public URL Input & Upload Button */}
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  <input
+                    type="text"
+                    value={icon}
+                    onChange={(e) => setIcon(e.target.value)}
+                    placeholder="Paste Public Image URL (https://...) or Emoji"
+                    style={{
+                      flex: 1,
+                      padding: '0.65rem',
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '8px',
+                      color: '#ffffff',
+                      boxSizing: 'border-box',
+                      fontSize: '0.8rem'
+                    }}
+                  />
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingIcon}
+                    style={{
+                      background: 'linear-gradient(135deg, #0284c7, #0369a1)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0 0.85rem',
+                      color: '#ffffff',
+                      fontWeight: 800,
+                      fontSize: '0.76rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <span>📁</span>
+                    <span>{uploadingIcon ? 'Uploading...' : 'Upload Image'}</span>
+                  </button>
+                </div>
               </div>
 
               {/* 5. Rewards (Diamonds & Spins) */}

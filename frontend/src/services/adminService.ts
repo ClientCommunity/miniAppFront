@@ -365,6 +365,12 @@ export const adminService = {
     return api.delete<null>(`/admin/tasks/${id}`);
   },
 
+  async uploadImage(file: File): Promise<ApiResponse<{ url: string; path: string; filename: string }>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post<{ url: string; path: string; filename: string }>('/admin/upload', formData);
+  },
+
   async getConnectedChats(): Promise<ApiResponse<ConnectedTelegramChat[]>> {
     const res = await api.get<ConnectedTelegramChat[]>('/admin/connected-chats');
     if (!res.success) {
