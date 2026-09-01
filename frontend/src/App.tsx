@@ -184,48 +184,10 @@ function App() {
     };
   }, []);
 
-  // Daily Streak Reward Status & Once-per-day 10s auto-popup check
+  // Telegram Authentication & Startup Boot Handshake
   useEffect(() => {
     let popupTimer: any = null;
 
-    const checkDailyStatus = async () => {
-      try {
-        const dailyData = await fetchDailyRewardsData(true);
-        if (dailyData) {
-          const canClaim = !!dailyData.canClaimToday;
-          setCanClaimDaily(canClaim);
-
-          if (canClaim) {
-            const userId = userProfile.telegram_id || userProfile.id || 'guest';
-            const serverDate = dailyData.serverDate || new Date().toISOString().slice(0, 10);
-            const storageKey = `daily_popup_shown_${userId}_${serverDate}`;
-            const hasShownToday = localStorage.getItem(storageKey) === 'true';
-
-            if (!hasShownToday) {
-              // Mark popup as presented for today so subsequent opens/reloads do NOT pop up
-              localStorage.setItem(storageKey, 'true');
-
-              // Auto-popup after 10 seconds only on first open of the day
-              popupTimer = setTimeout(() => {
-                setShowDailyRewards(true);
-              }, 10000);
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('Daily rewards status check error:', err);
-      }
-    };
-
-    checkDailyStatus();
-
-    return () => {
-      if (popupTimer) clearTimeout(popupTimer);
-    };
-  }, [userProfile.telegram_id, userProfile.id]);
-
-  // Telegram Authentication & Deep-Link Referral Boot Sync
-  useEffect(() => {
     // @ts-ignore
     const tg = window.Telegram?.WebApp;
     if (tg?.ready) {
@@ -251,85 +213,126 @@ function App() {
       notifyToast('🛡️ Direct Admin Access Request Detected', 'info', 3500);
     }
 
-    authenticateTelegram(initData, isDirectAdminLink ? '' : startParam).then((res) => {
-      if (res.user) {
-        setUserProfile(res.user);
-        const isUserAdmin = res.user.is_admin === true || (res.user as any).isAdmin === true;
+    const initApp = async () => {
+      try {
+        // 1. Authenticate with server to store valid auth_token in localStorage and identify user
+        const res = await authenticateTelegram(initData, isDirectAdminLink ? '' : startParam);
+        
+        let authedUser: UserProfile | undefined = res.user;
+        if (res.user) {
+          setUserProfile(res.user);
+          const isUserAdmin = res.user.is_admin === true || (res.user as any).isAdmin === true;
 
-        // Clear any stored admin token if the currently authenticated user is not an admin
-        if (!isUserAdmin) {
-          adminService.logout();
-        } else if (isDirectAdminLink) {
-          // Direct Admin Panel link (?startapp=admin) accessed by authorized admin account
-          if (adminService.isAuthenticated()) {
-            setViewMode('admin');
-            notifyToast('👑 Admin Console Activated', 'success', 3000);
-          } else {
-            setShowAdminAuthModal(true);
-          }
-        }
-      }
-    });
-
-    // Fetch active dynamic tasks to populate home screen task banner carousel & badge count
-    fetchTasksPageData()
-      .then((data) => {
-        if (data && data.tasks) {
-          // Calculate active unclaimed tasks count
-          const active = data.tasks.filter((t: any) => t.status !== 'claimed' && t.status !== 'completed');
-          setActiveTasksCount(active.length);
-
-          if (data.tasks.length > 0) {
-            const candidatePool = active.length > 0 ? active : data.tasks;
-
-            // Pick up to 3 random or latest active tasks
-            const shuffled = [...candidatePool].sort(() => 0.5 - Math.random());
-            const selected = shuffled.slice(0, 3);
-
-            const mapped = selected.map((t: any) => {
-              const rewardDiamonds = t.reward_diamonds ?? t.reward_gems ?? t.rewardGems ?? 0;
-              const rewardSpins = t.reward_spins ?? t.rewardSpins ?? 0;
-              const rewardAmount = rewardDiamonds > 0 ? rewardDiamonds : (rewardSpins > 0 ? rewardSpins : 50);
-              const rewardIcon = rewardSpins > 0 ? './assets/ticket_animated.gif' : './assets/diamond_animated.gif';
-
-              let icon = '🎯';
-              if (t.task_type === 'telegram_join' || t.taskType === 'telegram_join' || t.category === 'socials') {
-                icon = '📣';
-              } else if (t.task_type === 'ad_reward' || t.taskType === 'ad_reward') {
-                icon = '📺';
-              } else if (t.category === 'daily') {
-                icon = '📅';
-              } else if (t.task_type === 'spin_count') {
-                icon = '🎡';
-              } else if (t.task_type === 'invite_friends') {
-                icon = '👥';
-              }
-
-              let subtitle = 'Complete task & earn';
-              if (t.category === 'socials') subtitle = 'Join & stay updated';
-              else if (t.task_type === 'ad_reward' || t.taskType === 'ad_reward') subtitle = 'Watch quick ad to earn';
-              else if (t.category === 'daily') subtitle = 'Daily active quest';
-              else if (t.progress && t.progress.total > 1) subtitle = `Progress: ${t.progress.current}/${t.progress.total}`;
-
-              return {
-                id: t.id,
-                title: t.title,
-                subtitle: subtitle,
-                icon: icon,
-                rewardAmount: rewardAmount,
-                rewardIcon: rewardIcon
-              };
-            });
-
-            if (mapped.length > 0) {
-              setBannerTasks(mapped);
+          // Clear any stored admin token if the currently authenticated user is not an admin
+          if (!isUserAdmin) {
+            adminService.logout();
+          } else if (isDirectAdminLink) {
+            // Direct Admin Panel link (?startapp=admin) accessed by authorized admin account
+            if (adminService.isAuthenticated()) {
+              setViewMode('admin');
+              notifyToast('👑 Admin Console Activated', 'success', 3000);
+            } else {
+              setShowAdminAuthModal(true);
             }
           }
         }
-      })
-      .catch(() => {
-        // Silently keep default banners fallback
-      });
+
+        // 2. Fetch active dynamic tasks ONLY after authenticateTelegram resolves and stores a valid auth_token
+        try {
+          const tasksData = await fetchTasksPageData();
+          if (tasksData && tasksData.tasks) {
+            // Calculate active unclaimed tasks count
+            const active = tasksData.tasks.filter((t: any) => t.status !== 'claimed' && t.status !== 'completed');
+            setActiveTasksCount(active.length);
+
+            if (tasksData.tasks.length > 0) {
+              const candidatePool = active.length > 0 ? active : tasksData.tasks;
+
+              // Pick up to 3 random or latest active tasks
+              const shuffled = [...candidatePool].sort(() => 0.5 - Math.random());
+              const selected = shuffled.slice(0, 3);
+
+              const mapped = selected.map((t: any) => {
+                const rewardDiamonds = t.reward_diamonds ?? t.reward_gems ?? t.rewardGems ?? 0;
+                const rewardSpins = t.reward_spins ?? t.rewardSpins ?? 0;
+                const rewardAmount = rewardDiamonds > 0 ? rewardDiamonds : (rewardSpins > 0 ? rewardSpins : 50);
+                const rewardIcon = rewardSpins > 0 ? './assets/ticket_animated.gif' : './assets/diamond_animated.gif';
+
+                let icon = '🎯';
+                if (t.task_type === 'telegram_join' || t.taskType === 'telegram_join' || t.category === 'socials') {
+                  icon = '📣';
+                } else if (t.task_type === 'ad_reward' || t.taskType === 'ad_reward') {
+                  icon = '📺';
+                } else if (t.category === 'daily') {
+                  icon = '📅';
+                } else if (t.task_type === 'spin_count') {
+                  icon = '🎡';
+                } else if (t.task_type === 'invite_friends') {
+                  icon = '👥';
+                }
+
+                let subtitle = 'Complete task & earn';
+                if (t.category === 'socials') subtitle = 'Join & stay updated';
+                else if (t.task_type === 'ad_reward' || t.taskType === 'ad_reward') subtitle = 'Watch quick ad to earn';
+                else if (t.category === 'daily') subtitle = 'Daily active quest';
+                else if (t.progress && t.progress.total > 1) subtitle = `Progress: ${t.progress.current}/${t.progress.total}`;
+
+                return {
+                  id: t.id,
+                  title: t.title,
+                  subtitle: subtitle,
+                  icon: icon,
+                  rewardAmount: rewardAmount,
+                  rewardIcon: rewardIcon
+                };
+              });
+
+              if (mapped.length > 0) {
+                setBannerTasks(mapped);
+              }
+            }
+          }
+        } catch (tasksErr) {
+          console.warn('Tasks banner data fetch error:', tasksErr);
+        }
+
+        // 3. Daily Streak Reward Status & 10s auto-popup check ONLY after auth is established
+        try {
+          const dailyData = await fetchDailyRewardsData(true);
+          if (dailyData) {
+            const canClaim = !dailyData.canClaimToday;
+            setCanClaimDaily(canClaim);
+
+            if (canClaim) {
+              const currentUserId = authedUser?.telegram_id || authedUser?.id || 'guest';
+              const serverDate = dailyData.serverDate || new Date().toISOString().slice(0, 10);
+              const storageKey = `daily_popup_shown_${currentUserId}_${serverDate}`;
+              const hasShownToday = localStorage.getItem(storageKey) === 'true';
+
+              if (!hasShownToday) {
+                // Mark popup as presented for today so subsequent opens/reloads do NOT pop up
+                localStorage.setItem(storageKey, 'true');
+
+                // Auto-popup after 10 seconds only on first open of the day
+                popupTimer = setTimeout(() => {
+                  setShowDailyRewards(true);
+                }, 10000);
+              }
+            }
+          }
+        } catch (dailyErr) {
+          console.warn('Daily rewards status check error:', dailyErr);
+        }
+      } catch (authErr) {
+        console.error('Startup auth handshake error:', authErr);
+      }
+    };
+
+    initApp();
+
+    return () => {
+      if (popupTimer) clearTimeout(popupTimer);
+    };
   }, []);
 
   // Interrupted Session Recovery for Active BEP-20 USDT Deposits

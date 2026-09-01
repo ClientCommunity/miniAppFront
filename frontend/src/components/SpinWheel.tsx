@@ -113,21 +113,12 @@ export const SpinWheel: FC<SpinWheelProps> = ({
   const [isSpinning, setIsSpinning] = useState(false);
   const [loadedCount, setLoadedCount] = useState(0);
   const [isButtonPressed, setIsButtonPressed] = useState(false);
-  const [bulbPhase, setBulbPhase] = useState(0);
   const loadedImagesRef = useRef<Record<string, HTMLImageElement>>({});
 
   // Sizing metrics
   const frameThickness = 22;
   const coreSize = Math.max(120, size - frameThickness * 2 + 4);
   const hubSize = coreSize * 0.30;
-
-  // Cycle marquee bulbs chase effect
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBulbPhase((prev) => (prev + 1) % 2);
-    }, isSpinning ? 90 : 500);
-    return () => clearInterval(interval);
-  }, [isSpinning]);
 
   // Preload segment images & trigger redraw when each image finishes loading
   useEffect(() => {
@@ -453,21 +444,12 @@ export const SpinWheel: FC<SpinWheelProps> = ({
       return;
     }
 
-    // 1. INSTANT 0ms ACCELERATION START (No network wait!)
     setIsSpinning(true);
     haptics.impact('heavy');
     haptics.playClickSound();
 
-    // Start fast spinning immediately so UI feels instant
-    const initialSpinSpeed = 1080; // 3 full turns
-    const fastStartRotation = cumulativeRotationRef.current + initialSpinSpeed;
-    if (coreWrapperRef.current) {
-      coreWrapperRef.current.style.transition = 'transform 1000ms cubic-bezier(0.35, 0.0, 0.75, 0.25)';
-      coreWrapperRef.current.style.transform = `rotate(${fastStartRotation}deg)`;
-    }
-
     try {
-      // 2. PARALLEL BACKEND RESOLUTION
+      // 1. Resolve target segment (starts instantly upon user tap)
       let targetIndex = 0;
       let serverResultData: any = null;
 
@@ -485,7 +467,7 @@ export const SpinWheel: FC<SpinWheelProps> = ({
 
       targetIndex = ((targetIndex % segments.length) + segments.length) % segments.length;
 
-      // 3. EXACT SEGMENT LANDING CALCULATION
+      // 2. EXACT SEGMENT LANDING CALCULATION
       const numSegments = segments.length;
       const degreesPerSegment = 360 / numSegments;
 
@@ -499,19 +481,19 @@ export const SpinWheel: FC<SpinWheelProps> = ({
       const currentMod = cumulativeRotationRef.current % 360;
       const forwardDelta = (targetStopMod - currentMod + 360) % 360;
 
-      // Add minimum 5 extra full rotations (1800°) for dramatic smooth deceleration
-      const extraFullSpins = 5;
+      // 7 full dramatic rotations (2520°) for rich authentic wheel spin
+      const extraFullSpins = 7;
       const finalTargetRotation = cumulativeRotationRef.current + extraFullSpins * 360 + forwardDelta;
       cumulativeRotationRef.current = finalTargetRotation;
 
-      // 4. SEAMLESS DECELERATION CURVE (3.2s)
-      const decelDuration = spinDuration || 3200;
+      // 3. CONTINUOUS SMOOTH DECELERATION CURVE (Single uninterrupted physics transition, zero speed hitch/jerk)
+      const decelDuration = spinDuration || 3400;
       if (coreWrapperRef.current) {
-        coreWrapperRef.current.style.transition = `transform ${decelDuration}ms cubic-bezier(0.15, 0.95, 0.22, 1.0)`;
+        coreWrapperRef.current.style.transition = `transform ${decelDuration}ms cubic-bezier(0.12, 0.8, 0.15, 1.0)`;
         coreWrapperRef.current.style.transform = `rotate(${finalTargetRotation}deg)`;
       }
 
-      // 5. LANDING RESOLUTION
+      // 4. LANDING RESOLUTION
       setTimeout(() => {
         setIsSpinning(false);
         const winner = segments[targetIndex];
@@ -521,9 +503,6 @@ export const SpinWheel: FC<SpinWheelProps> = ({
       }, decelDuration);
     } catch (err) {
       console.error('Spin request error:', err);
-      if (coreWrapperRef.current) {
-        coreWrapperRef.current.style.transition = 'transform 1000ms cubic-bezier(0.2, 0.8, 0.3, 1)';
-      }
       setIsSpinning(false);
     }
   };
@@ -538,9 +517,9 @@ export const SpinWheel: FC<SpinWheelProps> = ({
     const angle = (i * 2 * Math.PI) / BULB_COUNT;
     const x = size / 2 + Math.cos(angle) * bulbRadius;
     const y = size / 2 + Math.sin(angle) * bulbRadius;
-    const isLit = (i + bulbPhase) % 2 === 0;
+    const isEven = i % 2 === 0;
 
-    return { x, y, isLit };
+    return { x, y, isEven };
   });
 
   return (
@@ -760,25 +739,14 @@ export const SpinWheel: FC<SpinWheelProps> = ({
         })}
       </svg>
 
-      {/* 20 Marquee Bulbs Mounted on Gold Rim Ring */}
+      {/* 20 Marquee Bulbs Mounted on Gold Rim Ring (Pure CSS GPU Animation) */}
       {bulbs.map((bulb, idx) => (
         <div
           key={idx}
+          className={`bulb-chaser ${bulb.isEven ? 'bulb-even' : 'bulb-odd'} ${isSpinning ? 'spinning' : ''}`}
           style={{
-            position: 'absolute',
             left: `${bulb.x}px`,
-            top: `${bulb.y}px`,
-            transform: 'translate(-50%, -50%)',
-            width: '7.5px',
-            height: '7.5px',
-            borderRadius: '50%',
-            backgroundColor: bulb.isLit ? '#fffdf0' : '#78350f',
-            border: bulb.isLit ? '1px solid #ffffff' : '1px solid #451a03',
-            boxShadow: bulb.isLit
-              ? '0 0 10px 3px rgba(254, 240, 138, 0.95), 0 0 3px #ffffff, inset 0 1px 2px #ffffff'
-              : 'inset 0 1px 2px rgba(0,0,0,0.8), 0 1px 1px rgba(255,255,255,0.15)',
-            zIndex: 12,
-            transition: 'background-color 0.1s ease, box-shadow 0.1s ease'
+            top: `${bulb.y}px`
           }}
         />
       ))}
