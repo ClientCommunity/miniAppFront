@@ -100,11 +100,33 @@ export const SettingsModule: React.FC = () => {
 
     setSavingChannel(true);
     try {
+      let finalLink = channelLink.trim();
+      let finalTitle = channelTitle.trim();
+      let finalUsername = channelUsername.trim();
+
+      // If target is specified, attempt live bot verification and invite link auto-export
+      if (targetId) {
+        try {
+          const verifyRes = await adminService.verifyAndConnectChannel(targetId);
+          if (verifyRes.success && verifyRes.data) {
+            setChannelVerified(true);
+            if (verifyRes.data.title) finalTitle = verifyRes.data.title;
+            if (verifyRes.data.username) finalUsername = verifyRes.data.username;
+            if (verifyRes.data.invite_link) finalLink = verifyRes.data.invite_link;
+            setChannelTitle(finalTitle);
+            setChannelUsername(finalUsername);
+            setChannelLink(finalLink);
+          }
+        } catch {
+          // If detection fails, continue with manual inputs
+        }
+      }
+
       const payload: Record<string, string> = {
         official_channel_id: channelId.trim(),
-        official_channel_title: channelTitle.trim(),
-        official_channel_username: channelUsername.trim(),
-        official_channel_link: channelLink.trim(),
+        official_channel_title: finalTitle,
+        official_channel_username: finalUsername,
+        official_channel_link: finalLink,
         official_channel_reward_spins: String(parseInt(rewardSpins, 10) || 3),
         official_channel_reward_diamonds: String(parseInt(rewardDiamonds, 10) || 500)
       };
@@ -112,7 +134,7 @@ export const SettingsModule: React.FC = () => {
       const res = await adminService.updateSystemSettings(payload);
       if (res.success) {
         haptics.notification('success');
-        notifyToast('✓ Official Telegram Channel Gatekeeper settings saved!', 'success', 3500);
+        notifyToast('✓ Official Telegram Channel Gatekeeper settings saved and verified!', 'success', 3500);
       } else {
         haptics.notification('error');
         notifyToast(res.error || 'Failed to save channel settings', 'error', 3500);
