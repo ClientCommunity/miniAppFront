@@ -326,31 +326,35 @@ button {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   GPU-ACCELERATED MARQUEE BULB CHASER (Zero React Re-renders)
+   GPU-ACCELERATED ORGANIC BREATHING MARQUEE BULBS (Smooth Dim-to-Bright Wave)
    ═══════════════════════════════════════════════════════════════════ */
 @keyframes bulbChaserEven {
-  0%, 49.9% {
+  0%, 100% {
     background-color: #fffdf0;
     border-color: #ffffff;
-    box-shadow: 0 0 10px 3px rgba(254, 240, 138, 0.95), 0 0 3px #ffffff, inset 0 1px 2px #ffffff;
+    box-shadow: 0 0 9px 2.5px rgba(254, 240, 138, 0.95), 0 0 3px #ffffff, inset 0 1px 2px #ffffff;
+    opacity: 1;
   }
-  50%, 100% {
-    background-color: #78350f;
-    border-color: #451a03;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.8), 0 1px 1px rgba(255,255,255,0.15);
+  50% {
+    background-color: #b45309;
+    border-color: #78350f;
+    box-shadow: 0 0 3.5px 1px rgba(245, 158, 11, 0.4), inset 0 1px 2px rgba(0,0,0,0.6);
+    opacity: 0.6;
   }
 }
 
 @keyframes bulbChaserOdd {
-  0%, 49.9% {
-    background-color: #78350f;
-    border-color: #451a03;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.8), 0 1px 1px rgba(255,255,255,0.15);
+  0%, 100% {
+    background-color: #b45309;
+    border-color: #78350f;
+    box-shadow: 0 0 3.5px 1px rgba(245, 158, 11, 0.4), inset 0 1px 2px rgba(0,0,0,0.6);
+    opacity: 0.6;
   }
-  50%, 100% {
+  50% {
     background-color: #fffdf0;
     border-color: #ffffff;
-    box-shadow: 0 0 10px 3px rgba(254, 240, 138, 0.95), 0 0 3px #ffffff, inset 0 1px 2px #ffffff;
+    box-shadow: 0 0 9px 2.5px rgba(254, 240, 138, 0.95), 0 0 3px #ffffff, inset 0 1px 2px #ffffff;
+    opacity: 1;
   }
 }
 
@@ -361,24 +365,24 @@ button {
   border-radius: 50%;
   border: 1px solid;
   z-index: 12;
-  will-change: background-color, box-shadow;
+  will-change: background-color, box-shadow, opacity;
   transform: translate(-50%, -50%);
 }
 
 .bulb-even {
-  animation: bulbChaserEven 1s infinite steps(1);
+  animation: bulbChaserEven 1.6s infinite ease-in-out;
 }
 
 .bulb-odd {
-  animation: bulbChaserOdd 1s infinite steps(1);
+  animation: bulbChaserOdd 1.6s infinite ease-in-out;
 }
 
 .bulb-even.spinning {
-  animation-duration: 0.18s;
+  animation-duration: 0.45s;
 }
 
 .bulb-odd.spinning {
-  animation-duration: 0.18s;
+  animation-duration: 0.45s;
 }
 
 

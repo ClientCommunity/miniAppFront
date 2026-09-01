@@ -253,7 +253,7 @@ export const SpinWheel: FC<SpinWheelProps> = ({
       ctx.rotate(midAngle);
 
       const itemDistance = innerRadius * 0.68;
-      const iconRenderSize = coreSize > 200 ? 36 : 28;
+      const iconRenderSize = coreSize > 200 ? 52 : 42;
 
       // 3A: Soft Saturated Ambient Flare behind asset
       const ambientGlow = ctx.createRadialGradient(
@@ -273,8 +273,26 @@ export const SpinWheel: FC<SpinWheelProps> = ({
       ctx.fillStyle = ambientGlow;
       ctx.fill();
 
-      // 3B: Fallback text only if no segment image
-      if (!segment.image) {
+      // 3B: Draw Image Directly on Canvas (Baked for 60/120 FPS GPU Rotation)
+      if (segment.image && loadedImagesRef.current[segment.image]) {
+        const img = loadedImagesRef.current[segment.image];
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetY = 4;
+
+        ctx.translate(itemDistance, 0);
+        ctx.rotate(Math.PI / 2);
+
+        let scale = 1;
+        if (segment.image.includes('coinSack')) scale = 0.84;
+        else if (segment.image.includes('SingleCoin')) scale = 0.70;
+
+        const drawW = iconRenderSize * scale;
+        const drawH = iconRenderSize * scale;
+        ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+        ctx.restore();
+      } else if (!segment.image) {
         ctx.font = `900 ${coreSize > 200 ? 12 : 10}px Georgia, serif`;
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffffff';
@@ -609,54 +627,6 @@ export const SpinWheel: FC<SpinWheelProps> = ({
               display: 'block'
             }}
           />
-
-          {/* Real-time Animated Segment Icons Overlay (Supports live rotating GIFs & 3D assets) */}
-          {segments.map((segment, i) => {
-            const arc = (2 * Math.PI) / segments.length;
-            const midAngle = i * arc + arc / 2;
-            const itemDistance = (coreSize / 2 - 1) * 0.68;
-            const iconSize = coreSize > 200 ? 54 : 44;
-            const x = coreSize / 2 + Math.cos(midAngle) * itemDistance;
-            const y = coreSize / 2 + Math.sin(midAngle) * itemDistance;
-            const rotationDeg = (midAngle * 180) / Math.PI + 90;
-
-            if (!segment.image) return null;
-
-            return (
-              <div
-                key={i}
-                style={{
-                  position: 'absolute',
-                  left: `${x}px`,
-                  top: `${y}px`,
-                  width: `${iconSize}px`,
-                  height: `${iconSize}px`,
-                  transform: `translate(-50%, -50%) rotate(${rotationDeg}deg)`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pointerEvents: 'none',
-                  zIndex: 5
-                }}
-              >
-                <img
-                  src={segment.image}
-                  alt={segment.label}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.85))',
-                    transform: segment.image?.includes('coinSack')
-                      ? 'scale(0.84)'
-                      : segment.image?.includes('SingleCoin')
-                      ? 'scale(0.70)'
-                      : 'scale(1)'
-                  }}
-                />
-              </div>
-            );
-          })}
         </div>
       </div>
 
@@ -674,8 +644,7 @@ export const SpinWheel: FC<SpinWheelProps> = ({
           width: `${size}px`,
           height: `${size}px`,
           pointerEvents: 'none',
-          zIndex: 10,
-          filter: 'drop-shadow(0 16px 32px rgba(0,0,0,0.85))'
+          zIndex: 10
         }}
       >
         <defs>
