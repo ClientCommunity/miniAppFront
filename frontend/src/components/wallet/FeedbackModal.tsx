@@ -1,5 +1,8 @@
 import { useState, useRef } from 'react';
 import type { FC, ChangeEvent, DragEvent } from 'react';
+import { submitFeedback } from '../../services/dataService';
+import { notifyToast } from '../../utils/debugToast';
+import { haptics } from '../../utils/haptics';
 
 export interface FeedbackModalProps {
   onClose: () => void;
@@ -13,6 +16,7 @@ export const FeedbackModal: FC<FeedbackModalProps> = ({ onClose }) => {
   const [description, setDescription] = useState('');
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -51,7 +55,7 @@ export const FeedbackModal: FC<FeedbackModalProps> = ({ onClose }) => {
     setPreviewUrl(null);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!email.trim() || !email.includes('@')) {
       setErrorMsg('Please enter a valid email address');
       return;
@@ -62,11 +66,35 @@ export const FeedbackModal: FC<FeedbackModalProps> = ({ onClose }) => {
     }
 
     setErrorMsg(null);
-    setIsSubmitted(true);
+    setIsSubmitting(true);
 
-    setTimeout(() => {
-      onClose();
-    }, 1800);
+    try {
+      const formData = new FormData();
+      formData.append('email', email.trim());
+      formData.append('category', category);
+      formData.append('description', description.trim());
+      if (screenshot) {
+        formData.append('screenshot', screenshot);
+      }
+
+      const res = await submitFeedback(formData);
+      if (res.success) {
+        haptics.notification('success');
+        setIsSubmitted(true);
+        notifyToast('✓ Support ticket submitted! Our team will review and reply via Telegram bot.', 'success', 3500);
+        setTimeout(() => {
+          onClose();
+        }, 2200);
+      } else {
+        setErrorMsg(res.message || 'Failed to submit feedback. Please try again.');
+        notifyToast(res.message || 'Submission failed', 'error', 3000);
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Failed to submit feedback');
+      notifyToast(err?.message || 'Error', 'error', 3000);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -400,25 +428,26 @@ export const FeedbackModal: FC<FeedbackModalProps> = ({ onClose }) => {
             {/* Submit Button */}
             <button
               onClick={handleSubmit}
+              disabled={isSubmitting}
               style={{
                 width: '100%',
-                background: 'linear-gradient(180deg, #059669 0%, #047857 100%)',
+                background: isSubmitting ? 'rgba(5, 150, 105, 0.6)' : 'linear-gradient(180deg, #059669 0%, #047857 100%)',
                 border: 'none',
                 borderRadius: '0.75rem',
                 padding: '0.75rem',
                 color: '#ffffff',
                 fontWeight: 800,
                 fontSize: '0.98rem',
-                cursor: 'pointer',
+                cursor: isSubmitting ? 'not-allowed' : 'pointer',
                 boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)',
                 transition: 'transform 0.1s ease',
                 marginTop: '0.25rem'
               }}
-              onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
+              onMouseDown={(e) => !isSubmitting && (e.currentTarget.style.transform = 'scale(0.98)')}
               onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
               onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
             >
-              Submit Feedback
+              {isSubmitting ? 'Submitting Report...' : 'Submit Feedback 🚀'}
             </button>
 
             {/* Developer Credit Footer Link */}

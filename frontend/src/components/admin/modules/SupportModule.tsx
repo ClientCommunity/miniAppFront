@@ -9,22 +9,44 @@ export const SupportModule: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'open' | 'resolved'>('open');
   const [inspectTicket, setInspectTicket] = useState<AdminSupportFeedback | null>(null);
-  const [adminNotes, setAdminNotes] = useState('Resolved after review');
+  const [adminNotes, setAdminNotes] = useState('');
   const [resolving, setResolving] = useState(false);
+
+  const normalizeItem = (item: any): AdminSupportFeedback => {
+    const isResolved =
+      item.is_resolved === true ||
+      item.isResolved === true ||
+      item.status === 'resolved';
+
+    return {
+      id: item.id || 0,
+      user_id: item.user_id ?? item.userId ?? 0,
+      telegram_id: item.telegram_id ?? item.telegramId ?? 0,
+      username: item.username || item.userName || item.user_name || 'user',
+      email: item.email || '',
+      category: item.category || 'general',
+      message: item.message || item.description || '',
+      screenshot_url: item.screenshot_url || item.screenshotUrl || '',
+      created_at: item.created_at || item.createdAt || new Date().toISOString(),
+      is_resolved: isResolved,
+      resolved_at: item.resolved_at || item.resolvedAt,
+      admin_notes: item.admin_notes || item.adminNotes || ''
+    };
+  };
 
   const loadFeedback = async () => {
     setLoading(true);
     try {
       const res = await adminService.getSupportFeedback();
       const raw = res?.data;
-      let list: AdminSupportFeedback[] = [];
+      let list: any[] = [];
       if (Array.isArray(raw)) {
         list = raw;
       } else if (raw && typeof raw === 'object') {
         const potential = (raw as any).feedback || (raw as any).items || (raw as any).data || (raw as any).messages;
         if (Array.isArray(potential)) list = potential;
       }
-      setFeedbackList(list);
+      setFeedbackList(list.map(normalizeItem));
     } catch (err: any) {
       console.warn('Failed to load feedback:', err);
       notifyToast(`Failed to load feedback: ${err?.message || 'Error'}`, 'error', 3000);
@@ -42,8 +64,9 @@ export const SupportModule: React.FC = () => {
     setResolving(true);
     try {
       haptics.notification('success');
-      await adminService.resolveSupportFeedback(item.id, notes || 'Resolved after review');
-      notifyToast('✓ Ticket marked as resolved and user notified!', 'success', 3500);
+      const responseText = (notes || '').trim() || 'Your support request has been investigated and resolved by our team.';
+      await adminService.resolveSupportFeedback(item.id, responseText);
+      notifyToast('✓ Ticket marked as resolved and user notified via Telegram Bot!', 'success', 3500);
       setInspectTicket(null);
       loadFeedback();
     } catch (err: any) {
@@ -68,7 +91,7 @@ export const SupportModule: React.FC = () => {
             📩 Support & Feedback Inbox
           </h2>
           <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
-            Click any ticket to read full details, inspect screenshots, and resolve with user feedback
+            Click any ticket to read user inquiry, inspect screenshot, and send live Telegram bot reply
           </span>
         </div>
 
@@ -89,7 +112,7 @@ export const SupportModule: React.FC = () => {
                 cursor: 'pointer'
               }}
             >
-              {st}
+              {st} ({feedbackList.filter(f => st === 'all' ? true : st === 'open' ? !f.is_resolved : f.is_resolved).length})
             </button>
           ))}
         </div>
@@ -110,18 +133,19 @@ export const SupportModule: React.FC = () => {
               onClick={() => {
                 haptics.selection();
                 setInspectTicket(item);
-                setAdminNotes('Resolved after review');
+                setAdminNotes(item.admin_notes || 'Your support inquiry has been investigated and resolved.');
               }}
               style={{
                 background: 'rgba(15, 23, 42, 0.75)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                border: item.is_resolved ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(56, 189, 248, 0.3)',
                 borderRadius: '14px',
                 padding: '1.1rem',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '0.65rem',
                 cursor: 'pointer',
-                transition: 'all 0.15s ease'
+                transition: 'all 0.15s ease',
+                boxShadow: item.is_resolved ? 'none' : '0 4px 14px rgba(56, 189, 248, 0.08)'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -150,7 +174,7 @@ export const SupportModule: React.FC = () => {
                     {item.category}
                   </span>
                   <span style={{ color: '#ffffff', fontWeight: 700, fontSize: '0.88rem' }}>
-                    @{item.username || 'user'} (ID: {item.telegram_id})
+                    @{item.username || 'user'} {item.telegram_id ? `(ID: ${item.telegram_id})` : item.user_id ? `(User #${item.user_id})` : ''}
                   </span>
                 </div>
 
@@ -160,7 +184,7 @@ export const SupportModule: React.FC = () => {
               </div>
 
               <p style={{ margin: 0, color: '#e2e8f0', fontSize: '0.85rem', lineHeight: 1.45, background: 'rgba(0,0,0,0.25)', padding: '0.65rem', borderRadius: '8px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                {item.message}
+                {item.message || 'No description provided.'}
               </p>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
@@ -171,7 +195,7 @@ export const SupportModule: React.FC = () => {
                     fontWeight: 700
                   }}
                 >
-                  {item.is_resolved ? '✓ Resolved' : '⏳ Open / Tap to Read & Reply'}
+                  {item.is_resolved ? '✓ Resolved' : '⏳ Open / Tap to View & Reply'}
                 </span>
 
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -181,7 +205,7 @@ export const SupportModule: React.FC = () => {
                     </span>
                   )}
                   <span style={{ color: '#38bdf8', fontSize: '0.78rem', fontWeight: 700 }}>
-                    Open Ticket ↗
+                    Open Ticket #{item.id} ↗
                   </span>
                 </div>
               </div>
@@ -250,13 +274,13 @@ export const SupportModule: React.FC = () => {
                     @{inspectTicket.username || 'user'}
                   </div>
                   <div style={{ color: '#38bdf8', fontSize: '0.75rem' }}>
-                    Telegram ID: <code>{inspectTicket.telegram_id}</code>
+                    Telegram ID: <code>{inspectTicket.telegram_id || inspectTicket.user_id || 'N/A'}</code>
                   </div>
                 </div>
 
-                {inspectTicket.username && (
+                {inspectTicket.username && inspectTicket.username !== 'user' && (
                   <a
-                    href={`https://t.me/${inspectTicket.username}`}
+                    href={`https://t.me/${inspectTicket.username.replace('@', '')}`}
                     target="_blank"
                     rel="noreferrer"
                     style={{
@@ -285,7 +309,7 @@ export const SupportModule: React.FC = () => {
               )}
 
               <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.2rem' }}>
-                <span style={{ background: 'rgba(255, 255, 255, 0.08)', color: '#cbd5e1', padding: '0.15rem 0.45rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 700 }}>
+                <span style={{ background: 'rgba(255, 255, 255, 0.08)', color: '#cbd5e1', padding: '0.15rem 0.45rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase' }}>
                   Category: {inspectTicket.category}
                 </span>
                 <span style={{ background: inspectTicket.is_resolved ? 'rgba(52, 211, 153, 0.15)' : 'rgba(245, 158, 11, 0.15)', color: inspectTicket.is_resolved ? '#34d399' : '#f59e0b', padding: '0.15rem 0.45rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 700 }}>
@@ -300,7 +324,7 @@ export const SupportModule: React.FC = () => {
                 Player Message:
               </label>
               <div style={{ background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '0.9rem', color: '#ffffff', fontSize: '0.9rem', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
-                {inspectTicket.message}
+                {inspectTicket.message || 'No description provided.'}
               </div>
             </div>
 
@@ -310,11 +334,11 @@ export const SupportModule: React.FC = () => {
                 <label style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.35rem' }}>
                   Attached Screenshot:
                 </label>
-                <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.15)', background: '#000000', textAlign: 'center' }}>
+                <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.15)', background: '#000000', textAlign: 'center', padding: '0.5rem' }}>
                   <img
-                    src={inspectTicket.screenshot_url}
+                    src={inspectTicket.screenshot_url.startsWith('/uploads/') ? `https://craftspin.duckdns.org${inspectTicket.screenshot_url}` : inspectTicket.screenshot_url}
                     alt="Attached Screenshot"
-                    style={{ maxWidth: '100%', maxHeight: '260px', objectFit: 'contain', display: 'block', margin: '0 auto' }}
+                    style={{ maxWidth: '100%', maxHeight: '260px', objectFit: 'contain', display: 'block', margin: '0 auto', borderRadius: '6px' }}
                   />
                 </div>
               </div>
@@ -324,22 +348,24 @@ export const SupportModule: React.FC = () => {
             {!inspectTicket.is_resolved ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                 <div>
-                  <label style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.35rem' }}>
-                    Resolution Notes & Bot Notification Message:
+                  <label style={{ color: '#38bdf8', fontSize: '0.78rem', fontWeight: 700, display: 'block', marginBottom: '0.35rem' }}>
+                    💬 Admin Response & Telegram Bot Notification Message:
                   </label>
-                  <input
-                    type="text"
+                  <textarea
+                    rows={3}
                     value={adminNotes}
                     onChange={(e) => setAdminNotes(e.target.value)}
-                    placeholder="e.g. Issue investigated and solved. Balance updated!"
+                    placeholder="Type your response to the user. When you click Resolve, this response is sent to their Telegram via bot..."
                     style={{
                       width: '100%',
                       padding: '0.65rem',
                       background: 'rgba(0, 0, 0, 0.45)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      border: '1px solid rgba(56, 189, 248, 0.4)',
                       borderRadius: '8px',
                       color: '#ffffff',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box',
+                      fontSize: '0.85rem',
+                      fontFamily: 'Outfit, sans-serif'
                     }}
                   />
                 </div>
@@ -375,13 +401,13 @@ export const SupportModule: React.FC = () => {
                       boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)'
                     }}
                   >
-                    {resolving ? 'Resolving...' : '✓ Mark Resolved & Send Bot Alert'}
+                    {resolving ? 'Sending...' : '✓ Resolve & Send Bot Reply 🚀'}
                   </button>
                 </div>
               </div>
             ) : (
               <div style={{ background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.3)', padding: '0.75rem', borderRadius: '8px', color: '#34d399', fontSize: '0.82rem', textAlign: 'center', fontWeight: 700 }}>
-                ✓ This inquiry has been resolved.
+                ✓ This inquiry has been resolved. {inspectTicket.admin_notes ? `Response sent: "${inspectTicket.admin_notes}"` : ''}
               </div>
             )}
           </div>
@@ -390,3 +416,5 @@ export const SupportModule: React.FC = () => {
     </div>
   );
 };
+
+export default SupportModule;
