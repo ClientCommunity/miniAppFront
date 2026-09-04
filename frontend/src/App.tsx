@@ -962,11 +962,13 @@ function App() {
           display: 'flex',
           overflowX: 'auto',
           scrollSnapType: 'x mandatory',
-          gap: '0.75rem',
-          padding: '0.25rem 0',
+          gap: '0.55rem',
+          padding: '0.25rem 0.35rem',
+          scrollPadding: '0 0.35rem',
           width: '100%',
           flexShrink: 0,
           WebkitOverflowScrolling: 'touch',
+          boxSizing: 'border-box'
         }}>
         {bannerTasks.map((task: any, i: number) => (
           <TaskBanner key={task.id || i} {...task} onClick={() => navigateTo('tasks')} />
