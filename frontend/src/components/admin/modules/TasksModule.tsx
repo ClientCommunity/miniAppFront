@@ -3,6 +3,7 @@ import { adminService } from '../../../services/adminService';
 import type { AdminTask, AdminTaskType, ConnectedTelegramChat } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
+import { showAdminDiagnostic } from '../../../utils/adminDiagnostics';
 
 // Smart Icon Renderer (Prevents raw path strings from ever rendering on screen)
 export const TaskIconRenderer: React.FC<{ icon?: string; size?: number; style?: React.CSSProperties }> = ({
@@ -208,7 +209,9 @@ export const TasksModule: React.FC = () => {
           error: res.error || 'Bot is not an administrator in this channel'
         });
         haptics.notification('warning');
-        notifyToast('⚠️ Bot not detected as admin. Please add bot as admin to channel.', 'error', 4000);
+        const errMsg = res.error || '⚠️ Bot not detected as admin. Please add bot as admin to channel.';
+        notifyToast(errMsg, 'error', 4000);
+        showAdminDiagnostic(errMsg, 'Verify Telegram Channel');
       }
     } catch (err: any) {
       setChannelVerifyResult({
@@ -216,6 +219,7 @@ export const TasksModule: React.FC = () => {
         error: err.message || 'Connection error'
       });
       notifyToast(`Verification failed: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Verify Telegram Channel');
     } finally {
       setVerifyingChannel(false);
     }
@@ -240,9 +244,11 @@ export const TasksModule: React.FC = () => {
         notifyToast('📁 Icon uploaded and hosted on server successfully!', 'success', 3000);
       } else {
         notifyToast(res.error || 'Failed to upload image', 'error', 3000);
+        showAdminDiagnostic(res.error || 'Failed to upload image', 'Upload Task Icon');
       }
     } catch (err: any) {
       notifyToast(`Upload error: ${err.message}`, 'error', 3000);
+      showAdminDiagnostic(err, 'Upload Task Icon');
     } finally {
       setUploadingIcon(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -307,6 +313,7 @@ export const TasksModule: React.FC = () => {
     } catch (err: any) {
       haptics.notification('error');
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Create Quest Task');
     } finally {
       setSubmitting(false);
     }
@@ -320,6 +327,7 @@ export const TasksModule: React.FC = () => {
       loadData();
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3000);
+      showAdminDiagnostic(err, 'Delete Quest Task');
     }
   };
 
@@ -336,6 +344,7 @@ export const TasksModule: React.FC = () => {
       loadData();
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3000);
+      showAdminDiagnostic(err, 'Link Telegram Channel');
     } finally {
       setLinkingChat(false);
     }
@@ -349,6 +358,7 @@ export const TasksModule: React.FC = () => {
       loadData();
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3000);
+      showAdminDiagnostic(err, 'Unlink Telegram Channel');
     }
   };
 

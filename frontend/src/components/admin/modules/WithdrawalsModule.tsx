@@ -3,6 +3,7 @@ import { adminService } from '../../../services/adminService';
 import type { AdminWithdrawalItem, PayoutSettings } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
+import { showAdminDiagnostic } from '../../../utils/adminDiagnostics';
 import { copyTextSafe } from '../../../utils/clipboard';
 import { downloadCsvAuthenticated } from '../../../utils/csvDownloader';
 import { openDownloadInBrowser } from '../../../utils/browserOpener';
@@ -72,9 +73,11 @@ export const WithdrawalsModule: React.FC = () => {
         notifyToast(`✓ Switched to ${newMode === 'instant' ? 'Instant Automated Mode ⚡' : 'Manual Review Mode 🛡️'}`, 'success', 3500);
       } else {
         notifyToast(`Failed to update payout settings: ${res.error || 'Server error'}`, 'error', 3500);
+        showAdminDiagnostic(res.error || 'Failed to update payout settings', 'Update Payout Mode');
       }
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Update Payout Mode');
     } finally {
       setUpdatingSettings(false);
     }
@@ -95,10 +98,13 @@ export const WithdrawalsModule: React.FC = () => {
         notifyToast(`🚀 On-chain payout broadcasted! Tx: ${res.data?.tx_hash?.substring(0, 14)}...`, 'success', 4500);
         loadData();
       } else {
-        notifyToast(`Payout failed: ${res.error || 'Check vault BNB gas or USDT reserve balance'}`, 'error', 4500);
+        const errMsg = res.error || 'Check vault BNB gas or USDT reserve balance';
+        notifyToast(`Payout failed: ${errMsg}`, 'error', 4500);
+        showAdminDiagnostic(errMsg, 'Master Vault Payout');
       }
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Master Vault Payout');
     } finally {
       setProcessingId(null);
     }
@@ -124,9 +130,11 @@ export const WithdrawalsModule: React.FC = () => {
         loadData();
       } else {
         notifyToast(`Error: ${res.error || 'Could not mark paid'}`, 'error', 3500);
+        showAdminDiagnostic(res.error || 'Could not mark paid', 'Mark Withdrawal Paid');
       }
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Mark Withdrawal Paid');
     } finally {
       setSubmittingManualPaid(false);
     }
@@ -147,9 +155,11 @@ export const WithdrawalsModule: React.FC = () => {
         loadData();
       } else {
         notifyToast(`Error: ${res.error || 'Rejection failed'}`, 'error', 3500);
+        showAdminDiagnostic(res.error || 'Rejection failed', 'Reject Withdrawal');
       }
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Reject Withdrawal');
     } finally {
       setSubmittingReject(false);
     }

@@ -17,6 +17,7 @@ import { SubAdminsModule } from './modules/SubAdminsModule';
 import { BroadcastModule } from './modules/BroadcastModule';
 import { SettingsModule } from './modules/SettingsModule';
 import { VaultSetupWizardModal } from './VaultSetupWizardModal';
+import { AdminDiagnosticModal } from './AdminDiagnosticModal';
 import { adminService } from '../../services/adminService';
 import type { AdminWalletStatus } from '../../types/admin';
 import { notifyToast } from '../../utils/debugToast';
@@ -122,6 +123,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToApp, onL
         onInitialized={() => setShowSetupWizard(false)}
         onCancel={onBackToApp}
       />
+
+      {/* Human-Readable Admin Diagnostic & Solution Popup */}
+      <AdminDiagnosticModal />
 
       {/* Executive Dark Top Header */}
       <div

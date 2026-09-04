@@ -3,6 +3,7 @@ import { adminService } from '../../../services/adminService';
 import type { AdminSupportFeedback } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
+import { showAdminDiagnostic } from '../../../utils/adminDiagnostics';
 
 export const SupportModule: React.FC = () => {
   const [feedbackList, setFeedbackList] = useState<AdminSupportFeedback[]>([]);
@@ -71,6 +72,7 @@ export const SupportModule: React.FC = () => {
       loadFeedback();
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3000);
+      showAdminDiagnostic(err, 'Resolve Support Ticket & Notify User');
     } finally {
       setResolving(false);
     }

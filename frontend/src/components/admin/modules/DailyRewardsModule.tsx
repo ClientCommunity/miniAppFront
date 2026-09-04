@@ -3,6 +3,7 @@ import { adminService } from '../../../services/adminService';
 import type { AdminDailyStreakDay } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
+import { showAdminDiagnostic } from '../../../utils/adminDiagnostics';
 
 export const DailyRewardsModule: React.FC = () => {
   const [days, setDays] = useState<AdminDailyStreakDay[]>([]);
@@ -91,11 +92,14 @@ export const DailyRewardsModule: React.FC = () => {
         await loadDays();
       } else {
         haptics.notification('error');
-        notifyToast(`Save failed: ${res.error || res.message}`, 'error', 3500);
+        const errMsg = res.error || res.message || 'Failed to save daily streak ladder';
+        notifyToast(`Save failed: ${errMsg}`, 'error', 3500);
+        showAdminDiagnostic(errMsg, 'Save Daily Streak Rewards Ladder');
       }
     } catch (err: any) {
       haptics.notification('error');
       notifyToast(`Error: ${err?.message || 'Failed to save'}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Save Daily Streak Rewards Ladder');
     } finally {
       setSaving(false);
     }

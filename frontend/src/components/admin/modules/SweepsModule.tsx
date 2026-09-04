@@ -4,6 +4,7 @@ import type { AdminFailedTransaction } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
 import { copyTextSafe } from '../../../utils/clipboard';
+import { showAdminDiagnostic } from '../../../utils/adminDiagnostics';
 
 export const SweepsModule: React.FC = () => {
   const [transactions, setTransactions] = useState<AdminFailedTransaction[]>([]);
@@ -52,11 +53,14 @@ export const SweepsModule: React.FC = () => {
         await loadTransactions();
       } else {
         haptics.notification('error');
-        notifyToast(`Sweep failed: ${res.error || 'Server error'}`, 'error', 3500);
+        const errMsg = res.error || 'Server error';
+        notifyToast(`Sweep failed: ${errMsg}`, 'error', 3500);
+        showAdminDiagnostic(errMsg, 'Force HD Vault Sweep');
       }
     } catch (err: any) {
       haptics.notification('error');
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Force HD Vault Sweep');
     } finally {
       setSweepingId(null);
     }

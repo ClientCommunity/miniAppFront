@@ -3,6 +3,7 @@ import { adminService } from '../../../services/adminService';
 import type { AdminContest, ContestPrizeLadderEntry } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
+import { showAdminDiagnostic } from '../../../utils/adminDiagnostics';
 
 interface StandardTournamentConfig {
   category: 'spins' | 'referrals';
@@ -138,6 +139,7 @@ export const ContestsModule: React.FC = () => {
       loadContests();
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Save Tournament Configuration');
     } finally {
       setSubmitting(false);
     }
@@ -176,6 +178,7 @@ export const ContestsModule: React.FC = () => {
       loadContests();
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Quick Launch Tournament');
     }
   };
 
@@ -195,10 +198,13 @@ export const ContestsModule: React.FC = () => {
         notifyToast(`💰 Prizes distributed to winners!`, 'success', 4000);
         loadContests();
       } else {
-        notifyToast(`Failed: ${res.error || 'Check server'}`, 'error', 3500);
+        const errMsg = res.error || 'Tournament prize distribution failed. Check tournament status and end date.';
+        notifyToast(`Failed: ${errMsg}`, 'error', 3500);
+        showAdminDiagnostic(errMsg, 'Distribute Tournament Prizes');
       }
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Distribute Tournament Prizes');
     }
   };
 

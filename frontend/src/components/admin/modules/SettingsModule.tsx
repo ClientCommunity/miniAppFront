@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { adminService } from '../../../services/adminService';
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
+import { showAdminDiagnostic } from '../../../utils/adminDiagnostics';
 
 export const SettingsModule: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -79,12 +80,15 @@ export const SettingsModule: React.FC = () => {
       } else {
         setChannelVerified(false);
         haptics.notification('error');
-        notifyToast(res.error || 'Failed to detect channel. Ensure the bot is an Administrator in that chat!', 'error', 4500);
+        const errMsg = res.error || 'Failed to detect channel. Ensure the bot is an Administrator in that chat!';
+        notifyToast(errMsg, 'error', 4500);
+        showAdminDiagnostic(errMsg, 'Auto-Detect Telegram Channel');
       }
     } catch (err: any) {
       setChannelVerified(false);
       haptics.notification('error');
       notifyToast(`Error: ${err.message}`, 'error', 4500);
+      showAdminDiagnostic(err, 'Auto-Detect Telegram Channel');
     } finally {
       setVerifyingChannel(false);
     }
@@ -138,10 +142,12 @@ export const SettingsModule: React.FC = () => {
       } else {
         haptics.notification('error');
         notifyToast(res.error || 'Failed to save channel settings', 'error', 3500);
+        showAdminDiagnostic(res.error || 'Failed to save channel settings', 'Save Channel Gatekeeper Settings');
       }
     } catch (err: any) {
       haptics.notification('error');
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Save Channel Gatekeeper Settings');
     } finally {
       setSavingChannel(false);
     }
@@ -164,10 +170,12 @@ export const SettingsModule: React.FC = () => {
       } else {
         haptics.notification('error');
         notifyToast(res.error || 'Failed to save financial settings', 'error', 3500);
+        showAdminDiagnostic(res.error || 'Failed to save financial settings', 'Save Financial Settings');
       }
     } catch (err: any) {
       haptics.notification('error');
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Save Financial Settings');
     } finally {
       setSavingFinancial(false);
     }
@@ -192,10 +200,12 @@ export const SettingsModule: React.FC = () => {
       } else {
         haptics.notification('error');
         notifyToast(res.error || 'Failed to update data mode', 'error', 3000);
+        showAdminDiagnostic(res.error || 'Failed to update data mode', 'Update Data Mode');
       }
     } catch (err: any) {
       haptics.notification('error');
       notifyToast(`Error: ${err.message}`, 'error', 3000);
+      showAdminDiagnostic(err, 'Update Data Mode');
     } finally {
       setSavingDataMode(false);
     }

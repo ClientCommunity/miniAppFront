@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { adminService } from '../../../services/adminService';
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
+import { showAdminDiagnostic } from '../../../utils/adminDiagnostics';
 
 export const WheelSettingsModule: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -106,11 +107,14 @@ export const WheelSettingsModule: React.FC = () => {
         await loadSettings();
       } else {
         haptics.notification('error');
-        notifyToast(`Update failed: ${res.error || 'Server error'}`, 'error', 3500);
+        const errMsg = res.error || 'Failed to save wheel settings';
+        notifyToast(`Update failed: ${errMsg}`, 'error', 3500);
+        showAdminDiagnostic(errMsg, 'Save Lucky Wheel Probabilities');
       }
     } catch (err: any) {
       haptics.notification('error');
       notifyToast(`Error: ${err?.message || 'Failed to save'}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Save Lucky Wheel Probabilities');
     } finally {
       setSaving(false);
     }

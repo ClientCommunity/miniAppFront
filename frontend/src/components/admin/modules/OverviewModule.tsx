@@ -3,6 +3,7 @@ import { adminService } from '../../../services/adminService';
 import type { AdminOverviewMetrics, MasterVaultStatus } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
 import { copyTextSafe } from '../../../utils/clipboard';
+import { showAdminDiagnostic } from '../../../utils/adminDiagnostics';
 
 const formatUsd = (val?: number | null): string => {
   if (val === undefined || val === null || isNaN(Number(val))) return '0.00';
@@ -76,12 +77,16 @@ export const OverviewModule: React.FC = () => {
     }
 
     if (transferAsset === 'usdt' && vault && numAmount > (vault.usdt_reserve_balance ?? 0)) {
-      notifyToast(`Insufficient USDT reserve! Available: $${formatUsd(vault.usdt_reserve_balance)}`, 'error', 4000);
+      const errMsg = `Insufficient USDT reserve balance in Master Vault! Available: $${formatUsd(vault.usdt_reserve_balance)}`;
+      notifyToast(errMsg, 'error', 4000);
+      showAdminDiagnostic(errMsg, 'Master Vault Transfer');
       return;
     }
 
     if (transferAsset === 'bnb' && vault && numAmount > (vault.bnb_gas_balance ?? 0)) {
-      notifyToast(`Insufficient BNB reserve! Available: ${vault.bnb_gas_balance} BNB`, 'error', 4000);
+      const errMsg = `Insufficient BNB gas balance in Master Vault! Available: ${vault.bnb_gas_balance} BNB`;
+      notifyToast(errMsg, 'error', 4000);
+      showAdminDiagnostic(errMsg, 'Master Vault Transfer');
       return;
     }
 
@@ -99,10 +104,13 @@ export const OverviewModule: React.FC = () => {
         notifyToast(`✓ Successfully broadcasted ${numAmount} ${transferAsset.toUpperCase()} transfer!`, 'success', 5000);
         loadData().catch(() => {});
       } else {
-        notifyToast(`Transfer failed: ${res.error || 'Server error'}`, 'error', 4500);
+        const errMsg = res.error || 'Server error';
+        notifyToast(`Transfer failed: ${errMsg}`, 'error', 4500);
+        showAdminDiagnostic(errMsg, 'Master Vault Transfer');
       }
     } catch (err: any) {
       notifyToast(`Transfer error: ${err.message || 'Network failure'}`, 'error', 4500);
+      showAdminDiagnostic(err, 'Master Vault Transfer');
     } finally {
       setIsTransferring(false);
     }

@@ -9,6 +9,7 @@ import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
 import { copyTextSafe } from '../../../utils/clipboard';
 import { downloadRawCsv } from '../../../utils/csvDownloader';
+import { showAdminDiagnostic } from '../../../utils/adminDiagnostics';
 
 export const GiftCodesModule: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'codes' | 'batches'>('codes');
@@ -108,10 +109,13 @@ export const GiftCodesModule: React.FC = () => {
         setCustomCode('');
         loadData();
       } else {
-        notifyToast(`Error: ${res.error || 'Failed to create code'}`, 'error', 3500);
+        const errMsg = res.error || 'Failed to create code';
+        notifyToast(`Error: ${errMsg}`, 'error', 3500);
+        showAdminDiagnostic(errMsg, 'Create Promo Gift Code');
       }
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Create Promo Gift Code');
     } finally {
       setSubmittingCustom(false);
     }
@@ -162,6 +166,7 @@ export const GiftCodesModule: React.FC = () => {
       }
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Bulk Generate Promo Codes');
     } finally {
       setSubmittingBulk(false);
     }
@@ -195,6 +200,7 @@ export const GiftCodesModule: React.FC = () => {
       loadData();
     } catch (err: any) {
       notifyToast(`Error deleting: ${err.message}`, 'error', 3000);
+      showAdminDiagnostic(err, 'Delete Promo Code');
     }
   };
 

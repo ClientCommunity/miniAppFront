@@ -3,6 +3,7 @@ import { adminService } from '../../../services/adminService';
 import type { AdminSubAdmin, CreateSubAdminPayload } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
+import { showAdminDiagnostic } from '../../../utils/adminDiagnostics';
 
 const AVAILABLE_PERMISSIONS = [
   { id: 'withdrawals_approve', label: 'Approve & Pay Cashouts' },
@@ -86,10 +87,13 @@ export const SubAdminsModule: React.FC = () => {
         setUsername('');
         loadSubAdmins();
       } else {
-        notifyToast(`Failed: ${res.error || 'Unknown error'}`, 'error', 4000);
+        const errMsg = res.error || 'Failed to create sub-admin';
+        notifyToast(`Failed: ${errMsg}`, 'error', 4000);
+        showAdminDiagnostic(errMsg, 'Create Sub-Admin');
       }
     } catch (err: any) {
       notifyToast(`Error: ${err?.message || 'Failed to create sub-admin'}`, 'error', 4000);
+      showAdminDiagnostic(err, 'Create Sub-Admin');
     } finally {
       setSubmitting(false);
     }
@@ -103,10 +107,13 @@ export const SubAdminsModule: React.FC = () => {
         notifyToast(`✓ Sub-Admin ${admin.telegram_id} ${!admin.is_active ? 'Activated' : 'Suspended'}`, 'success', 2500);
         loadSubAdmins();
       } else {
-        notifyToast(`Error: ${res.error}`, 'error', 3000);
+        const errMsg = res.error || 'Failed to update sub-admin status';
+        notifyToast(`Error: ${errMsg}`, 'error', 3000);
+        showAdminDiagnostic(errMsg, 'Update Sub-Admin Status');
       }
     } catch (err: any) {
       notifyToast(`Error: ${err?.message}`, 'error', 3000);
+      showAdminDiagnostic(err, 'Update Sub-Admin Status');
     }
   };
 
@@ -120,10 +127,13 @@ export const SubAdminsModule: React.FC = () => {
         notifyToast('✓ Sub-Admin removed', 'success', 2500);
         loadSubAdmins();
       } else {
-        notifyToast(`Error: ${res.error}`, 'error', 3000);
+        const errMsg = res.error || 'Failed to remove sub-admin';
+        notifyToast(`Error: ${errMsg}`, 'error', 3000);
+        showAdminDiagnostic(errMsg, 'Remove Sub-Admin');
       }
     } catch (err: any) {
       notifyToast(`Error: ${err?.message}`, 'error', 3000);
+      showAdminDiagnostic(err, 'Remove Sub-Admin');
     }
   };
 

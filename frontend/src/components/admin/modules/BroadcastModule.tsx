@@ -3,6 +3,7 @@ import { adminService } from '../../../services/adminService';
 import type { AdminBroadcastJob, CreateBroadcastJobPayload, AdminBroadcastButton } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
+import { showAdminDiagnostic } from '../../../utils/adminDiagnostics';
 
 export const BroadcastModule: React.FC = () => {
   const [jobs, setJobs] = useState<AdminBroadcastJob[]>([]);
@@ -98,10 +99,13 @@ export const BroadcastModule: React.FC = () => {
         setActiveTab('queue');
         loadJobs();
       } else {
-        notifyToast(`Broadcast launch failed: ${res.error}`, 'error', 4000);
+        const errMsg = res.error || 'Failed to queue broadcast campaign';
+        notifyToast(`Broadcast launch failed: ${errMsg}`, 'error', 4000);
+        showAdminDiagnostic(errMsg, 'Launch Broadcast Campaign');
       }
     } catch (err: any) {
       notifyToast(`Error: ${err?.message}`, 'error', 4000);
+      showAdminDiagnostic(err, 'Launch Broadcast Campaign');
     } finally {
       setIsSending(false);
     }
@@ -116,10 +120,13 @@ export const BroadcastModule: React.FC = () => {
         notifyToast('✓ Broadcast job cancelled', 'success', 2500);
         loadJobs();
       } else {
-        notifyToast(`Failed: ${res.error}`, 'error', 3000);
+        const errMsg = res.error || 'Failed to cancel broadcast job';
+        notifyToast(`Failed: ${errMsg}`, 'error', 3000);
+        showAdminDiagnostic(errMsg, 'Cancel Broadcast Job');
       }
     } catch (err: any) {
       notifyToast(`Error: ${err?.message}`, 'error', 3000);
+      showAdminDiagnostic(err, 'Cancel Broadcast Job');
     }
   };
 

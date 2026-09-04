@@ -3,6 +3,7 @@ import { adminService } from '../../../services/adminService';
 import type { AdminReferralRewardSettings } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
+import { showAdminDiagnostic } from '../../../utils/adminDiagnostics';
 
 export const ReferralSettingsModule: React.FC = () => {
   const [settings, setSettings] = useState<AdminReferralRewardSettings>({
@@ -63,11 +64,14 @@ export const ReferralSettingsModule: React.FC = () => {
         loadSettings();
       } else {
         haptics.notification('error');
-        notifyToast(`Save failed: ${res.error || res.message}`, 'error', 3500);
+        const errMsg = res.error || res.message || 'Failed to save referral rules';
+        notifyToast(`Save failed: ${errMsg}`, 'error', 3500);
+        showAdminDiagnostic(errMsg, 'Save Referral Settings');
       }
     } catch (err: any) {
       haptics.notification('error');
       notifyToast(`Error: ${err?.message || 'Failed to save'}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Save Referral Settings');
     } finally {
       setSaving(false);
     }

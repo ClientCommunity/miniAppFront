@@ -3,6 +3,7 @@ import { adminService } from '../../../services/adminService';
 import type { AdminRaffle } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
+import { showAdminDiagnostic } from '../../../utils/adminDiagnostics';
 
 export const RafflesModule: React.FC = () => {
   const [raffles, setRaffles] = useState<AdminRaffle[]>([]);
@@ -86,6 +87,7 @@ export const RafflesModule: React.FC = () => {
       loadRaffles();
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Create Raffle');
     } finally {
       setSubmitting(false);
     }
@@ -104,10 +106,13 @@ export const RafflesModule: React.FC = () => {
         notifyToast(`🎉 Winner drawn: ${winner}!`, 'success', 4000);
         loadRaffles();
       } else {
-        notifyToast(`Failed: ${res.error || 'Server error'}`, 'error', 3500);
+        const errMsg = res.error || 'Failed to draw raffle winner. Ensure tickets exist and raffle is active.';
+        notifyToast(`Failed: ${errMsg}`, 'error', 3500);
+        showAdminDiagnostic(errMsg, 'Draw Raffle Winner');
       }
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Draw Raffle Winner');
     }
   };
 
@@ -123,10 +128,13 @@ export const RafflesModule: React.FC = () => {
         notifyToast(`🛑 Raffle "${raffle.title}" marked as ended!`, 'success', 3000);
         loadRaffles();
       } else {
-        notifyToast(`Failed: ${res.error || 'Server error'}`, 'error', 3500);
+        const errMsg = res.error || 'Server error';
+        notifyToast(`Failed: ${errMsg}`, 'error', 3500);
+        showAdminDiagnostic(errMsg, 'End Raffle');
       }
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'End Raffle');
     }
   };
 
@@ -142,10 +150,13 @@ export const RafflesModule: React.FC = () => {
         notifyToast(`🗑️ Raffle deleted successfully!`, 'success', 3000);
         loadRaffles();
       } else {
-        notifyToast(`Failed: ${res.error || 'Server error'}`, 'error', 3500);
+        const errMsg = res.error || 'Server error';
+        notifyToast(`Failed: ${errMsg}`, 'error', 3500);
+        showAdminDiagnostic(errMsg, 'Delete Raffle');
       }
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Delete Raffle');
     }
   };
 

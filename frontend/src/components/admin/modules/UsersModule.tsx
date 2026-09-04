@@ -6,6 +6,7 @@ import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
 import { downloadCsvAuthenticated } from '../../../utils/csvDownloader';
 import { openDownloadInBrowser } from '../../../utils/browserOpener';
+import { showAdminDiagnostic } from '../../../utils/adminDiagnostics';
 
 export const UsersModule: React.FC = () => {
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
@@ -76,6 +77,7 @@ export const UsersModule: React.FC = () => {
       loadUsers();
     } catch (err: any) {
       notifyToast(`Adjustment failed: ${err.message}`, 'error', 3500);
+      showAdminDiagnostic(err, 'Adjust Player Balance');
     } finally {
       setSubmitting(false);
     }
@@ -92,6 +94,7 @@ export const UsersModule: React.FC = () => {
       loadUsers();
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3000);
+      showAdminDiagnostic(err, 'Toggle Player Ban Status');
     }
   };
 
