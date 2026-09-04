@@ -77,8 +77,15 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack, userProfile }) => {
     }
 
     const availableBal = userProfile?.balance_usd ?? walletData.availableBalanceUsd ?? 0;
-    const minAmt = walletData.minWithdrawalUsd || 1.0;
-    if (withdrawAmount < minAmt) {
+    const minAmt = (walletData.minWithdrawalUsd !== undefined && walletData.minWithdrawalUsd !== null)
+      ? Number(walletData.minWithdrawalUsd)
+      : 0;
+    if (withdrawAmount <= 0) {
+      notifyToast('⚠️ Please enter an amount greater than $0.00', 'error', 3000);
+      haptics.notification('error');
+      return;
+    }
+    if (minAmt > 0 && withdrawAmount < minAmt) {
       notifyToast(`⚠️ Minimum withdrawal is $${minAmt.toFixed(2)} USDT`, 'error', 3000);
       haptics.notification('error');
       return;
@@ -465,7 +472,9 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack, userProfile }) => {
                 Withdraw Amount (USDT)
               </h2>
               <span style={{ color: '#86efac', fontSize: '0.72rem', fontWeight: 600 }}>
-                Min: ${walletData.minWithdrawalUsd?.toFixed(2) || '1.00'}
+                {walletData.minWithdrawalUsd !== undefined && walletData.minWithdrawalUsd !== null && walletData.minWithdrawalUsd > 0
+                  ? `Min: $${walletData.minWithdrawalUsd.toFixed(2)}`
+                  : 'No Min'}
               </span>
             </div>
 
@@ -524,7 +533,7 @@ export const WalletPage: FC<WalletPageProps> = ({ onBack, userProfile }) => {
               <input
                 type="number"
                 step="any"
-                min="1"
+                min="0"
                 value={customAmountStr}
                 onChange={(e) => setCustomAmountStr(e.target.value)}
                 placeholder="Enter custom amount..."

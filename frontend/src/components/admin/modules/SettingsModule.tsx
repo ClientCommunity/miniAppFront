@@ -18,6 +18,7 @@ export const SettingsModule: React.FC = () => {
   const [rewardDiamonds, setRewardDiamonds] = useState('500');
   const [verifyingChannel, setVerifyingChannel] = useState(false);
   const [channelVerified, setChannelVerified] = useState(false);
+  const [showManualLinkOverride, setShowManualLinkOverride] = useState(false);
 
   // General Financial & System Settings
   const [feePercent, setFeePercent] = useState('2.0');
@@ -97,8 +98,8 @@ export const SettingsModule: React.FC = () => {
   const handleSaveChannelSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     const targetId = channelId.trim() || channelUsername.trim();
-    if (!targetId && !channelLink.trim()) {
-      notifyToast('Channel ID or invite link is required', 'info', 3000);
+    if (!targetId) {
+      notifyToast('Please enter your Telegram Channel @username or Chat ID', 'info', 3000);
       return;
     }
 
@@ -109,28 +110,30 @@ export const SettingsModule: React.FC = () => {
       let finalUsername = channelUsername.trim();
 
       // If target is specified, attempt live bot verification and invite link auto-export
-      if (targetId) {
-        try {
-          const verifyRes = await adminService.verifyAndConnectChannel(targetId);
-          if (verifyRes.success && verifyRes.data) {
-            setChannelVerified(true);
-            if (verifyRes.data.title) finalTitle = verifyRes.data.title;
-            if (verifyRes.data.username) finalUsername = verifyRes.data.username;
-            if (verifyRes.data.invite_link) finalLink = verifyRes.data.invite_link;
-            setChannelTitle(finalTitle);
-            setChannelUsername(finalUsername);
-            setChannelLink(finalLink);
-          }
-        } catch {
-          // If detection fails, continue with manual inputs
+      try {
+        const verifyRes = await adminService.verifyAndConnectChannel(targetId);
+        if (verifyRes.success && verifyRes.data) {
+          setChannelVerified(true);
+          if (verifyRes.data.title) finalTitle = verifyRes.data.title;
+          if (verifyRes.data.username) finalUsername = verifyRes.data.username;
+          if (verifyRes.data.invite_link) finalLink = verifyRes.data.invite_link;
+          setChannelTitle(finalTitle);
+          setChannelUsername(finalUsername);
+          setChannelLink(finalLink);
+        }
+      } catch {
+        // Fallback: If verification fails and targetId starts with @, construct public link automatically
+        if (!finalLink && targetId.startsWith('@')) {
+          finalLink = `https://t.me/${targetId.replace('@', '')}`;
+          setChannelLink(finalLink);
         }
       }
 
       const payload: Record<string, string> = {
-        official_channel_id: channelId.trim(),
-        official_channel_title: finalTitle,
-        official_channel_username: finalUsername,
-        official_channel_link: finalLink,
+        official_channel_id: targetId,
+        official_channel_title: finalTitle || 'Official Telegram Channel',
+        official_channel_username: finalUsername || (targetId.startsWith('@') ? targetId : ''),
+        official_channel_link: finalLink || (targetId.startsWith('@') ? `https://t.me/${targetId.replace('@', '')}` : ''),
         official_channel_reward_spins: String(parseInt(rewardSpins, 10) || 3),
         official_channel_reward_diamonds: String(parseInt(rewardDiamonds, 10) || 500)
       };
@@ -138,7 +141,7 @@ export const SettingsModule: React.FC = () => {
       const res = await adminService.updateSystemSettings(payload);
       if (res.success) {
         haptics.notification('success');
-        notifyToast('✓ Official Telegram Channel Gatekeeper settings saved and verified!', 'success', 3500);
+        notifyToast('✓ Official Telegram Channel Gatekeeper saved! Link auto-generated.', 'success', 3500);
       } else {
         haptics.notification('error');
         notifyToast(res.error || 'Failed to save channel settings', 'error', 3500);
@@ -158,9 +161,10 @@ export const SettingsModule: React.FC = () => {
     setSavingFinancial(true);
     try {
       const payload: Record<string, string> = {
-        fee_percent: feePercent.trim() || '2.0',
-        min_withdraw_usd: minWithdrawUsd.trim() || '1.00',
-        min_deposit_usd: minDepositUsd.trim() || '0.50'
+        fee_percent: feePercent.trim() !== '' ? feePercent.trim() : '2.0',
+        min_withdraw_usd: minWithdrawUsd.trim() !== '' ? minWithdrawUsd.trim() : '0.00',
+        min_withdrawal_usd: minWithdrawUsd.trim() !== '' ? minWithdrawUsd.trim() : '0.00',
+        min_deposit_usd: minDepositUsd.trim() !== '' ? minDepositUsd.trim() : '0.00'
       };
 
       const res = await adminService.updateSystemSettings(payload);
@@ -304,11 +308,11 @@ export const SettingsModule: React.FC = () => {
         <form onSubmit={handleSaveChannelSettings} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
             {/* Telegram Chat ID or Username */}
-            <div>
+            <div style={{ gridColumn: '1 / -1' }}>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                Telegram Channel Chat ID (or @username)
+                Official Telegram Channel (@username or Chat ID)
               </label>
-              <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                 <input
                   type="text"
                   value={channelId || channelUsername}
@@ -318,9 +322,9 @@ export const SettingsModule: React.FC = () => {
                       setChannelUsername(e.target.value);
                     }
                   }}
-                  placeholder="-1002345678901 or @channel"
+                  placeholder="@MyChannel or -1002345678901"
                   style={{
-                    flex: 1,
+                    flex: '1 1 240px',
                     background: '#070a12',
                     border: '1px solid rgba(255, 255, 255, 0.12)',
                     borderRadius: '8px',
@@ -339,7 +343,7 @@ export const SettingsModule: React.FC = () => {
                     background: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
                     border: 'none',
                     borderRadius: '8px',
-                    padding: '0.5rem 0.85rem',
+                    padding: '0.5rem 0.95rem',
                     color: '#ffffff',
                     fontWeight: 700,
                     fontSize: '0.78rem',
@@ -348,60 +352,103 @@ export const SettingsModule: React.FC = () => {
                     boxShadow: '0 2px 8px rgba(14, 165, 233, 0.3)'
                   }}
                 >
-                  {verifyingChannel ? '⏳ Detecting...' : '🔍 Detect Link'}
+                  {verifyingChannel ? '⏳ Detecting...' : '🔍 Connect & Auto-Export Link'}
                 </button>
               </div>
               <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.25rem', display: 'block' }}>
-                Enter your Chat ID (e.g. -100...). The Bot will auto-export the permanent invite link.
+                Simply enter your Channel handle or Chat ID. The bot automatically creates and links the permanent invite link.
               </span>
             </div>
 
-            {/* Official Channel Invite Link (Auto-Generated) */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>
-                Permanent Channel Invite Link
-              </label>
-              <div style={{ display: 'flex', gap: '0.4rem' }}>
+            {/* Live Auto-Generated Link Status & Preview Badge */}
+            <div
+              style={{
+                gridColumn: '1 / -1',
+                background: 'rgba(0, 0, 0, 0.35)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '8px',
+                padding: '0.75rem 0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.5rem'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.9rem' }}>{channelVerified ? '🛡️' : '📢'}</span>
+                <div>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f8fafc' }}>
+                    {channelTitle || 'No Channel Connected'}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: channelLink ? '#38bdf8' : '#64748b', wordBreak: 'break-all' }}>
+                    {channelLink || 'Invite link will be generated automatically when saved'}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                {channelLink && (
+                  <button
+                    type="button"
+                    onClick={handleTestLink}
+                    title="Open Link in New Tab"
+                    style={{
+                      background: 'rgba(56, 189, 248, 0.15)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      borderRadius: '6px',
+                      padding: '0.35rem 0.65rem',
+                      color: '#38bdf8',
+                      fontWeight: 700,
+                      fontSize: '0.74rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🔗 Test Link
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setShowManualLinkOverride(!showManualLinkOverride)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#64748b',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  {showManualLinkOverride ? 'Hide Custom URL' : 'Override URL (Optional)'}
+                </button>
+              </div>
+            </div>
+
+            {/* Optional Manual Link Override */}
+            {showManualLinkOverride && (
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 600, color: '#94a3b8', marginBottom: '0.25rem' }}>
+                  Custom Redirect URL (Optional Override)
+                </label>
                 <input
                   type="url"
                   value={channelLink}
                   onChange={(e) => setChannelLink(e.target.value)}
-                  placeholder="https://t.me/SpinCraftNews"
+                  placeholder="https://t.me/yourlink"
                   style={{
-                    flex: 1,
+                    width: '100%',
                     background: '#070a12',
                     border: '1px solid rgba(255, 255, 255, 0.12)',
                     borderRadius: '8px',
-                    padding: '0.6rem 0.85rem',
+                    padding: '0.5rem 0.75rem',
                     color: '#ffffff',
-                    fontSize: '0.85rem',
+                    fontSize: '0.8rem',
                     outline: 'none',
                     boxSizing: 'border-box'
                   }}
                 />
-                <button
-                  type="button"
-                  onClick={handleTestLink}
-                  title="Open Link in New Tab"
-                  style={{
-                    background: 'rgba(56, 189, 248, 0.15)',
-                    border: '1px solid rgba(56, 189, 248, 0.3)',
-                    borderRadius: '8px',
-                    padding: '0.5rem 0.75rem',
-                    color: '#38bdf8',
-                    fontWeight: 700,
-                    fontSize: '0.78rem',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  🔗 Test
-                </button>
               </div>
-              <span style={{ fontSize: '0.7rem', color: channelVerified ? '#34d399' : '#64748b', marginTop: '0.25rem', display: 'block' }}>
-                {channelVerified ? `🛡️ Verified Administrator | Title: "${channelTitle}"` : (channelTitle ? `📢 Channel Title: "${channelTitle}"` : 'Opened when players tap "🚀 Join Channel".')}
-              </span>
-            </div>
+            )}
 
             {/* Reward Spins */}
             <div>
@@ -532,11 +579,11 @@ export const SettingsModule: React.FC = () => {
               </label>
               <input
                 type="number"
-                step="0.10"
-                min="0.10"
+                step="any"
+                min="0"
                 value={minWithdrawUsd}
                 onChange={(e) => setMinWithdrawUsd(e.target.value)}
-                placeholder="1.00"
+                placeholder="0.00"
                 style={{
                   width: '100%',
                   background: '#070a12',
@@ -549,6 +596,9 @@ export const SettingsModule: React.FC = () => {
                   boxSizing: 'border-box'
                 }}
               />
+              <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.2rem', display: 'block' }}>
+                Set to 0.00 for no minimum restriction.
+              </span>
             </div>
 
             {/* Min Deposit */}
@@ -558,11 +608,11 @@ export const SettingsModule: React.FC = () => {
               </label>
               <input
                 type="number"
-                step="0.10"
-                min="0.10"
+                step="any"
+                min="0"
                 value={minDepositUsd}
                 onChange={(e) => setMinDepositUsd(e.target.value)}
-                placeholder="0.50"
+                placeholder="0.00"
                 style={{
                   width: '100%',
                   background: '#070a12',
@@ -575,6 +625,9 @@ export const SettingsModule: React.FC = () => {
                   boxSizing: 'border-box'
                 }}
               />
+              <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.2rem', display: 'block' }}>
+                Set to 0.00 for micro-deposits / no minimum.
+              </span>
             </div>
 
             {/* Gas Fee Percent */}
