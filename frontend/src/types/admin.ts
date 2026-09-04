@@ -86,6 +86,30 @@ export interface AdminContest {
 }
 
 // 3. Raffles & Lotteries
+export interface RafflePrizeTierConfig {
+  rank: string;
+  medal: string;
+  reward_type: 'usd' | 'diamonds';
+  amount: number;
+  amount_str?: string;
+  icon?: string;
+  multiplier?: string;
+  winners_count: number;
+  highlight?: boolean;
+}
+
+export interface AdminRaffleWinner {
+  tier_rank: string;
+  user_id: number;
+  telegram_id?: number;
+  name: string;
+  username?: string;
+  prize: string;
+  reward_type: string;
+  amount: number;
+  won_at?: string;
+}
+
 export interface AdminRaffle {
   id: number | string;
   title: string;
@@ -104,6 +128,9 @@ export interface AdminRaffle {
   winner_telegram_id?: number;
   winner_username?: string;
   winner_tx_id?: string;
+  prize_tiers?: RafflePrizeTierConfig[];
+  prizeTiers?: RafflePrizeTierConfig[];
+  winners?: AdminRaffleWinner[];
 }
 
 export interface CreateRafflePayload {
@@ -117,6 +144,7 @@ export interface CreateRafflePayload {
   enable_stars_payment?: boolean;
   enable_gems_payment?: boolean;
   ends_at: string;
+  prize_tiers?: RafflePrizeTierConfig[];
 }
 
 // 4. Tasks & Connected Chats

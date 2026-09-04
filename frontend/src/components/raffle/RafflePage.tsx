@@ -29,12 +29,33 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack, userProfile }) => {
     });
   }, []);
 
+  const handleTicketUpdate = (raffleId: string, newCount: number) => {
+    setRafflesData((prev: any) => {
+      if (!prev) return prev;
+      const updateList = (list: any[]) =>
+        (list || []).map((r) =>
+          r.id === raffleId || r.id === `#${raffleId}` || `#${r.id}` === raffleId
+            ? { ...r, userTickets: newCount, user_tickets: newCount }
+            : r
+        );
+      return {
+        ...prev,
+        ongoing: updateList(prev.ongoing),
+        ended: updateList(prev.ended)
+      };
+    });
+    if (selectedRaffle && (selectedRaffle.id === raffleId || selectedRaffle.id === `#${raffleId}`)) {
+      setSelectedRaffle((prev: any) => ({ ...prev, userTickets: newCount, user_tickets: newCount }));
+    }
+  };
+
   if (selectedRaffle) {
     return (
       <RaffleDetails 
         raffle={selectedRaffle}
         userProfile={userProfile}
         onBack={() => setSelectedRaffle(null)}
+        onTicketPurchased={handleTicketUpdate}
       />
     );
   }
@@ -282,6 +303,7 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack, userProfile }) => {
               <RaffleCard 
                 key={raffle.id}
                 {...raffle}
+                endsAt={raffle.ends_at || raffle.endsAt}
                 userTickets={raffle.user_tickets ?? raffle.userTickets ?? 0}
                 status="ongoing"
                 onClickDetails={() => setSelectedRaffle(raffle)}
@@ -298,6 +320,7 @@ export const RafflePage: FC<RafflePageProps> = ({ onBack, userProfile }) => {
               <RaffleCard 
                 key={raffle.id}
                 {...raffle}
+                endsAt={raffle.ends_at || raffle.endsAt}
                 userTickets={raffle.user_tickets ?? raffle.userTickets ?? 0}
                 status="ended"
                 onClickDetails={() => setSelectedRaffle(raffle)}

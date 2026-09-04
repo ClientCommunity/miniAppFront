@@ -740,6 +740,7 @@ export const fetchRaffleDetails = async (raffleId: string): Promise<RaffleDetail
     const userTickets = raw.user_tickets ?? raw.userTickets ?? rawRaffle?.tickets ?? 0;
     const prizeTiers = raw.prize_tiers ?? raw.prizeTiers ?? [];
     const secondsLeft = raw.seconds_left ?? raw.secondsLeft ?? 45;
+    const winners = raw.winners || raw.winners_json || [];
 
     return {
       raffle: rawRaffle,
@@ -747,7 +748,8 @@ export const fetchRaffleDetails = async (raffleId: string): Promise<RaffleDetail
       ticketPriceGems: raw.ticket_price_gems ?? raw.ticketPriceGems ?? rawRaffle?.ticket_gem_price ?? 0,
       endsTimestamp: raw.ends_timestamp ?? raw.endsTimestamp ?? (Date.now() + 86400000),
       secondsLeft,
-      prizeTiers
+      prizeTiers,
+      winners
     };
   }
 

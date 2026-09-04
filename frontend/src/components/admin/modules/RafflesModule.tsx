@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { adminService } from '../../../services/adminService';
-import type { AdminRaffle } from '../../../types/admin';
+import type { AdminRaffle, RafflePrizeTierConfig } from '../../../types/admin';
 import { notifyToast } from '../../../utils/debugToast';
 import { haptics } from '../../../utils/haptics';
 import { showAdminDiagnostic } from '../../../utils/adminDiagnostics';
@@ -25,6 +25,18 @@ export const RafflesModule: React.FC = () => {
 
   const [enableGems, setEnableGems] = useState(true);
   const [gemPrice, setGemPrice] = useState('200');
+
+  // Multi-Tier Prize Ladder State
+  const getDefaultTiers = (prizeUSD: number): RafflePrizeTierConfig[] => [
+    { medal: '🥇', rank: '1st Prize', reward_type: 'usd', amount: Math.round(prizeUSD * 0.5 * 100) / 100, winners_count: 1, highlight: true },
+    { medal: '🥈', rank: '2nd Prize', reward_type: 'usd', amount: Math.round(prizeUSD * 0.3 * 100) / 100, winners_count: 2, highlight: false },
+    { medal: '🥉', rank: '3rd Prize', reward_type: 'usd', amount: Math.round(prizeUSD * 0.2 * 100) / 100, winners_count: 6, highlight: false },
+    { medal: '💎', rank: '4th Prize', reward_type: 'diamonds', amount: 5000, winners_count: 20, highlight: false },
+    { medal: '💎', rank: '5th Prize', reward_type: 'diamonds', amount: 800, winners_count: 100, highlight: false },
+  ];
+
+  const [prizeTiers, setPrizeTiers] = useState<RafflePrizeTierConfig[]>(getDefaultTiers(100));
+  const [customTiersEnabled, setCustomTiersEnabled] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -79,11 +91,14 @@ export const RafflesModule: React.FC = () => {
         enable_usd_payment: enableUsdt,
         enable_stars_payment: enableStars,
         enable_gems_payment: enableGems,
-        ends_at: endsAt
+        ends_at: endsAt,
+        prize_tiers: prizeTiers
       });
-      notifyToast('🎟️ New Raffle created with Multi-Currency Checkout!', 'success', 3000);
+      notifyToast('🎟️ New Raffle created with Multi-Currency & Prize Ladder!', 'success', 3000);
       setShowModal(false);
       setTitle('');
+      setCustomTiersEnabled(false);
+      setPrizeTiers(getDefaultTiers(100));
       loadRaffles();
     } catch (err: any) {
       notifyToast(`Error: ${err.message}`, 'error', 3500);
@@ -94,7 +109,7 @@ export const RafflesModule: React.FC = () => {
   };
 
   const handleDrawWinner = async (raffle: AdminRaffle) => {
-    if (!window.confirm(`Draw winner for "${raffle.title}"? This will select a random winner and credit $${raffle.cash_prize_usd} USDT.`)) {
+    if (!window.confirm(`Draw winners for "${raffle.title}"? This will execute fair weighted random selection across all prize tiers and credit winners automatically.`)) {
       return;
     }
 
@@ -102,8 +117,8 @@ export const RafflesModule: React.FC = () => {
       haptics.impact('heavy');
       const res = await adminService.drawRaffleWinner(raffle.id);
       if (res.success && res.data) {
-        const winner = res.data.winner_username || (res.data as any).winnerName || (res.data as any).winner_name || 'Player';
-        notifyToast(`🎉 Winner drawn: ${winner}!`, 'success', 4000);
+        const count = res.data.winnersCount || (res.data.winners ? res.data.winners.length : 1);
+        notifyToast(`🎉 Draw Completed! Selected ${count} winners across prize tiers!`, 'success', 4000);
         loadRaffles();
       } else {
         const errMsg = res.error || 'Failed to draw raffle winner. Ensure tickets exist and raffle is active.';
@@ -271,11 +286,33 @@ export const RafflesModule: React.FC = () => {
                   )}
                 </div>
 
-                {r.winner_username && (
+                {r.winners && r.winners.length > 0 ? (
+                  <div style={{ background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(52, 211, 153, 0.3)', padding: '0.65rem 0.8rem', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#34d399' }}>
+                        🏆 Drawn Winners ({r.winners.length})
+                      </span>
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Prizes Distributed</span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', maxHeight: '130px', overflowY: 'auto' }}>
+                      {r.winners.map((w, idx) => (
+                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', background: 'rgba(0,0,0,0.25)', padding: '0.3rem 0.5rem', borderRadius: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <span style={{ color: '#fbbf24', fontWeight: 700 }}>{w.tier_rank}:</span>
+                            <span style={{ color: '#ffffff', fontWeight: 600 }}>{w.username ? `@${w.username}` : w.name}</span>
+                          </div>
+                          <span style={{ color: w.reward_type === 'diamonds' ? '#38bdf8' : '#34d399', fontWeight: 800 }}>
+                            {w.prize}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : r.winner_username ? (
                   <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(52, 211, 153, 0.3)', padding: '0.5rem', borderRadius: '8px', fontSize: '0.8rem', color: '#a7f3d0' }}>
                     👑 <strong>Winner:</strong> {r.winner_username}
                   </div>
-                )}
+                ) : null}
 
                 {/* Actions Row */}
                 <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.45rem', paddingTop: '0.35rem' }}>
@@ -414,7 +451,13 @@ export const RafflesModule: React.FC = () => {
                     type="number"
                     step="0.01"
                     value={cashPrize}
-                    onChange={(e) => setCashPrize(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCashPrize(val);
+                      if (!customTiersEnabled) {
+                        setPrizeTiers(getDefaultTiers(parseFloat(val) || 0));
+                      }
+                    }}
                     style={{
                       width: '100%',
                       padding: '0.65rem',
@@ -546,6 +589,156 @@ export const RafflesModule: React.FC = () => {
                     )}
                   </div>
                 </div>
+              </div>
+
+              {/* Prize Ladder & Winner Positions Section */}
+              <div style={{ background: 'rgba(0,0,0,0.35)', padding: '0.85rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ color: '#cbd5e1', fontSize: '0.82rem', fontWeight: 800, display: 'block' }}>
+                      🏆 Prize Ladder & Winners ({prizeTiers.length} Tiers)
+                    </span>
+                    <span style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
+                      Configure prizes & number of winners per position
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomTiersEnabled(true);
+                      setPrizeTiers([
+                        ...prizeTiers,
+                        {
+                          medal: '🎁',
+                          rank: `${prizeTiers.length + 1}th Prize`,
+                          reward_type: 'diamonds',
+                          amount: 500,
+                          winners_count: 10,
+                          highlight: false
+                        }
+                      ]);
+                    }}
+                    style={{
+                      background: 'rgba(56, 189, 248, 0.2)',
+                      border: '1px solid rgba(56, 189, 248, 0.4)',
+                      color: '#38bdf8',
+                      borderRadius: '6px',
+                      padding: '0.3rem 0.6rem',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    + Add Tier
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto' }}>
+                  {prizeTiers.map((t, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '32px 1fr 85px 80px 65px 22px',
+                        gap: '0.3rem',
+                        alignItems: 'center',
+                        background: 'rgba(15, 23, 42, 0.6)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        borderRadius: '6px',
+                        padding: '0.35rem'
+                      }}
+                    >
+                      <input
+                        type="text"
+                        value={t.medal}
+                        onChange={(e) => {
+                          setCustomTiersEnabled(true);
+                          const updated = [...prizeTiers];
+                          updated[idx].medal = e.target.value;
+                          setPrizeTiers(updated);
+                        }}
+                        style={{ width: '100%', textAlign: 'center', background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', color: '#ffffff', padding: '0.3rem 0', fontSize: '0.85rem' }}
+                      />
+                      <input
+                        type="text"
+                        value={t.rank}
+                        onChange={(e) => {
+                          setCustomTiersEnabled(true);
+                          const updated = [...prizeTiers];
+                          updated[idx].rank = e.target.value;
+                          setPrizeTiers(updated);
+                        }}
+                        style={{ width: '100%', background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', color: '#ffffff', padding: '0.3rem 0.4rem', fontSize: '0.75rem' }}
+                      />
+                      <select
+                        value={t.reward_type}
+                        onChange={(e) => {
+                          setCustomTiersEnabled(true);
+                          const updated = [...prizeTiers];
+                          updated[idx].reward_type = e.target.value as 'usd' | 'diamonds';
+                          setPrizeTiers(updated);
+                        }}
+                        style={{ width: '100%', background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', color: '#ffffff', padding: '0.3rem 0.2rem', fontSize: '0.72rem' }}
+                      >
+                        <option value="usd">💵 USDT</option>
+                        <option value="diamonds">💎 Gems</option>
+                      </select>
+                      <input
+                        type="number"
+                        step={t.reward_type === 'usd' ? '0.01' : '1'}
+                        value={t.amount}
+                        onChange={(e) => {
+                          setCustomTiersEnabled(true);
+                          const updated = [...prizeTiers];
+                          updated[idx].amount = parseFloat(e.target.value) || 0;
+                          setPrizeTiers(updated);
+                        }}
+                        placeholder="Amount"
+                        style={{ width: '100%', background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', color: '#ffffff', padding: '0.3rem 0.3rem', fontSize: '0.75rem' }}
+                      />
+                      <input
+                        type="number"
+                        min="1"
+                        value={t.winners_count}
+                        onChange={(e) => {
+                          setCustomTiersEnabled(true);
+                          const updated = [...prizeTiers];
+                          updated[idx].winners_count = parseInt(e.target.value, 10) || 1;
+                          setPrizeTiers(updated);
+                        }}
+                        placeholder="Winners"
+                        title="Number of winners for this position"
+                        style={{ width: '100%', background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', color: '#ffffff', padding: '0.3rem 0.3rem', fontSize: '0.75rem' }}
+                      />
+                      {prizeTiers.length > 1 ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCustomTiersEnabled(true);
+                            setPrizeTiers(prizeTiers.filter((_, i) => i !== idx));
+                          }}
+                          style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '0.85rem', padding: 0 }}
+                          title="Remove tier"
+                        >
+                          ✕
+                        </button>
+                      ) : <span />}
+                    </div>
+                  ))}
+                </div>
+
+                {customTiersEnabled && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomTiersEnabled(false);
+                      setPrizeTiers(getDefaultTiers(parseFloat(cashPrize) || 100));
+                    }}
+                    style={{ alignSelf: 'flex-start', background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '0.7rem', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+                  >
+                    ↺ Reset to Default 5 Tiers
+                  </button>
+                )}
               </div>
 
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>

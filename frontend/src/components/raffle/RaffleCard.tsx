@@ -11,6 +11,8 @@ export interface RaffleCardProps {
   tickets: number;
   totalTickets?: number;
   userTickets?: number;
+  endsAt?: string;
+  ends_at?: string;
   onClickDetails?: () => void;
 }
 
@@ -23,22 +25,46 @@ export const RaffleCard: FC<RaffleCardProps> = ({
   tickets,
   totalTickets = 10000,
   userTickets = 0,
+  endsAt,
+  ends_at,
   onClickDetails
 }) => {
   const isOngoing = status === 'ongoing';
   const [isPressed, setIsPressed] = useState(false);
-  const [countdown, setCountdown] = useState('04h 28m 15s');
+  const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
     if (!isOngoing) return;
-    const interval = setInterval(() => {
-      const now = new Date();
-      const sec = 59 - now.getSeconds();
-      const min = 59 - now.getMinutes();
-      setCountdown(`04h ${min < 10 ? '0' : ''}${min}m ${sec < 10 ? '0' : ''}${sec}s`);
-    }, 1000);
+    const targetTime = endsAt || ends_at ? new Date(endsAt || ends_at!).getTime() : null;
+
+    const updateTimer = () => {
+      if (!targetTime) {
+        setCountdown('Ongoing');
+        return;
+      }
+      const now = Date.now();
+      const diff = Math.floor((targetTime - now) / 1000);
+      if (diff <= 0) {
+        setCountdown('Ended');
+        return;
+      }
+      const d = Math.floor(diff / 86400);
+      const h = Math.floor((diff % 86400) / 3600);
+      const m = Math.floor((diff % 3600) / 60);
+      const s = diff % 60;
+      if (d > 0) {
+        setCountdown(`${d}d ${h < 10 ? '0' : ''}${h}h`);
+      } else if (h > 0) {
+        setCountdown(`${h < 10 ? '0' : ''}${h}h ${m < 10 ? '0' : ''}${m}m`);
+      } else {
+        setCountdown(`${m < 10 ? '0' : ''}${m}m ${s < 10 ? '0' : ''}${s}s`);
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [isOngoing]);
+  }, [isOngoing, endsAt, ends_at]);
 
   const percentage = Math.min(100, Math.round((tickets / totalTickets) * 100));
 
@@ -303,7 +329,7 @@ export const RaffleCard: FC<RaffleCardProps> = ({
             boxShadow: isOngoing ? '0 4px 10px rgba(16, 185, 129, 0.4)' : 'none'
           }}
         >
-          {isOngoing ? 'Join & Details ➔' : 'View Results'}
+          {isOngoing ? (userTickets > 0 ? 'My Tickets ➔' : 'Join & Details ➔') : 'View Results'}
         </button>
       </div>
     </div>

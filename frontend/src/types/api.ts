@@ -184,6 +184,21 @@ export interface PrizeTier {
   icon?: string;
   multiplier: string;
   highlight: boolean;
+  reward_type?: string;
+  amount_val?: number;
+  winners_count?: number;
+}
+
+export interface RaffleWinnerData {
+  tier_rank: string;
+  user_id: number;
+  telegram_id?: number;
+  name: string;
+  username?: string;
+  prize: string;
+  reward_type: string;
+  amount: number;
+  won_at?: string;
 }
 
 export interface RaffleDetailsData {
@@ -196,6 +211,7 @@ export interface RaffleDetailsData {
   endsTimestamp: number;
   secondsLeft: number;
   prizeTiers: PrizeTier[];
+  winners?: RaffleWinnerData[];
 }
 
 export interface BuyRaffleTicketPayload {
