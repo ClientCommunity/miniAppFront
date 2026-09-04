@@ -298,6 +298,105 @@ export const OverviewModule: React.FC = () => {
         </div>
       )}
 
+      {/* Real-time Traffic Telemetry Bar (Per Min, Per Hour, Per Day, Per Month) */}
+      {metrics?.traffic && (
+        <div
+          style={{
+            background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.12) 0%, rgba(99, 102, 241, 0.08) 100%)',
+            border: '1px solid rgba(56, 189, 248, 0.3)',
+            borderRadius: '16px',
+            padding: '1.2rem',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '1.3rem' }}>🌐</span>
+              <div>
+                <h3 style={{ margin: 0, color: '#38bdf8', fontSize: '1.05rem', fontWeight: 800 }}>
+                  Live Traffic & Active Telemetry
+                </h3>
+                <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                  Real-time Redis request rate & active unique users
+                </span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span
+                style={{
+                  background: 'rgba(56, 189, 248, 0.15)',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  color: '#38bdf8',
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: '8px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700
+                }}
+              >
+                ⚡ Live RPS: {formatCount(metrics.traffic.live_rps || 0)} /s (Peak: {formatCount(metrics.traffic.peak_rps || 0)})
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.75rem' }}>
+            {/* 1. Per Minute */}
+            <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.85rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 600 }}>Per Minute</span>
+                <span style={{ fontSize: '0.9rem' }}>⏱️</span>
+              </div>
+              <div style={{ color: '#38bdf8', fontSize: '1.3rem', fontWeight: 900 }}>
+                {formatCount(metrics.traffic.live_rpm || 0)}
+              </div>
+              <span style={{ color: '#64748b', fontSize: '0.70rem' }}>Requests in current minute</span>
+            </div>
+
+            {/* 2. Per Hour */}
+            <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.85rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 600 }}>Per Hour</span>
+                <span style={{ fontSize: '0.9rem' }}>⏳</span>
+              </div>
+              <div style={{ color: '#818cf8', fontSize: '1.3rem', fontWeight: 900 }}>
+                {formatCount(metrics.traffic.hour_requests || 0)}
+              </div>
+              <span style={{ color: '#64748b', fontSize: '0.70rem' }}>Requests in current hour</span>
+            </div>
+
+            {/* 3. Per Day */}
+            <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.85rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 600 }}>Per Day (Today)</span>
+                <span style={{ fontSize: '0.9rem' }}>📅</span>
+              </div>
+              <div style={{ color: '#34d399', fontSize: '1.3rem', fontWeight: 900 }}>
+                {formatCount(metrics.traffic.today_requests || 0)}
+              </div>
+              <span style={{ color: '#64748b', fontSize: '0.70rem' }}>
+                DAU: {formatCount(metrics.traffic.daily_active_users || metrics.active_users_dau || 0)} unique
+              </span>
+            </div>
+
+            {/* 4. Per Month */}
+            <div style={{ background: 'rgba(0, 0, 0, 0.35)', padding: '0.85rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 600 }}>Per Month</span>
+                <span style={{ fontSize: '0.9rem' }}>🗓️</span>
+              </div>
+              <div style={{ color: '#f472b6', fontSize: '1.3rem', fontWeight: 900 }}>
+                {formatCount(metrics.traffic.month_requests || 0)}
+              </div>
+              <span style={{ color: '#64748b', fontSize: '0.70rem' }}>
+                MAU: {formatCount(metrics.traffic.monthly_active_users || metrics.active_users_mau || 0)} unique
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* KPI Metric Cards Grid */}
       {metrics && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>

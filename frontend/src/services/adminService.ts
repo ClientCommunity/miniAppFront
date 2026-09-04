@@ -69,7 +69,7 @@ export const adminService = {
   // 1. DASHBOARD OVERVIEW & MASTER VAULT STATUS
   // --------------------------------------------------------------------------
   async getOverviewMetrics(): Promise<ApiResponse<AdminOverviewMetrics>> {
-    const res = await api.get<AdminOverviewMetrics>('/admin/stats/overview');
+    const res = await api.get<any>('/admin/stats/overview');
     if (!res.success) {
       // Return realistic defaults if backend endpoint is in progress
       return {
@@ -79,6 +79,7 @@ export const adminService = {
           total_withdrawals_usd: 4120.50,
           gross_volume_usd: 16571.30,
           active_users_dau: 1248,
+          active_users_mau: 3450,
           total_registered_users: 5890,
           pending_withdrawals_count: 7,
           total_spins_today: 8940,
@@ -86,7 +87,43 @@ export const adminService = {
         }
       };
     }
-    return res;
+
+    const raw = (res.data || res) as any;
+    const depGross = Number(raw?.total_deposits_usd ?? raw?.deposits?.totalGrossUSD ?? raw?.totalDepositsUSD ?? 0);
+    const withGross = Number(raw?.total_withdrawals_usd ?? raw?.withdrawals?.totalRequestedUSD ?? raw?.totalWithdrawalsUSD ?? 0);
+    const usersCount = Number(raw?.total_registered_users ?? raw?.totalUsers ?? raw?.usersCount ?? 0);
+    const dauCount = Number(raw?.active_users_dau ?? raw?.traffic?.dailyActiveUsers ?? raw?.traffic?.dau ?? 0);
+    const mauCount = Number(raw?.active_users_mau ?? raw?.traffic?.monthlyActiveUsers ?? raw?.traffic?.mau ?? 0);
+    const spinsToday = Number(raw?.total_spins_today ?? raw?.totalSpinsToday ?? 0);
+    const pendingWithdrawals = Number(raw?.pending_withdrawals_count ?? raw?.withdrawals?.pendingPayoutsCount ?? 0);
+
+    const trafficRaw = raw?.traffic || {};
+    const trafficMetrics = {
+      live_rps: Number(trafficRaw.liveRps ?? trafficRaw.live_rps ?? 0),
+      live_rpm: Number(trafficRaw.liveRpm ?? trafficRaw.live_rpm ?? 0),
+      hour_requests: Number(trafficRaw.hourRequests ?? trafficRaw.hour_requests ?? 0),
+      today_requests: Number(trafficRaw.todayRequests ?? trafficRaw.today_requests ?? 0),
+      month_requests: Number(trafficRaw.monthRequests ?? trafficRaw.month_requests ?? 0),
+      daily_active_users: Number(trafficRaw.dailyActiveUsers ?? trafficRaw.daily_active_users ?? dauCount),
+      monthly_active_users: Number(trafficRaw.monthlyActiveUsers ?? trafficRaw.monthly_active_users ?? mauCount),
+      peak_rps: Number(trafficRaw.peakRps ?? trafficRaw.peak_rps ?? 0)
+    };
+
+    return {
+      success: true,
+      data: {
+        total_deposits_usd: depGross,
+        total_withdrawals_usd: withGross,
+        gross_volume_usd: Number(raw?.gross_volume_usd ?? (depGross + withGross)),
+        active_users_dau: dauCount,
+        active_users_mau: mauCount,
+        total_registered_users: usersCount,
+        pending_withdrawals_count: pendingWithdrawals,
+        total_spins_today: spinsToday,
+        conversion_rate_percent: Number(raw?.conversion_rate_percent ?? 0),
+        traffic: trafficMetrics
+      }
+    };
   },
 
   async getMasterVaultStatus(): Promise<ApiResponse<MasterVaultStatus>> {

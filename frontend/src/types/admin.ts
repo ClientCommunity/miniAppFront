@@ -8,16 +8,37 @@ export interface AdminAuthResponse {
   message?: string;
 }
 
+export interface TrafficMetrics {
+  live_rps?: number;
+  liveRps?: number;
+  live_rpm?: number;
+  liveRpm?: number;
+  hour_requests?: number;
+  hourRequests?: number;
+  today_requests?: number;
+  todayRequests?: number;
+  month_requests?: number;
+  monthRequests?: number;
+  daily_active_users?: number;
+  dailyActiveUsers?: number;
+  monthly_active_users?: number;
+  monthlyActiveUsers?: number;
+  peak_rps?: number;
+  peakRps?: number;
+}
+
 // 1. Overview & Master Vault Status
 export interface AdminOverviewMetrics {
   total_deposits_usd: number;
   total_withdrawals_usd: number;
   gross_volume_usd: number;
   active_users_dau: number;
+  active_users_mau?: number;
   total_registered_users: number;
   pending_withdrawals_count: number;
   total_spins_today: number;
   conversion_rate_percent: number;
+  traffic?: TrafficMetrics;
 }
 
 export interface MasterVaultStatus {
